@@ -12,7 +12,7 @@ To report a vulnerability, see [SECURITY.md](https://github.com/lrivallain/deckf
   cross-site form or `fetch` can't use the cookie.
 - The server checks the Host header against DNS rebinding and the Origin header on writes. It requires JSON request bodies and sends
   a strict Content-Security-Policy for the editor.
-- Writes happen only in the deck folder (`deck.yaml`, `deck.html`, `deckforge/`, `templates/`, `assets/`) and in
+- Writes happen only in the deck folder (`deck.yaml`, `deck.html`, `deck.pptx`, `deckforge/`, `templates/`, `assets/`) and in
   `~/.config/deckforge/` (`templates/` and the Copilot handoff files below), plus the `deckforge` entry of
   `~/.copilot/mcp-config.json` when you ask for it. Dot-files and paths outside the deck folder are never served.
 - Uploads (`POST /api/assets`) need the token, pass the Origin check and are limited to 10 MB. The file
@@ -21,6 +21,9 @@ To report a vulnerability, see [SECURITY.md](https://github.com/lrivallain/deckf
   `assets/<sha256-12>.<ext>`. Assets are served with `X-Content-Type-Options: nosniff`, and SVG with a
   `sandbox` Content-Security-Policy. User images are always `<img>` elements, never inline SVG. The server
   never fetches remote URLs.
+- PowerPoint export (`POST /api/export/pptx`) needs the token and passes the Origin check. It accepts only a ZIP
+  package up to 200 MB and always writes `deck.pptx` (named after `deck.yaml`) next to the deck. The browser
+  builds the file from the laid-out deck; the server never parses it.
 - Slot text is HTML-escaped and rich text is sanitized with an allow-list. Theme values are validated.
 - deckforge sends no telemetry.
 

@@ -22,7 +22,7 @@ export default defineConfig({
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"], viewport: { width: 1440, height: 900 } },
-      testMatch: ["editor.spec.js", "cross-site.spec.js", "no-srcdoc.spec.js", "viewer.spec.js", "media.spec.js", "layout-check.spec.js"],
+      testMatch: ["editor.spec.js", "cross-site.spec.js", "no-srcdoc.spec.js", "viewer.spec.js", "media.spec.js", "layout-check.spec.js", "export.spec.js"],
     },
   ],
 });

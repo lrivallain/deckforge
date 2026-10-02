@@ -208,6 +208,7 @@ Copy the structure of a built-in theme (see the [theme file reference](https://d
 deckforge build <dir> --json                 # validate + write deck.html (exit 2 on errors)
 deckforge build <dir> --runtime inline       # one self-contained file to share (no network)
 deckforge build <dir> --out <file> [--runtime local|inline|cdn]
+deckforge export <dir> --json                # editable deck.pptx next to deck.yaml (needs Playwright)
 ```
 
 `--json` reports `ok`, `outPath`, `runtime`, `slides`, `visibleSlides`, `issues[]`

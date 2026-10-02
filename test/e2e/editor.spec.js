@@ -91,8 +91,9 @@ test("add, duplicate, hide, reorder and delete slides with undo", async ({ page 
   await page.locator(".toast").getByRole("button", { name: "Undo" }).click();
   await expect(railItem(page, "zoom")).toHaveCount(1);
 
-  await page.locator("body").click({ position: { x: 700, y: 30 } });
+  await page.getByTestId("deck-title").click();
   await page.keyboard.press("ControlOrMeta+z");
+  await expect(page.getByTestId("redo")).toBeEnabled();
   await page.keyboard.press("ControlOrMeta+z");
   await page.getByTestId("redo").click();
   await expect(page.getByTestId("redo")).toBeEnabled();

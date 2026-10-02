@@ -9,6 +9,7 @@ deckforge --help | --version
 |---|---|
 | [`new`](#new) | Create a deck folder |
 | [`build`](#build) | Render `deck.yaml` to `deck.html` and report issues |
+| [`export`](#export) | Export the deck to an editable PowerPoint file |
 | [`templates`](#templates) | List templates, slots, themes and icons |
 | [`edit`](#edit) | Start the local editor |
 | [`serve`](#serve) | Serve the deck read-only with live reload |
@@ -41,6 +42,31 @@ Renders the deck and prints validation issues. It exits with code **2** when the
 | `--json` | Prints a machine-readable report: `ok`, `outPath`, `issues`, `loadErrors`, `assets` |
 
 It also lists assets that no slide uses. It never deletes them.
+
+## export
+
+```bash
+deckforge export <deck> [--out deck.pptx] [--json]
+```
+
+Exports the visible slides to an editable PowerPoint file, `deck.pptx` next to `deck.yaml` by default.
+Text, cards, lines and images become native PowerPoint objects; icons and gradients become vector pictures.
+Speaker notes and links are kept. See [Export to PowerPoint](../guide/presenting#export-to-powerpoint).
+
+The command lays the deck out in a headless Chromium browser through [Playwright](https://playwright.dev),
+an optional dependency. If it is missing, install it once:
+
+```bash
+npm install -g playwright && npx playwright install chromium
+```
+
+It also uses an installed Google Chrome or Microsoft Edge when Playwright's own Chromium is absent.
+Like `build`, it exits with code **2**, and writes nothing, when the deck has errors.
+
+| Option | Effect |
+|---|---|
+| `--out`, `-o` | Output file. The default is `deck.pptx` next to `deck.yaml` |
+| `--json` | Prints a machine-readable report: `ok`, `outPath`, `slides`, `warnings`, `issues`, `loadErrors` |
 
 ## templates
 

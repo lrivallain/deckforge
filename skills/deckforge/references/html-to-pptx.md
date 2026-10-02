@@ -1,6 +1,23 @@
 # deckforge deck → editable PowerPoint
 
-deckforge does not export PPTX. This guide rebuilds an **approved** `deck.html` as native PowerPoint
+## 0. Export first
+
+```bash
+deckforge export <dir> --json      # writes <dir>/deck.pptx (or --out <file>.pptx)
+```
+
+The exporter lays the approved deck out in headless Chromium (Playwright, an optional dependency: if the command
+reports it missing, ask before running `npm install -g playwright && npx playwright install chromium`, or use the
+editor's **PowerPoint** button). It writes native text boxes, rounded rectangles, lines and cropped pictures; icons,
+gradients and arrowheads become SVG pictures; speaker notes and links are kept; hidden slides are skipped.
+
+Read `warnings` (font substitutions, unsupported content), then validate the file with §5 below. It does **not**
+produce animations or embed fonts. Use the manual method in §1–4 only for what the export cannot do or when the user
+asks for a hand-built rebuild (for example, native grouped diagrams with connectors, or Appear/Fade builds).
+
+## Manual rebuild
+
+This method rebuilds an **approved** `deck.html` as native PowerPoint
 text, shapes and connectors. It is a reconstruction method, not a universal exporter. A screenshot on
 each slide is not an editable conversion.
 

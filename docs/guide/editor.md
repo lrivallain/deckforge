@@ -13,7 +13,7 @@ This command opens the editor in your browser. Every change saves `deck.yaml` an
 | **Slide rail** (left) | Select, drag to reorder, duplicate, hide or delete slides. Use **Add slide** to add one |
 | **Preview** (centre) | Click any text to edit it in place. <kbd>Enter</kbd> commits, <kbd>Esc</kbd> reverts |
 | **Inspector** (right) | The template, a form for every slot with character counters, speaker notes, footer and visibility |
-| **Top bar** | Undo/redo, theme, **Templates**, **Deck** settings, **Present** and **Copilot** |
+| **Top bar** | Undo/redo, theme, **Templates**, **Deck** settings, **PowerPoint** export, **Present** and **Copilot** |
 
 Drag the edge of the slide rail, the inspector or the Copilot panel to resize it. The editor remembers the widths. Double-click an edge to restore the default width.
 

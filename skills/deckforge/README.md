@@ -7,7 +7,7 @@ This skill teaches GitHub Copilot (the CLI and the GitHub Copilot app) to build 
 - measure the rendered slides at 1280 × 720 in the app's browser canvas;
 - hand the deck over to the deckforge editor.
 
-On request, it rebuilds the approved deck as editable PowerPoint. It replaces the older `build-presentation` skill.
+On request, it exports the approved deck as editable PowerPoint (`deckforge export`). It replaces the older `build-presentation` skill.
 
 ## Install
 
@@ -31,7 +31,7 @@ Start a new Copilot session afterwards and check that the skill is loaded with `
 | `references/workflow.md` | Brief → plan → author → validate → inspect → hand off |
 | `references/authoring.md` | The `deck.yaml` format, the template map, slot rules, overlays, deck-local templates, build issues |
 | `references/design-system.md` | Palette, typography, geometry, diagram grammar, motion, accessibility |
-| `references/html-to-pptx.md` | Rebuilding an approved deck as native, editable PowerPoint |
+| `references/html-to-pptx.md` | Exporting and checking an approved deck as native, editable PowerPoint |
 | `scripts/layout-check.js` | In-page check: overflow, clipped text, overlays covering text or sitting on bars and labels, broken images |
 
 ## Example prompts

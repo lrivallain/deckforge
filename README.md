@@ -31,6 +31,7 @@
 - **GitHub Copilot inside.** Ask for changes to one slide or the whole deck. Copilot can only use deck tools.
   Continue the same conversation in Copilot CLI or the Copilot app (`deckforge mcp`) and watch its edits in the editor as they happen.
 - **One static file.** Speaker notes, a presenter window and print to PDF. No network requests by default.
+- **Editable PowerPoint export.** Native text boxes, shapes and pictures, with your speaker notes.
 
 ## Install
 
@@ -46,6 +47,7 @@ npm install -g https://github.com/lrivallain/deckforge/archive/refs/heads/master
 deckforge new my-talk --title "Shipping with confidence"   # creates my-talk/deck.yaml
 deckforge edit my-talk                                      # opens the editor
 deckforge build my-talk --runtime inline                    # one self-contained deck.html
+deckforge export my-talk                                    # an editable deck.pptx
 ```
 
 To start from a complete deck, run `deckforge new my-talk --example aurora`.
@@ -58,7 +60,7 @@ To start from a complete deck, run `deckforge new my-talk --example aurora`.
 | [Write a deck](https://deckforge.vuptime.io/guide/writing-decks) | The basics of `deck.yaml` |
 | [Themes](https://deckforge.vuptime.io/guide/themes) · [Templates](https://deckforge.vuptime.io/guide/templates) | Galleries of themes and templates |
 | [Editor](https://deckforge.vuptime.io/guide/editor) · [Copilot](https://deckforge.vuptime.io/guide/copilot) | Edit slides visually or by asking Copilot |
-| [Present and share](https://deckforge.vuptime.io/guide/presenting) | Viewer, print to PDF, runtime modes |
+| [Present and share](https://deckforge.vuptime.io/guide/presenting) | Viewer, print to PDF, PowerPoint export, runtime modes |
 | [Copilot skill](https://deckforge.vuptime.io/guide/copilot-skill) | Let the Copilot CLI build a deck from a brief |
 | [Reference](https://deckforge.vuptime.io/reference/cli) | CLI, `deck.yaml`, theme and template files, security model |
 

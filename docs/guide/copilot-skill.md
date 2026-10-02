@@ -9,7 +9,7 @@ a deck from a short brief:
 4. It **measures** every slide at 1280×720 to find text that overflows or is clipped, and overlays that cover text.
 5. It **opens** the deck in `deckforge edit` so you can review it.
 
-If you ask, it can also rebuild the approved deck as an editable PowerPoint file.
+If you ask, it can also export the approved deck as an editable PowerPoint file.
 
 ## Install
 

@@ -74,11 +74,13 @@
     "esbuild": "^0.28.2",
     "eslint": "^10.11.0",
     "globals": "^17.12.0",
-    "playwright": "^1.63.0",
+    "jszip": "^3.10.2",
+    "pptxgenjs": "^4.0.1",
     "vitepress": "^1.6.4",
     "vitest": "^4.1.11"
   },
   "optionalDependencies": {
-    "@github/copilot-sdk": "^1.0.16"
+    "@github/copilot-sdk": "^1.0.16",
+    "playwright": "^1.63.0"
   }
 }

@@ -109,6 +109,6 @@ Never commit, publish, upload, email or deploy the deck unless the user explicit
 
 ## 7. PowerPoint
 
-Only after the user approves the HTML deck: follow [html-to-pptx.md](html-to-pptx.md).
-If the user asks for PowerPoint only, still author in deckforge: it is the fastest way to a reviewed layout.
-Then rebuild the result natively.
+Only after the user approves the HTML deck: run `deckforge export <dir> --json` and follow
+[html-to-pptx.md](html-to-pptx.md) to check it. If the user asks for PowerPoint only, still author in
+deckforge: it is the fastest way to a reviewed layout. Then export it.
