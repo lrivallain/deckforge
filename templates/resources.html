@@ -1,0 +1,52 @@
+---
+name: resources
+label: Resources & next step
+description: Two or three resource groups with real, descriptive links, and one final action (recipe G).
+category: structure
+slots:
+  eyebrow: { type: text, max: 40, sample: Resources }
+  title: { type: richtext, max: 60, required: true, sample: 'Where to go <span class="blue">next</span>' }
+  subtitle: { type: text, max: 60, sample: Real links. One clear action. }
+  groups:
+    type: cards
+    max: 3
+    fields:
+      icon: { type: icon }
+      title: { type: text, max: 30 }
+      text: { type: text, max: 90 }
+      link: { type: link }
+    sample:
+      - { icon: book, title: Read, text: The design system behind these slides., link: { label: Design system, href: "https://github.com/lrivallain/deckforge#themes" } }
+      - { icon: code, title: Build, text: Create and edit decks from the command line., link: { label: deckforge CLI, href: "https://github.com/lrivallain/deckforge#cli" } }
+      - { icon: flow, title: Share, text: Publish a single self-contained HTML file., link: { label: Runtime modes, href: "https://github.com/lrivallain/deckforge#runtime-modes" } }
+  actionLabel: { type: text, max: 20, sample: Next step }
+  action: { type: text, max: 100, sample: Pick one deck and rebuild it with deckforge this week. }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="groups">
+  {{#each groups}}
+  <article class="group reveal">
+    {{icon}}
+    <h2>{{title}}</h2>
+    <p>{{text}}</p>
+    {{#if link}}<p class="link">{{link}}</p>{{/if}}
+  </article>
+  {{/each}}
+</div>
+{{#if action}}<p class="outcome reveal"><strong>{{actionLabel}}</strong><span>{{action}}</span></p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.groups { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1.4cqw; align-items: stretch; min-height: 0; }
+.group {
+  display: flex; flex-direction: column; gap: 1cqw; padding: 1.8cqw;
+  background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-panel);
+}
+.group .icon { width: 2.8cqw; height: 2.8cqw; }
+.group h2 { font-size: 2.3cqw; }
+.group p { font-size: 1.7cqw; line-height: 1.4; color: var(--df-muted); }
+.group .link { margin-top: auto; font: 400 1.4cqw / 1.4 var(--df-font-mono); }
+</style>

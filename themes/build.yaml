@@ -1,0 +1,63 @@
+name: build
+label: Build
+description: >-
+  White 16:9 slides on a cool grey surround, azure primary and restrained
+  amber emphasis. Bricolage Grotesque headings, Instrument Sans body and
+  IBM Plex Mono labels (local fonts with named fallbacks; no network).
+palette:
+  bg: "#EDF1F7"
+  paper: "#FFFFFF"
+  line: "#E2E8F2"
+  ink: "#16202F"
+  muted: "#53617A"
+  node: "#F7F9FC"
+  primary: "#0F6CBD"
+  primary-soft: "#EAF3FC"
+  primary-line: "#BBD7F0"
+  accent: "#C2620A"
+  accent-soft: "#FFF4E4"
+  accent-line: "#F0C078"
+  frame: "#FFFCF5"
+  dashed: "#53617A"
+  ok: "#1F9D6B"
+fonts:
+  heading:
+    family: Bricolage Grotesque
+    fallback: '"Trebuchet MS", "Segoe UI", sans-serif'
+    faces:
+      - weight: 800
+        local: [Bricolage Grotesque ExtraBold Regular, BricolageGrotesqueExtraBold-Regular]
+      - weight: 600
+        local: [Bricolage Grotesque SemiBold Regular, BricolageGrotesqueSemiBold-Regular]
+  body:
+    family: Instrument Sans
+    fallback: '"Segoe UI", Arial, sans-serif'
+    faces:
+      - weight: 400
+        local: [Instrument Sans Regular, InstrumentSans-Regular]
+      - weight: 600
+        local: [Instrument Sans SemiBold Regular, InstrumentSansSemiBold-Regular]
+  mono:
+    family: IBM Plex Mono
+    fallback: Consolas, monospace
+    faces:
+      - weight: 400
+        local: [IBM Plex Mono Regular, IBMPlexMono-Regular]
+radii:
+  slide: 12px
+  card: 10px
+  panel: 12px
+  frame: 14px
+  small: 8px
+  pill: 99px
+spacing:
+  padding: 3cqw 4cqw 2cqw
+  gap: 1.3cqw
+  grid: 1.1cqw
+motion:
+  duration: .55s
+  easing: ease
+  distance: 8px
+  stagger: .15s
+shadow:
+  slide: 0 24px 60px rgb(22 32 47 / 10%)

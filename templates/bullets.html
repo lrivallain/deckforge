@@ -1,0 +1,41 @@
+---
+name: bullets
+label: Key points
+description: Headline with up to five short numbered points and an optional takeaway. Prefer a diagram when the points have relationships.
+category: content
+slots:
+  eyebrow: { type: text, max: 40, sample: Key points }
+  title: { type: richtext, max: 60, required: true, sample: 'Three things to <span class="blue">remember</span>' }
+  subtitle: { type: text, max: 60, sample: Short enough to read aloud. }
+  points:
+    type: list
+    of: richtext
+    max: 5
+    maxLength: 90
+    sample:
+      - <strong>One purpose</strong> per slide, stated in the headline.
+      - <strong>One diagram</strong> that carries the argument.
+      - <strong>One takeaway</strong> the audience can repeat.
+  takeawayLabel: { type: text, max: 20, sample: The takeaway }
+  takeaway: { type: text, max: 90, sample: "" }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<ol class="points">
+  {{#each points}}<li class="point reveal"><span class="pill" aria-hidden="true">{{@number}}</span><span class="point-text">{{this}}</span></li>{{/each}}
+</ol>
+{{#if takeaway}}<p class="outcome reveal"><strong>{{takeawayLabel}}</strong><span>{{takeaway}}</span></p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.points { flex: 1; list-style: none; padding: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.2cqw; }
+.point {
+  display: flex; align-items: center; gap: 1.6cqw; padding: 1.3cqw 1.6cqw;
+  background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-card);
+  font-size: 2.1cqw; line-height: 1.35;
+}
+.point .pill { align-self: center; flex: none; }
+.point strong { font-weight: 600; }
+</style>

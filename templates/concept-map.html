@@ -1,0 +1,97 @@
+---
+name: concept-map
+label: Concept map
+description: >-
+  Shift headline over an audience row, a labelled shared boundary with two
+  lanes and a capability row, then one takeaway. Explain the system in
+  audience language before naming products (recipe A).
+category: diagram
+class: map-slide
+slots:
+  eyebrow: { type: text, max: 40, sample: "01 / Explain the shift" }
+  title:
+    type: richtext
+    max: 70
+    required: true
+    sample: '<span class="old">From isolated tasks.</span><span class="blue">To a shared workflow.</span>'
+  subtitle: { type: text, max: 60, sample: "Show the structure before naming the tools." }
+  audiences:
+    type: cards
+    max: 3
+    fields:
+      icon: { type: icon }
+      title: { type: text, max: 24 }
+      text: { type: text, max: 40 }
+    sample:
+      - { icon: pen, title: Creators, text: Prepare the work }
+      - { icon: review, title: Reviewers, text: Resolve the open questions }
+      - { icon: book, title: Readers, text: Understand the result }
+  boundary: { type: text, max: 32, sample: One review boundary }
+  boundaryNote: { type: text, max: 48, sample: "accuracy · ownership · access" }
+  lanes:
+    type: cards
+    max: 2
+    fields:
+      title: { type: text, max: 24 }
+      text: { type: text, max: 60 }
+    sample:
+      - { title: Prepare, text: Turn evidence into a clear draft. }
+      - { title: Deliver, text: Share the version people can use. }
+  capabilitiesLabel: { type: text, max: 40, sample: Shared capabilities, description: Accessible name of the capability row }
+  capabilities: { type: list, max: 4, sample: [Context, Tools, History, Permissions] }
+  takeawayLabel: { type: text, max: 20, sample: The takeaway }
+  takeaway: { type: text, max: 90, sample: "People, flow and shared capabilities form one understandable map." }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="map">
+  <div class="row">
+    {{#each audiences}}
+    <article class="audience reveal">
+      {{icon}}
+      <div><h2>{{title}}</h2><p>{{text}}</p></div>
+    </article>
+    {{/each}}
+  </div>
+  <div class="boundary reveal">
+    <div class="boundary-label"><h2>{{boundary}}</h2><span>{{boundaryNote}}</span></div>
+    <div class="lanes">
+      {{#each lanes}}<article class="lane"><h3>{{title}}</h3><p>{{text}}</p></article>{{/each}}
+    </div>
+    {{#if capabilities}}
+    <div class="capabilities" aria-label="{{capabilitiesLabel}}">
+      {{#each capabilities}}<div class="capability">{{this}}</div>{{/each}}
+    </div>
+    {{/if}}
+  </div>
+</div>
+{{#if takeaway}}<p class="outcome reveal"><strong>{{takeawayLabel}}</strong><span>{{takeaway}}</span></p>{{/if}}
+{{> foot}}
+
+<style scoped>
+:scope .header { flex: 0 0 9cqw; }
+.map { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--df-space-grid); }
+.row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid); }
+.audience {
+  display: flex; align-items: center; gap: .9cqw; padding: 1cqw;
+  background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-card);
+}
+.audience p { margin-top: .3cqw; color: var(--df-muted); font-size: 1.45cqw; }
+.boundary {
+  display: flex; flex-direction: column; gap: .9cqw; padding: 1cqw 1.2cqw;
+  border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-frame); background: var(--df-frame);
+}
+.boundary-label { display: flex; align-items: center; justify-content: space-between; gap: 1cqw; }
+.boundary-label h2 { color: var(--df-accent); }
+.boundary-label span { font: 400 1.1cqw var(--df-font-mono); color: var(--df-muted); }
+.lanes { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid); }
+.lane { border: 1.5px dashed var(--df-dashed); border-radius: var(--df-radius-card); padding: 1cqw 1.2cqw; background: var(--df-paper); }
+.lane p { margin-top: .35cqw; font-size: 1.6cqw; line-height: 1.35; color: var(--df-muted); }
+.capabilities { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: .8cqw; }
+.capability {
+  border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-small); background: var(--df-primary-soft);
+  padding: .65cqw; text-align: center; font-size: 1.5cqw;
+}
+</style>

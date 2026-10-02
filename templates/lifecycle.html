@@ -1,0 +1,62 @@
+---
+name: lifecycle
+label: Lifecycle
+description: >-
+  Three stages with numbered pills, connectors and an owner per stage; the
+  focused stage gets more width. Optional labelled feedback path and one
+  takeaway (recipes C/D).
+category: diagram
+slots:
+  eyebrow: { type: text, max: 40, sample: "03 / Explain the handoffs" }
+  title: { type: richtext, max: 60, required: true, sample: 'Prepare. Review. <span class="blue">Deliver.</span>' }
+  subtitle: { type: text, max: 60, sample: Make each responsibility visible. }
+  stages:
+    type: cards
+    max: 4
+    fields:
+      label: { type: text, max: 18 }
+      title: { type: text, max: 20 }
+      text: { type: text, max: 90 }
+      owner: { type: text, max: 30 }
+      focus: { type: boolean, description: Emphasise this stage }
+    sample:
+      - { label: 01 / INPUT, title: Prepare, text: "Gather sources.\nChoose the message.\nMake a first draft.", owner: "Owner: creator", focus: false }
+      - { label: 02 / DECISION, title: Review, text: Compare the draft with the brief and evidence. Resolve what is unclear., owner: "Owner: reviewer", focus: true }
+      - { label: 03 / OUTPUT, title: Deliver, text: Share an approved version. Make the next action clear., owner: "Owner: publisher", focus: false }
+  connector: { type: text, max: 20, sample: then, description: Accessible label of the arrows between stages }
+  feedback: { type: text, max: 70, sample: "Feedback from readers → the next preparation cycle" }
+  takeawayLabel: { type: text, max: 20, sample: The takeaway }
+  takeaway: { type: text, max: 90, sample: "The diagram explains who acts, what changes, and where feedback returns." }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="lifecycle">
+  {{#each stages}}
+  {{#unless @first}}<span class="arrow reveal" role="img" aria-label="{{connector}}">&rarr;</span>{{/unless}}
+  <article class="stage-card{{#if focus}} focus{{/if}} reveal">
+    {{#if label}}<span class="pill">{{label}}</span>{{/if}}
+    <h2>{{title}}</h2>
+    <p>{{text}}</p>
+    {{#if owner}}<p class="owner">{{owner}}</p>{{/if}}
+  </article>
+  {{/each}}
+</div>
+{{#if feedback}}<p class="feedback reveal">{{feedback}}</p>{{/if}}
+{{#if takeaway}}<p class="outcome reveal"><strong>{{takeawayLabel}}</strong><span>{{takeaway}}</span></p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.lifecycle { flex: 1; display: flex; align-items: stretch; gap: .9cqw; min-height: 0; }
+.stage-card {
+  flex: 1 1 0; min-width: 0; padding: 1.4cqw; border: 1px solid var(--df-line); border-radius: var(--df-radius-panel);
+  background: var(--df-node); display: flex; flex-direction: column; gap: 1.2cqw;
+}
+.stage-card.focus { flex-grow: 1.2; border-color: var(--df-primary-line); background: var(--df-primary-soft); }
+.stage-card h2 { font-size: 2.5cqw; }
+.stage-card p { font-size: 1.8cqw; line-height: 1.4; }
+.stage-card .owner { margin-top: auto; font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted); }
+.arrow { flex: 0 0 2cqw; }
+.feedback { color: var(--df-accent); font: 400 1.4cqw / 1.4 var(--df-font-mono); text-align: center; padding: .6cqw; }
+</style>

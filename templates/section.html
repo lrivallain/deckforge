@@ -1,0 +1,31 @@
+---
+name: section
+label: Section
+description: Chapter divider with a large number, a short title and one line of context.
+category: structure
+slots:
+  number: { type: text, max: 4, sample: "02" }
+  eyebrow: { type: text, max: 40, sample: Part two }
+  title: { type: richtext, max: 50, required: true, sample: 'How the <span class="blue">review</span> works' }
+  text: { type: text, max: 120, sample: Three handoffs, one shared boundary and a clear owner for every decision. }
+---
+<div class="section-body">
+  {{#if number}}<p class="number reveal" aria-hidden="true">{{number}}</p>{{/if}}
+  <div class="section-text">
+    {{#if eyebrow}}<p class="eyebrow reveal">{{eyebrow}}</p>{{/if}}
+    <h1 id="{{slide.titleId}}" class="reveal">{{title}}</h1>
+    {{#if text}}<p class="lead reveal">{{text}}</p>{{/if}}
+  </div>
+</div>
+{{> foot}}
+
+<style scoped>
+.section-body { flex: 1; display: flex; align-items: center; gap: 4cqw; }
+.number {
+  font: 800 13cqw / .9 var(--df-font-heading); letter-spacing: -.04em; color: var(--df-primary-soft);
+  -webkit-text-stroke: 2px var(--df-primary-line);
+}
+.section-text { border-left: 4px solid var(--df-accent); padding-left: 3cqw; display: flex; flex-direction: column; gap: 1.2cqw; max-width: 64cqw; }
+h1 { font-size: 4.6cqw; }
+.lead { font-size: 2cqw; line-height: 1.4; color: var(--df-muted); }
+</style>

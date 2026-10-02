@@ -1,0 +1,49 @@
+name: atelier
+label: Atelier
+description: >-
+  Warm ivory slides on a sand surround with deep teal and rose accents,
+  editorial serif headings and generous radii. Uses system fonts only.
+palette:
+  bg: "#EFEBE3"
+  paper: "#FFFDF8"
+  line: "#E7E0D2"
+  ink: "#1F2523"
+  muted: "#525C57"
+  node: "#F7F3EA"
+  primary: "#0B6A66"
+  primary-soft: "#E4F1EE"
+  primary-line: "#A8D2CB"
+  accent: "#A2385A"
+  accent-soft: "#FBEBF0"
+  accent-line: "#E2A6B9"
+  frame: "#FFF8FA"
+  dashed: "#525C57"
+  ok: "#2E7D4F"
+fonts:
+  heading:
+    family: Iowan Old Style
+    fallback: '"Palatino Linotype", Palatino, Georgia, "Times New Roman", serif'
+  body:
+    family: Avenir Next
+    fallback: '"Segoe UI", "Helvetica Neue", Arial, sans-serif'
+  mono:
+    family: SF Mono
+    fallback: Menlo, Consolas, monospace
+radii:
+  slide: 18px
+  card: 16px
+  panel: 18px
+  frame: 22px
+  small: 12px
+  pill: 99px
+spacing:
+  padding: 3.2cqw 4.4cqw 2.2cqw
+  gap: 1.4cqw
+  grid: 1.2cqw
+motion:
+  duration: .6s
+  easing: cubic-bezier(.2, .7, .2, 1)
+  distance: 10px
+  stagger: .14s
+shadow:
+  slide: 0 28px 70px rgb(60 45 20 / 12%)

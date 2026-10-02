@@ -1,0 +1,7 @@
+node_modules/
+.demo/
+test-results/
+playwright-report/
+.DS_Store
+*.log
+/tmp/

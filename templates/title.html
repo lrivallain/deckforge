@@ -1,0 +1,42 @@
+---
+name: title
+label: Title
+description: Opening slide with an eyebrow, an assertive two-part headline, a short promise and presenter details.
+category: structure
+slots:
+  eyebrow: { type: text, max: 40, sample: Team briefing · 2026 }
+  title: { type: richtext, max: 70, required: true, sample: '<span class="old">From scattered drafts.</span><span class="blue">To one reviewable story.</span>' }
+  subtitle: { type: text, max: 120, sample: How we prepare, review and deliver presentations that people can act on. }
+  presenter: { type: text, max: 50, sample: Presenter name }
+  details: { type: text, max: 50, sample: Event or date }
+---
+<div class="title-body">
+  {{#if eyebrow}}<p class="eyebrow reveal">{{eyebrow}}</p>{{/if}}
+  <h1 id="{{slide.titleId}}" class="reveal">{{title}}</h1>
+  {{#if subtitle}}<p class="lead reveal">{{subtitle}}</p>{{/if}}
+</div>
+<div class="motif" aria-hidden="true">
+  <span class="m m1"></span><span class="m m2"></span><span class="m m3"></span>
+</div>
+<footer class="title-meta reveal">
+  <span>{{presenter}}</span>
+  <span>{{details}}</span>
+</footer>
+
+<style scoped>
+:scope .slide-inner { justify-content: center; padding-right: 30cqw; }
+.title-body { display: flex; flex-direction: column; gap: 1.4cqw; }
+h1 { font-size: 5cqw; line-height: 1.05; }
+h1 .old { font-size: 2.6cqw; margin-bottom: .6cqw; }
+.lead { font-size: 2cqw; line-height: 1.4; color: var(--df-muted); max-width: 52cqw; }
+.title-meta {
+  position: absolute; left: 4cqw; right: 4cqw; bottom: 2.4cqw; display: flex; justify-content: space-between;
+  font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .08em; text-transform: uppercase;
+  border-top: 1px solid var(--df-line); padding-top: 1.2cqw;
+}
+.motif { position: absolute; right: 4cqw; top: 50%; transform: translateY(-58%); width: 22cqw; height: 26cqw; }
+.m { position: absolute; border-radius: var(--df-radius-frame); }
+.m1 { inset: 0 6cqw 9cqw 0; background: var(--df-primary-soft); border: 1px solid var(--df-primary-line); }
+.m2 { inset: 7cqw 0 2cqw 7cqw; background: var(--df-paper); border: 1.5px dashed var(--df-dashed); }
+.m3 { width: 9cqw; height: 4.6cqw; right: 2cqw; bottom: 0; background: var(--df-accent-soft); border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-pill); }
+</style>
