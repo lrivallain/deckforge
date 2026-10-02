@@ -1,0 +1,57 @@
+name: azure
+label: Azure
+description: >-
+  The Azure brand with some spark: white slides on Azure's lavender-to-sky
+  gradient, Azure blue (#0078D4) primary, the purple of the Azure AI and
+  architecture icons (#773ADC) as accent, deep navy ink. Segoe UI headings
+  (system fallbacks elsewhere), Cascadia Code labels, Azure radii and depth.
+  No network.
+# Values come from the Azure brand: the azure.microsoft.com design tokens
+# (--root-color-*, --root-gradient-*), the Azure "A" logo and the Azure
+# architecture icons.
+palette:
+  bg: "#EDE8F6"            # the lavender stop of Azure's hero gradient
+  chrome: "linear-gradient(120deg, #EDE8F6 0%, #F4FAFD 45%, #DCEEF8 100%)"   # root-gradient-linear-sky-blue
+  paper: "#FFFFFF"
+  line: "#E4DDF3"          # lavender-200
+  ink: "#0E1726"           # dark-blue-900, Azure strong text
+  muted: "#55698C"         # dark-blue-400
+  node: "#F7F5FD"          # lavender-50
+  primary: "#0078D4"       # brilliant-blue-500, Azure blue
+  primary-soft: "#E6F2FB"  # brilliant-blue-50
+  primary-line: "#8AC1EB"  # brilliant-blue-200
+  primary-text: "#004275"  # brilliant-blue-800, Azure eyebrows and highlights
+  accent: "#773ADC"        # Azure icon purple (AI services)
+  accent-soft: "#F1EBFD"
+  accent-line: "#B796F9"   # Azure icon light purple
+  frame: "#F8F4FF"
+  dashed: "#A67AF4"        # Azure icon purple, mid
+  ok: "#4E803E"            # mint-green-800
+fonts:
+  heading:
+    family: Segoe UI Variable Display
+    fallback: '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif'
+  body:
+    family: Segoe UI Variable Text
+    fallback: '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif'
+  mono:
+    family: Cascadia Code
+    fallback: '"Cascadia Mono", Consolas, "SF Mono", Menlo, monospace'
+radii:                     # Azure root radii: xs 4px, s/m 8px, l 16px
+  slide: 16px
+  card: 8px
+  panel: 16px
+  frame: 16px
+  small: 4px
+  pill: 99px
+spacing:
+  padding: 3cqw 4cqw 2cqw
+  gap: 1.3cqw
+  grid: 1.1cqw
+motion:
+  duration: .5s
+  easing: cubic-bezier(.1, .9, .2, 1)   # Fluent decelerateMid
+  distance: 8px
+  stagger: .12s
+shadow:
+  slide: 0 0 2px rgb(0 0 0 / 10%), 0 18px 40px rgb(119 58 220 / 16%)   # Azure depth with a purple glow

@@ -33,11 +33,22 @@ export class ThemeError extends Error {
 
 function cssValue(value, key, errors) {
   const text = String(value ?? "").trim();
-  if (!text || !CSS_VALUE_RE.test(text)) {
+  if (!text || !CSS_VALUE_RE.test(text) || !balancedParens(text)) {
     errors.push(`Invalid CSS value for "${key}": ${JSON.stringify(value)}`);
     return null;
   }
   return text;
+}
+
+// An unclosed "(" would swallow the rest of the :root block (e.g. a YAML
+// comment cutting "linear-gradient(90deg, #fff …" short).
+function balancedParens(text) {
+  let depth = 0;
+  for (const ch of text) {
+    if (ch === "(") depth++;
+    else if (ch === ")" && --depth < 0) return false;
+  }
+  return depth === 0;
 }
 
 function fontStack(value, errors, key) {

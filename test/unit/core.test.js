@@ -15,29 +15,47 @@ const { themes, errors: themeErrors } = loadThemes(null);
 describe("built-in themes", () => {
   it("load without errors", () => {
     expect(themeErrors).toEqual([]);
-    expect(Object.keys(themes).sort()).toEqual(["atelier", "aurora", "build"]);
+    expect(Object.keys(themes).sort()).toEqual(["atelier", "aurora", "azure", "build"]);
   });
+  const luminance = (hex) => {
+    const [r, g, b] = hex.match(/[0-9a-f]{2}/gi).map((c) => {
+      const v = parseInt(c, 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const contrast = (a, b) => {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const expectReadableText = (p) => {
+    for (const key of ["ink", "muted", "primary-text", "accent-text"]) {
+      for (const surface of ["paper", "node", "primary-soft", "accent-soft"]) {
+        expect(contrast(p[key], p[surface]), `${key} on ${surface}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  };
   it("aurora is a dark theme whose text colours reach 4.5:1 on its slides", () => {
     const theme = themes.aurora;
     expect(theme.colorScheme).toBe("dark");
     expect(theme.css).toContain("color-scheme: dark;");
     expect(theme.css).not.toMatch(/url\(/);
-    const luminance = (hex) => {
-      const [r, g, b] = hex.match(/[0-9a-f]{2}/gi).map((c) => {
-        const v = parseInt(c, 16) / 255;
-        return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-      });
-      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    };
-    const contrast = (a, b) => {
-      const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-      return (hi + 0.05) / (lo + 0.05);
-    };
-    const p = theme.palette;
-    for (const key of ["ink", "muted", "primary-text", "accent-text"]) {
-      expect(contrast(p[key], p.paper), key).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(p[key], p.node), `${key} on node`).toBeGreaterThanOrEqual(4.5);
-    }
+    expectReadableText(theme.palette);
+  });
+  it("azure uses the Azure brand tokens and readable text colours", () => {
+    const theme = themes.azure;
+    expect(theme.colorScheme).toBe("light");
+    // azure.microsoft.com root tokens and gradient, the Azure blue and the architecture-icon purple.
+    expect(theme.palette).toMatchObject({
+      primary: "#0078D4", "primary-text": "#004275", ink: "#0E1726", accent: "#773ADC", "accent-line": "#B796F9",
+    });
+    expect(theme.css).toContain("--df-chrome: linear-gradient(120deg, #EDE8F6 0%, #F4FAFD 45%, #DCEEF8 100%);");
+    expect(theme.css).toContain('--df-font-heading: "Segoe UI Variable Display", "Segoe UI"');
+    expect(theme.css).toContain('--df-font-mono: "Cascadia Code"');
+    expect(theme.css).not.toMatch(/url\(/);
+    expectReadableText(theme.palette);
+    // Large accent text (headline emphasis) needs 3:1.
+    expect(contrast(theme.palette.accent, theme.palette.paper)).toBeGreaterThanOrEqual(3);
   });
   it("build theme reproduces the build-presentation tokens exactly", () => {
     const p = themes.build.palette;
@@ -58,6 +76,9 @@ describe("built-in themes", () => {
     expect(() => parseTheme(base.replace('primary: "#0F6CBD"', 'primary: "red; } body { display: none"'))).toThrow(ThemeError);
     expect(() => parseTheme("name: x\npalette: { bg: '#fff' }")).toThrow(/Missing palette/);
     expect(() => parseTheme(base.replace("family: Bricolage Grotesque", 'family: "x\\"; } *{"'))).toThrow(ThemeError);
+    // A YAML comment can cut a gradient short and leave an unclosed parenthesis.
+    expect(() => parseTheme(base.replace('bg: "#EDF1F7"', "chrome: linear-gradient(90deg, #EDE8F6 0%, #FFF 100%)\n  bg: \"#EDF1F7\""))).toThrow(/Invalid CSS value for "palette.chrome"/);
+    expect(parseTheme(base.replace('bg: "#EDF1F7"', 'chrome: "linear-gradient(90deg, #EDE8F6 0%, #FFF 100%)"\n  bg: "#EDF1F7"')).css).toContain("--df-chrome: linear-gradient(90deg, #EDE8F6 0%, #FFF 100%);");
   });
   it("supports font urls", () => {
     const base = fs.readFileSync(path.join(root, "themes/atelier.yaml"), "utf8");

@@ -3,7 +3,7 @@
 
 export const DESIGN_RULES = `
 <design_rules>
-Style: 16:9 slides with one primary accent and a restrained second accent; the theme sets the colours (white slides with blue and amber in the "build" theme, dark slides with violet and mint in "aurora"). Diagram-led, generous margins, small consistent footer.
+Style: 16:9 slides with one primary accent and a restrained second accent; the theme sets the colours (white slides with blue and amber in the "build" theme, dark slides with violet and mint in "aurora", Azure blue and purple in "azure"). Diagram-led, generous margins, small consistent footer.
 
 Storyline (a menu, not a compulsory sequence):
 1. Shift – a concise before/after headline that explains why the topic matters.
