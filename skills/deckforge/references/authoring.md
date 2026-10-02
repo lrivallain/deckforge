@@ -1,8 +1,7 @@
 # Authoring deck.yaml with deckforge
 
 `deck.yaml` is the source of truth. `deck.html` is generated: never edit it by hand.
-The full format is in the deckforge [README](https://github.com/lrivallain/deckforge#deckyaml).
-Images and overlays are in [docs/schema.md](https://github.com/lrivallain/deckforge/blob/master/docs/schema.md).
+The full format, including images and overlays, is in the [deck.yaml reference](https://lrivallain.github.io/deckforge/reference/deck-yaml).
 
 ## 1. Tooling
 
@@ -201,7 +200,7 @@ slots:
   and `loadErrors` stays empty. Run the layout check with its sample data.
 
 A theme is a `<dir>/themes/<name>.yaml` (the palette, fonts, radii, spacing and motion that compile to `--df-*`).
-Copy the structure from the README's Themes section. Keep the built-in `build` theme unless the user asks for another look.
+Copy the structure of a built-in theme (see the [theme file reference](https://lrivallain.github.io/deckforge/reference/themes)). Keep the built-in `build` theme unless the user asks for another look.
 
 ## 8. Build
 

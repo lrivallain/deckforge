@@ -40,7 +40,9 @@ export function imageControl({ value, label, path, onChange, required = false, d
     const img = h("img", { src: previewUrl(image.src), alt: "", draggable: false, "data-testid": "image-thumb" });
     const [fx, fy] = image.focus.split(" ").map((v) => parseFloat(v));
     const dot = h("span", { class: "focus-dot", style: { left: `${fx}%`, top: `${fy}%` }, "aria-hidden": "true" });
-    const frame = h("span", { class: "image-thumb", title: "Click to set the focal point" }, img, dot);
+    // An SVG without width/height has no intrinsic size and would collapse to 0×0 here.
+    const vector = /\.svg(?:[?#]|$)/i.test(image.src);
+    const frame = h("span", { class: `image-thumb${vector ? " is-vector" : ""}`, title: "Click to set the focal point" }, img, dot);
     img.addEventListener("click", (e) => {
       const r = img.getBoundingClientRect();
       const x = Math.round(((e.clientX - r.left) / r.width) * 100);

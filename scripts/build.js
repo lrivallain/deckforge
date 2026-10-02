@@ -33,6 +33,10 @@ const configs = entries.map((entry) => ({
   logLevel: "info",
 }));
 
+// The editor favicon; the master lives with the docs site assets.
+fs.mkdirSync(path.join(root, "dist"), { recursive: true });
+fs.copyFileSync(path.join(root, "docs/public/logo.svg"), path.join(root, "dist/deckforge.icon.svg"));
+
 if (watch) {
   for (const config of configs) {
     const ctx = await esbuild.context(config);

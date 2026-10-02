@@ -2,13 +2,28 @@
   "name": "deckforge",
   "version": "0.1.0",
   "description": "Editable, themeable HTML presentation framework: static viewer, local edition mode, template editor and an embedded Copilot agent.",
+  "keywords": [
+    "presentation",
+    "slides",
+    "deck",
+    "html",
+    "yaml",
+    "themes",
+    "templates",
+    "editor",
+    "github-copilot",
+    "cli"
+  ],
   "license": "MIT",
   "author": "Ludovic Rivallain",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lrivallain/deckforge.git"
   },
-  "homepage": "https://github.com/lrivallain/deckforge#readme",
+  "bugs": {
+    "url": "https://github.com/lrivallain/deckforge/issues"
+  },
+  "homepage": "https://lrivallain.github.io/deckforge/",
   "type": "module",
   "bin": {
     "deckforge": "bin/deckforge.js"
@@ -37,7 +52,11 @@
     "test": "vitest run",
     "test:e2e": "npm run build && playwright test",
     "lint": "eslint .",
-    "check": "npm run build && npm test && npm run test:e2e"
+    "check": "npm run build && npm test && npm run test:e2e",
+    "docs:dev": "node scripts/docs-demo.js && vitepress dev docs",
+    "docs:build": "node scripts/docs-demo.js && vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "docs:screenshots": "node scripts/screenshots.js && node scripts/icons.js"
   },
   "dependencies": {
     "yaml": "^2.9.1"
@@ -56,6 +75,7 @@
     "eslint": "^10.11.0",
     "globals": "^17.12.0",
     "playwright": "^1.63.0",
+    "vitepress": "^1.6.4",
     "vitest": "^4.1.11"
   },
   "optionalDependencies": {

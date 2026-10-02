@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 
 export default [
-  { ignores: ["dist/**", "node_modules/**", "examples/**/deckforge/**", "test-results/**", "playwright-report/**", ".demo/**", "skills/*/scripts/layout-check.js"] },
+  { ignores: ["dist/**", "node_modules/**", "examples/**/deckforge/**", "test-results/**", "playwright-report/**", ".demo/**", "docs/.vitepress/cache/**", "docs/.vitepress/dist/**", "docs/public/demo/**", "skills/*/scripts/layout-check.js"] },
   js.configs.recommended,
   {
     languageOptions: {
@@ -16,7 +16,7 @@ export default [
     },
   },
   {
-    files: ["src/editor/**", "src/viewer/**", "test/e2e/**"],
+    files: ["src/editor/**", "src/viewer/**", "test/e2e/**", "scripts/screenshots.js", "scripts/icons.js"],
     languageOptions: { globals: { ...globals.browser } },
   },
 ];
