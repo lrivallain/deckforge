@@ -145,10 +145,11 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
   font-size: 14px; flex-wrap: wrap;
 }
 .controls:not([hidden]) { display: flex; }
-.controls button, .controls select {
+.controls button, .controls select, .controls a {
   min-height: 40px; border: 1px solid var(--df-muted); border-radius: 7px; background: var(--df-paper);
   color: var(--df-ink); padding: 6px 12px;
 }
+.controls a { display: inline-flex; align-items: center; text-decoration: none; }
 .controls button { cursor: pointer; }
 .controls button:disabled { cursor: default; color: var(--df-muted); border-color: var(--df-line); }
 .controls button[aria-pressed="true"] { color: var(--df-paper); background: var(--df-primary); border-color: var(--df-primary); }
@@ -170,7 +171,7 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
 
 @media (max-width: 560px) {
   .controls { padding: 8px; gap: 6px; font-size: 12px; }
-  .controls button, .controls select { padding: 6px; }
+  .controls button, .controls select, .controls a { padding: 6px; }
   .controls select { max-width: 40vw; }
   .controls-sep { display: none; }
 }

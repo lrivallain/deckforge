@@ -260,10 +260,13 @@ The CDN URLs only resolve for tagged releases (`v<version>`).
 | `N` | Toggle the speaker notes panel |
 | `P` | Open the presenter window (notes, next slide, timer) |
 | `F` | Toggle fullscreen |
+| `E` | Edit the current slide (only when served by `deckforge edit`) |
 
 The viewer also supports these:
 
 - **Hash links:** `#3` and `#slide-<id>` open a specific slide.
+- **Back to the editor:** when `deckforge edit` serves the deck, the controls show an **Edit** link
+  that opens the editor on the current slide. A static `deck.html` and `deckforge serve` don't show it.
 - **Reduced motion:** with `prefers-reduced-motion`, slides show their final state immediately.
 - **Print / PDF:** printing outputs one 13.333×7.5 in page per slide, without the controls. Images are
   lazy in the markup, but the runtime loads the neighbouring slides' images on navigation and every

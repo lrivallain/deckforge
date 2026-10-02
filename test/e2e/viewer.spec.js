@@ -36,6 +36,8 @@ for (const mode of ["local", "inline"]) {
 
 test("keyboard, buttons, select and hash navigation", async ({ page }) => {
   await page.goto(url(local));
+  await expect(page.locator(".controls")).toBeVisible();
+  await expect(page.locator("#df-edit")).toHaveCount(0);
   const visible = page.locator(".stage > .slide:not([hidden])");
   await expect(visible).toHaveCount(1);
   await expect(visible).toHaveAttribute("data-slide-id", "concept");

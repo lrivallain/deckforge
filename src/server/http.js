@@ -12,6 +12,7 @@ import { DeckStore } from "./store.js";
 import { AgentController } from "./agent.js";
 import { editorPage } from "./editor-page.js";
 import { AssetError, listAssets, MAX_ASSET_BYTES, saveAsset } from "./assets.js";
+import { escapeHtml } from "../core/html.js";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -63,10 +64,16 @@ const LIVE_RELOAD = (eventsPath, nonce) => `<script nonce="${nonce}">(function()
  * only the deckforge runtime may run scripts (no inline handlers or injected
  * <script>), so a content-sanitizer bypass cannot drive the API.
  */
-export function protectDeckHtml(html, nonce) {
+export function protectDeckHtml(html, nonce, { editorUrl } = {}) {
   const marker = "<script data-df-runtime>";
   const index = html.lastIndexOf(marker);
   let out = index === -1 ? html : `${html.slice(0, index)}<script data-df-runtime nonce="${nonce}">${html.slice(index + marker.length)}`;
+  if (editorUrl) {
+    // Tells the viewer an editor is available (adds an Edit link to its controls).
+    const meta = `<meta name="deckforge-editor" content="${escapeHtml(editorUrl)}">`;
+    const headEnd = out.toLowerCase().indexOf("</head>");
+    out = headEnd === -1 ? meta + out : out.slice(0, headEnd) + meta + out.slice(headEnd);
+  }
   const bodyEnd = out.toLowerCase().lastIndexOf("</body>");
   out = bodyEnd === -1 ? out + LIVE_RELOAD("/api/events", nonce) : out.slice(0, bodyEnd) + LIVE_RELOAD("/api/events", nonce) + out.slice(bodyEnd);
   const csp = [
@@ -230,7 +237,7 @@ export async function startServer({
     if (ext === ".svg") headers["Content-Security-Policy"] = SVG_CSP;
     if (deckAsset) headers["Cache-Control"] = "private, max-age=3600";
     if (deckPage && type.startsWith("text/html")) {
-      const protectedPage = protectDeckHtml(body.toString("utf8"), crypto.randomBytes(16).toString("base64"));
+      const protectedPage = protectDeckHtml(body.toString("utf8"), crypto.randomBytes(16).toString("base64"), { editorUrl: mode === "edit" ? "/" : undefined });
       body = protectedPage.html;
       headers["Content-Security-Policy"] = protectedPage.csp;
     }
