@@ -288,6 +288,10 @@ export async function startServer({
       return send(res, 202, { ok: true });
     }
     if (req.method === "POST" && route === "/agent/abort") return send(res, 200, { ok: await agent.abort() });
+    if (req.method === "POST" && route === "/agent/improve") {
+      const { text, label, description, max, richtext, kind, slideId } = body || {};
+      return send(res, 200, await agent.improve({ text, label, description, max, richtext, kind, slideId }));
+    }
     if (req.method === "POST" && route === "/agent/reset") return send(res, 200, { ok: await agent.reset() });
     if (req.method === "GET" && route === "/agent") return send(res, 200, agent.status());
     return send(res, 404, { error: "Not found" });

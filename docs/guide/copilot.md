@@ -29,6 +29,15 @@ You need a GitHub Copilot subscription. If you are not signed in, the drawer exp
 The rail highlights the slides that Copilot changed. A whole turn is **one undo step**: use **Undo these changes**
 or <kbd>⌘/Ctrl</kbd> <kbd>Z</kbd>.
 
+## Improve one field
+
+Content text areas have a small ✨ button. This covers slot text, list items, card fields, speaker notes, overlay text, image
+alt text and the brief's goal. One click asks Copilot to rewrite that text so it is clearer and shorter:
+
+- It keeps the language and the rich-text tags, stays within the slot's maximum length and doesn't add facts.
+- The button then turns into a cancel icon that restores the previous text. Typing by hand removes that option.
+- Rewrites use a short-lived session with no tools (`POST /api/agent/improve`) and don't appear in the chat.
+
 ## Model
 
 By default, Copilot uses your default model. To pick another one, set `DECKFORGE_MODEL`:

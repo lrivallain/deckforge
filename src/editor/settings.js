@@ -3,18 +3,20 @@
 import { h, icon } from "./dom.js";
 import { state } from "./state.js";
 import { op } from "./actions.js";
+import { aiImprove } from "./improve.js";
 
 export function openSettings() {
   const meta = state.deck.meta;
   const brief = meta.brief || {};
   const fields = {};
-  const input = (key, label, value, { type = "text", textarea = false, hint, placeholder } = {}) => {
+  const input = (key, label, value, { type = "text", textarea = false, hint, placeholder, improve } = {}) => {
     const id = `set-${key}`;
     const el = textarea
       ? h("textarea", { id, class: "input", rows: 3, value: value ?? "", placeholder })
       : h("input", { id, class: "input", type, value: value ?? "", placeholder });
     fields[key] = el;
-    return h("div", { class: "field" }, h("div", { class: "field-label" }, h("label", { for: id }, label)), el, hint ? h("p", { class: "field-hint" }, hint) : null);
+    const control = improve ? aiImprove(el, { key: `@settings:${key}`, context: () => ({ label, description: improve, kind: "deck brief" }) }) : el;
+    return h("div", { class: "field" }, h("div", { class: "field-label" }, h("label", { for: id }, label)), control, hint ? h("p", { class: "field-hint" }, hint) : null);
   };
   const runtime = h("select", { id: "set-runtime", class: "input" },
     ["local", "cdn", "inline"].map((m) => h("option", { value: m, selected: (meta.runtime || "local") === m }, m)),
@@ -33,7 +35,7 @@ export function openSettings() {
     h("fieldset", {}, h("legend", {}, "Brief"), h("p", { class: "muted small" }, "Grounds the Copilot assistant: it designs for this audience and goal."),
       input("topic", "Topic", brief.topic),
       input("audience", "Audience", brief.audience),
-      input("goal", "Goal", brief.goal, { textarea: true }),
+      input("goal", "Goal", brief.goal, { textarea: true, improve: "What the audience should think or do after the talk." }),
       input("duration", "Duration", brief.duration, { placeholder: "e.g. 20 minutes" }),
       input("sources", "Sources", (brief.sources || []).join("\n"), { textarea: true, hint: "One per line. Only cite sources you are allowed to share." }),
     ),

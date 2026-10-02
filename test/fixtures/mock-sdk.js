@@ -7,9 +7,14 @@
 //   - otherwise it reads the deck and, for a slide-scoped request, sets that
 //     slide's eyebrow to "Edited by Copilot".
 //   - "#error <message>" emits session.error instead.
+// session.sendAndWait({ prompt }) (the one-shot "improve" rewrite) answers
+// "Improved: <text between <<< and >>>" or throws on "#error <message>".
 // DECKFORGE_MOCK_AUTH=fail makes getAuthStatus() report a signed-out user.
 
+let sessionCounter = 0;
+
 export function createClient() {
+  const deleted = [];
   return {
     async getAuthStatus() {
       if (process.env.DECKFORGE_MOCK_AUTH === "fail") return { isAuthenticated: false, statusMessage: "No GitHub credentials found." };
@@ -22,6 +27,7 @@ export function createClient() {
       };
       const tools = Object.fromEntries((config.tools || []).map((t) => [t.name, t]));
       const session = {
+        sessionId: `mock-${++sessionCounter}`,
         config,
         on(handler) {
           handlers.add(handler);
@@ -59,13 +65,29 @@ export function createClient() {
           }, 30);
           return "mock-message-id";
         },
+        async sendAndWait({ prompt }) {
+          await new Promise((resolve) => setTimeout(resolve, 30));
+          const error = /^#error (.*)$/m.exec(prompt);
+          if (error) throw new Error(error[1]);
+          const text = /\n<<<\n([\s\S]*)\n>>>$/.exec(prompt)?.[1] ?? "";
+          const content = `Improved: ${text}`;
+          emit("assistant.message", { content });
+          emit("session.idle", {});
+          return { type: "assistant.message", data: { content } };
+        },
         async abort() {
           emit("session.idle", {});
         },
         async disconnect() {},
       };
-      globalThis.__deckforgeMockSession = session;
+      // One-shot "improve" sessions have no tools: keep pointing at the chat session.
+      if (config.tools?.length) globalThis.__deckforgeMockSession = session;
+      else globalThis.__deckforgeMockImproveSession = session;
       return session;
+    },
+    deleted,
+    async deleteSession(id) {
+      deleted.push(id);
     },
     async stop() {
       return [];

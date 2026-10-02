@@ -78,3 +78,35 @@ ${briefBlock(deck.meta)}
 ${templateCatalog(templates)}
 </templates>`;
 }
+
+const RICHTEXT_TAGS = `Allowed inline HTML (keep existing tags, add new ones only when they help): <strong>, <em>, <span class="blue">, <span class="amber">, <span class="old">, <a href="…">.`;
+
+/** System prompt for the one-shot "improve this field" rewrite (no tools). */
+export function improveSystemPrompt(meta) {
+  return `You are the deckforge copy editor. You rewrite ONE text field of a presentation so it reads better: clearer, more concise, more direct, correct grammar and spelling.
+Rules:
+- Reply with the rewritten text ONLY: no preamble, no explanation, no quotes, no Markdown code fences.
+- Keep the meaning and the language of the original text. Never add facts, figures, names, dates, links or claims that are not in the original.
+- Respect the maximum length when one is given (characters of visible text, tags excluded).
+- Keep the same kind of content: a headline stays a headline, speaker notes stay speaking notes, alt text describes the picture.
+- If the text is already good, return it unchanged or with minimal edits.
+- Write for the audience and goal of the brief below.
+
+<brief>
+${briefBlock(meta)}
+</brief>`;
+}
+
+/** User prompt for one field rewrite. */
+export function improvePrompt({ text, label, description, max, richtext, kind, slide }) {
+  const lines = [`Field: ${label || "Text"}${kind ? ` (${kind})` : ""}`];
+  if (description) lines.push(`Field purpose: ${description}`);
+  if (max) lines.push(`Maximum length: ${max} characters`);
+  lines.push(richtext ? RICHTEXT_TAGS : "Plain text: do not use HTML or Markdown.");
+  if (slide) {
+    const context = JSON.stringify({ template: slide.template, data: slide.data }).slice(0, 4000);
+    lines.push(`Slide context (for reference only, do not rewrite it): ${context}`);
+  }
+  lines.push("", "Text to improve:", "<<<", text, ">>>");
+  return lines.join("\n");
+}

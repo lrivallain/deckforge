@@ -193,6 +193,39 @@ test("Copilot whole-deck scope can restructure the deck (mocked SDK)", async ({ 
   await expect(railItem(page, "implementation")).not.toHaveClass(/is-hidden/);
 });
 
+test("Copilot improves a text field and the change can be cancelled (mocked SDK)", async ({ page }) => {
+  const eyebrow = page.locator('textarea[data-path="eyebrow"]');
+  const button = page.locator('.field[data-path="eyebrow"]').getByTestId("ai-improve");
+  const original = await eyebrow.inputValue();
+  await expect(button).toHaveAttribute("aria-label", "Improve with Copilot");
+  await button.click();
+  await expect(eyebrow).toHaveValue(`Improved: ${original}`);
+  await expect(stage(page).locator(".eyebrow")).toHaveText(`Improved: ${original}`);
+  await waitForFile(editor.readYaml, (y) => y.includes("Improved: "));
+  await expect(button).toHaveAttribute("data-state", "revert");
+  await expect(button).toHaveAttribute("aria-label", /restore the previous text/);
+
+  await button.click();
+  await expect(eyebrow).toHaveValue(original);
+  await waitForFile(editor.readYaml, (y) => !y.includes("Improved: "));
+  await expect(button).toHaveAttribute("data-state", "improve");
+
+  // Typing after an improvement drops the revert offer.
+  await button.click();
+  await expect(button).toHaveAttribute("data-state", "revert");
+  await eyebrow.press("End");
+  await eyebrow.pressSequentially("!");
+  await expect(button).toHaveAttribute("data-state", "improve");
+  // Empty fields have nothing to improve.
+  await eyebrow.fill("");
+  await expect(button).toBeDisabled();
+
+  // Notes, list items and the deck goal get the button too; the chat input does not.
+  await expect(page.locator(".ai-field:has(.notes-input) [data-testid=ai-improve]")).toBeVisible();
+  await page.getByTestId("toggle-chat").click();
+  await expect(page.locator(".ai-field:has([data-testid=chat-input])")).toHaveCount(0);
+});
+
 test("editor has no serious accessibility violations", async ({ page }) => {
   const results = await new AxeBuilder({ page }).exclude("iframe").withTags(["wcag2a", "wcag2aa"]).analyze();
   const serious = results.violations.filter((v) => ["serious", "critical"].includes(v.impact));

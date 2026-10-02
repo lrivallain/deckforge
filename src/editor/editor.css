@@ -213,6 +213,23 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .richtext { display: grid; border: 1px solid var(--ui-line-strong); border-radius: 8px; overflow: hidden; background: var(--ui-panel); }
 .richtext:focus-within { border-color: var(--ui-accent); box-shadow: 0 0 0 3px rgb(42 100 214 / 16%); }
 .richtext .input { border: 0; border-radius: 0; box-shadow: none; }
+/* "Improve with Copilot" button inside text areas (src/editor/improve.js). */
+.ai-field { position: relative; display: grid; min-width: 0; }
+.list-row .ai-field { flex: 1; }
+.ai-field > textarea { padding-right: 34px; }
+.ai-field > textarea[readonly] { color: var(--ui-muted); background: var(--ui-sunken); cursor: progress; }
+.ai-btn {
+  position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0;
+  border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ui-copilot); cursor: pointer;
+  opacity: .55; transition: opacity .15s ease, background .15s ease;
+}
+.ai-field:hover .ai-btn, .ai-field:focus-within .ai-btn, .ai-btn[data-state="busy"], .ai-btn[data-state="revert"] { opacity: 1; }
+.ai-btn:hover:not(:disabled) { background: var(--ui-copilot-soft); }
+.ai-btn:focus-visible { outline: 2px solid var(--ui-copilot); outline-offset: 1px; opacity: 1; }
+.ai-btn:disabled { opacity: .25; cursor: default; }
+.ai-btn[data-state="revert"] { background: var(--ui-copilot-soft); border-color: rgb(106 75 216 / 30%); }
+.ai-btn[data-state="revert"]:hover { background: var(--ui-copilot); color: #fff; }
+.ai-spinner { width: 12px; height: 12px; border: 2px solid var(--ui-copilot-soft); border-top-color: var(--ui-copilot); border-radius: 50%; animation: spin .8s linear infinite; }
 .richtext-tools { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-bottom: 1px solid var(--ui-line); background: var(--ui-sunken); }
 .tool { border: 0; background: transparent; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 600; color: var(--ui-muted); cursor: pointer; }
 .tool:hover { background: var(--ui-panel); color: var(--ui-ink); }
@@ -317,6 +334,7 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .toast.leaving { opacity: 0; transform: translateY(6px); }
 
 @keyframes pulse { from { opacity: .35; } to { opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes flash { 0% { box-shadow: 0 0 0 3px rgb(42 100 214 / 35%); } 100% { box-shadow: 0 0 0 3px transparent; } }
 @keyframes changed { 0%, 60% { background: var(--ui-copilot-soft); border-color: var(--ui-copilot); } 100% { background: transparent; } }
 
