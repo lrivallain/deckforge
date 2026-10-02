@@ -46,7 +46,7 @@ export function createChat() {
     h("div", { class: "panel-head" },
       h("h2", {}, icon("sparkles", 16), "Copilot"),
       status,
-      h("button", { type: "button", class: "icon-btn", title: "Continue in Copilot CLI", "aria-label": "Continue in Copilot CLI", "data-testid": "continue-cli", onClick: () => handoff() }, icon("terminal", 15)),
+      h("button", { type: "button", class: "icon-btn", title: "Continue in Copilot CLI or the Copilot app", "aria-label": "Continue in Copilot CLI or the Copilot app", "data-testid": "continue-cli", onClick: () => handoff() }, icon("terminal", 15)),
       h("button", { type: "button", class: "icon-btn", title: "New conversation", "aria-label": "New conversation", onClick: reset }, icon("undo", 15)),
       h("button", { type: "button", class: "icon-btn", title: "Close", "aria-label": "Close assistant", onClick: () => toggle(false) }, icon("close", 16)),
     ),
@@ -164,7 +164,7 @@ export function createChat() {
     const chip = h("button", { type: "button", class: "session-chip", title: `Copilot session ${sessionId} · click to copy the ID`, onClick: () => copyText(sessionId, "Session ID copied") }, icon("copy", 12), `Session ${sessionId.slice(0, 8)}`);
     linkBar.replaceChildren(handedOff
       ? h("div", { class: "chat-handoff", role: "status" }, icon("terminal", 14),
-        h("p", {}, h("strong", {}, "Continued in Copilot CLI. "), "Exit it there, then send a message here to take the conversation back."), chip)
+        h("p", {}, h("strong", {}, "Continued outside the editor. "), "Exit Copilot CLI or close the session in the Copilot app, then send a message here to take the conversation back."), chip)
       : chip);
   }
 
@@ -305,30 +305,71 @@ function commandBlock(command, testid) {
   );
 }
 
-/** Explain the handoff and give the commands to continue in Copilot CLI. */
+/** Explain the handoff: open the conversation in the Copilot app, or resume it in Copilot CLI. */
 function openHandoffDialog(info) {
-  const mcpJson = JSON.stringify(info.mcpServer, null, 2);
+  const toolsStatus = h("div", { class: "handoff-tools", "data-testid": "handoff-tools" });
+  const renderTools = (status) => {
+    if (status?.installed) {
+      toolsStatus.replaceChildren(icon("check", 14), h("span", {}, "Deck tools are available in every Copilot session started in a deck folder."));
+      return;
+    }
+    const install = h("button", { type: "button", class: "btn btn-sm", "data-testid": "install-tools" }, icon("plus", 14), "Add the deck tools to Copilot");
+    install.addEventListener("click", async () => {
+      install.disabled = true;
+      try {
+        renderTools((await api.installCopilotTools()).status);
+        toast("Deck tools added to Copilot. New sessions load them.", { timeout: 4000 });
+      } catch (err) {
+        install.disabled = false;
+        toast(err.message, { kind: "error", timeout: 8000 });
+      }
+    });
+    toolsStatus.replaceChildren(icon("alert", 14),
+      h("span", {}, "The Copilot app only gets the deck tools once they are registered in ", h("code", {}, "~/.copilot/mcp-config.json"), " (or run ", h("code", {}, "deckforge mcp --install"), ")."),
+      install);
+  };
+  renderTools(info.globalTools);
+
+  const openApp = h("button", { type: "button", class: "btn btn-accent", "data-testid": "open-app" }, icon("external", 15), "Open in Copilot app");
+  openApp.addEventListener("click", async () => {
+    openApp.disabled = true;
+    try {
+      await api.agentOpenApp();
+      toast("Confirm in the Copilot app to open the conversation.", { timeout: 5000 });
+    } catch (err) {
+      toast(err.message, { kind: "error", timeout: 6000 });
+    } finally {
+      openApp.disabled = false;
+    }
+  });
+
   const body = h("div", { class: "dialog-body handoff-body" },
-    h("p", {}, "Copilot CLI gets the same deck tools through ", h("code", {}, "deckforge mcp"), ". While this editor stays open, every change made there shows up here live and can be undone."),
+    h("p", {}, "Copilot outside the editor gets the same deck tools through ", h("code", {}, "deckforge mcp"), ". While this editor stays open, every change made there shows up here live and can be undone."),
+    info.appUrl
+      ? h("section", {},
+        h("h3", {}, "GitHub Copilot app"),
+        h("div", { class: "row" }, openApp, h("span", { class: "muted small" }, "The app asks you to confirm before it opens the conversation.")),
+        toolsStatus)
+      : null,
     info.command
       ? h("section", {},
-        h("h3", {}, "Resume this conversation"),
-        commandBlock(info.command, "handoff-command"),
-        h("p", { class: "muted small" }, "The editor has let go of the conversation so that only one Copilot works on it. Exit Copilot CLI before you send a new message here."))
-      : h("p", { class: "muted" }, "There is no conversation to resume yet. Start a Copilot CLI session with the deck tools:"),
+        h("h3", {}, "Copilot CLI"),
+        commandBlock(info.command, "handoff-command"))
+      : h("section", {},
+        h("p", { class: "muted" }, "There is no conversation to continue yet. Start a Copilot CLI session with the deck tools:"),
+        commandBlock(info.commandNew, "handoff-command-new"),
+        toolsStatus),
+    info.command ? h("details", {}, h("summary", {}, "Start a new Copilot CLI session instead"), commandBlock(info.commandNew, "handoff-command-new")) : null,
     info.command
-      ? h("details", {}, h("summary", {}, "Start a new Copilot CLI session instead"), commandBlock(info.commandNew, "handoff-command-new"))
-      : commandBlock(info.commandNew, "handoff-command-new"),
-    h("details", {}, h("summary", {}, "Use the deck tools in every Copilot session (CLI and app)"),
-      h("p", { class: "muted small" }, "Add this server to ", h("code", {}, "~/.copilot/mcp-config.json"), ":"),
-      commandBlock(mcpJson, "handoff-mcp-config")),
+      ? h("p", { class: "muted small" }, "The editor has let go of the conversation so that only one Copilot works on it. Exit Copilot CLI, or close the session in the app, before you send a new message here.")
+      : null,
   );
   const close = () => {
     dialog.close();
     dialog.remove();
   };
   const dialog = h("dialog", { class: "dialog handoff", "aria-labelledby": "handoff-title", "data-testid": "handoff-dialog" },
-    h("header", { class: "dialog-head" }, h("h2", { id: "handoff-title" }, icon("terminal", 18), "Continue in Copilot CLI"),
+    h("header", { class: "dialog-head" }, h("h2", { id: "handoff-title" }, icon("terminal", 18), "Continue in Copilot"),
       h("button", { type: "button", class: "icon-btn", "aria-label": "Close", onClick: close }, icon("close"))),
     body,
     h("footer", { class: "dialog-foot" }, h("span", {}), h("button", { type: "button", class: "btn btn-primary", onClick: close }, "Done")),

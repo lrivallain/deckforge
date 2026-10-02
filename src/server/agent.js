@@ -7,7 +7,7 @@ import path from "node:path";
 import { OpError } from "../core/ops.js";
 import { improvePrompt, improveSystemPrompt, systemPrompt } from "./prompt.js";
 import { SLIDE_SCOPED_OPS, deckToolHandlers, deckToolSpecs } from "./deck-tools.js";
-import { cliCommands, mcpServerConfig, rememberedSession, rememberSession, sessionHolders, sessionName, writeMcpConfig } from "./copilot-link.js";
+import { cliCommands, copilotAppUrl, globalMcpStatus, mcpServerConfig, openUrl, rememberedSession, rememberSession, sessionHolders, sessionName, writeMcpConfig } from "./copilot-link.js";
 
 export { deckToolSpecs };
 
@@ -199,7 +199,7 @@ export class AgentController extends EventEmitter {
     if (!id || typeof this.client.resumeSession !== "function") return null;
     const holders = sessionHolders(id);
     if (holders.length) {
-      throw new OpError(`This conversation is open in Copilot CLI (process ${holders.join(", ")}). Exit it there (or start a new conversation here), then send your message again.`);
+      throw new OpError(`This conversation is open in Copilot CLI or the Copilot app (process ${holders.join(", ")}). Exit or close it there (or start a new conversation here), then send your message again.`);
     }
     let session;
     try {
@@ -413,12 +413,12 @@ export class AgentController extends EventEmitter {
   }
 
   /**
-   * Hand the conversation over to Copilot CLI: detach the editor from the
+   * Hand the conversation over to Copilot CLI or the app: detach the editor from the
    * session (a session must only be open in one runtime) and return the
    * commands that continue it with the deck tools (`deckforge mcp`).
    */
   async handoff() {
-    if (this.turn || this.pending || this.starting) throw new OpError("Copilot is still working. Wait for it to finish or press Stop, then continue in Copilot CLI.");
+    if (this.turn || this.pending || this.starting) throw new OpError("Copilot is still working. Wait for it to finish or press Stop, then continue elsewhere.");
     if (this.session) {
       await quietly(() => this.session.disconnect?.());
       this.session = null;
@@ -427,7 +427,24 @@ export class AgentController extends EventEmitter {
     const mcpConfig = writeMcpConfig(this.store.deckPath);
     const commands = cliCommands({ deckPath: this.store.deckPath, sessionId: this.sessionId, mcpConfigPath: mcpConfig });
     this.emitLink();
-    return { sessionId: this.sessionId, handedOff: this.handedOff, mcpConfig, mcpServer: mcpServerConfig(this.store.deckPath), command: commands.resume, commandNew: commands.fresh };
+    return {
+      sessionId: this.sessionId,
+      handedOff: this.handedOff,
+      mcpConfig,
+      mcpServer: mcpServerConfig(this.store.deckPath),
+      command: commands.resume,
+      commandNew: commands.fresh,
+      appUrl: copilotAppUrl(this.sessionId),
+      globalTools: globalMcpStatus(),
+    };
+  }
+
+  /** Hand the conversation over and open it in the GitHub Copilot app (which asks the user to confirm). */
+  async openInApp() {
+    if (!this.sessionId) throw new OpError("There is no conversation yet: send a message first.");
+    const info = await this.handoff();
+    if (!(await openUrl(info.appUrl))) throw Object.assign(new OpError("Could not open the GitHub Copilot app. Is it installed?"), { status: 502 });
+    return { ...info, opened: true };
   }
 
   async disposeClient() {

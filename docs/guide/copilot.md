@@ -29,33 +29,42 @@ You need a GitHub Copilot subscription. If you are not signed in, the drawer exp
 The rail highlights the slides that Copilot changed. A whole turn is **one undo step**: use **Undo these changes**
 or <kbd>⌘/Ctrl</kbd> <kbd>Z</kbd>.
 
-## Continue in Copilot CLI
+## Continue in Copilot CLI or the Copilot app
 
 The conversation is a regular Copilot session. Its ID is shown under the scope toggle (click it to copy it).
 The session is named `deckforge · <deck title>`, and the editor resumes it the next time it opens the deck.
 **New conversation** starts a fresh session.
 
-To carry on in a terminal, click the terminal button in the drawer header (**Continue in Copilot CLI**).
-The editor lets go of the session and shows a command like this one:
+To carry on outside the editor, click the terminal button in the drawer header. The editor lets go of the session
+and shows two ways to continue:
 
-```bash
-copilot --resume <session-id> -C <deck folder> \
-  --additional-mcp-config @~/.config/deckforge/mcp/<id>.json --allow-tool deckforge
-```
+- **Open in Copilot app** opens the same conversation in the GitHub Copilot app
+  (`ghapp://sessions/<session-id>`). The app asks you to confirm first.
+- **Copilot CLI**: a command to paste in a terminal, like this one:
 
-- Copilot CLI gets the same deck tools through [`deckforge mcp`](../reference/cli#mcp). In the CLI they are named
-  `deckforge-update_slide`, `deckforge-add_slide` and so on, and `deckforge-get_authoring_guide` returns the
-  design rules, the brief and the template catalogue.
-- While the editor is open, every change made in the CLI appears live. Changes made close together share one undo step
-  (**Copilot CLI: …**). With no editor running, the tools edit `deck.yaml` and rebuild `deck.html` themselves.
-- To take the conversation back, **exit Copilot CLI** and send a message in the drawer. The editor resumes the session
-  and shows what was said in the CLI. A session can only be open in one place at a time, so the editor refuses to resume it
-  while a Copilot CLI process still has it open.
-- The dialog also gives a command for a new CLI session with the deck tools, and the JSON to add this deck's tools to
-  `~/.copilot/mcp-config.json` for every Copilot session, in the CLI or the Copilot app.
+  ```bash
+  copilot --resume <session-id> -C <deck folder> \
+    --additional-mcp-config @~/.config/deckforge/mcp/<id>.json --allow-tool deckforge
+  ```
 
-::: tip Copilot app
-To let Copilot app sessions edit the deck too, add the deck tools to `~/.copilot/mcp-config.json` with the JSON from the dialog.
+Copilot gets the same deck tools through [`deckforge mcp`](../reference/cli#mcp). They are named
+`deckforge-update_slide`, `deckforge-add_slide` and so on, and `deckforge-get_authoring_guide` returns the
+design rules, the brief and the template catalogue.
+
+- **Copilot app.** The app only loads MCP servers from `~/.copilot/mcp-config.json`. Click
+  **Add the deck tools to Copilot** in the dialog, or run `deckforge mcp --install`. This registers one server
+  that edits the `deck.yaml` of the folder each session runs in, so every Copilot session started in a deck folder
+  gets the deck tools, in the CLI as well.
+- **Live changes.** While the editor is open, every change made in Copilot appears live. Changes made close together
+  share one undo step (**Copilot (outside the editor): …**). With no editor running, the tools edit `deck.yaml` and
+  rebuild `deck.html` themselves.
+- **Taking it back.** Exit Copilot CLI, or close the session in the app, then send a message in the drawer. The editor
+  resumes the session and shows what was said elsewhere. A session can only be open in one place at a time, so the
+  editor refuses to resume it while another Copilot process still has it open.
+
+::: tip Resumed sessions
+Copilot may load MCP tools on demand in a resumed session. If it says the deck tools are missing, ask it to search its
+tools for `deckforge`.
 :::
 
 ## Improve one field

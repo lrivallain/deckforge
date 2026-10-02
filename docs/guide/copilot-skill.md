@@ -38,5 +38,5 @@ The skill's files are listed in [skills/deckforge](https://github.com/lrivallain
 ## With the deck tools
 
 The skill writes `deck.yaml` with the CLI. When a session also has the [`deckforge mcp`](../reference/cli#mcp) tools,
-for example a conversation [continued from the editor](./copilot#continue-in-copilot-cli), Copilot edits that deck
+for example a conversation [continued from the editor](./copilot#continue-in-copilot-cli-or-the-copilot-app), Copilot edits that deck
 through the tools instead. An open editor then shows each change as it happens.

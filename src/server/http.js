@@ -1,7 +1,8 @@
 // Local HTTP server for `deckforge edit` and `deckforge serve`.
 // Binds 127.0.0.1 only. Edit mode requires a per-run token (cookie after the
 // first visit with ?token=…), checks Host/Origin headers and only writes
-// inside the deck directory and ~/.config/deckforge/.
+// inside the deck directory and ~/.config/deckforge/, plus the deckforge entry
+// of ~/.copilot/mcp-config.json when the user asks for the deck tools there.
 
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -11,7 +12,7 @@ import { DIST_DIR } from "./registry.js";
 import { DeckStore } from "./store.js";
 import { AgentController } from "./agent.js";
 import { deckToolHandlers, mcpToolSpecs } from "./deck-tools.js";
-import { publishEditor } from "./copilot-link.js";
+import { globalMcpStatus, installGlobalMcp, publishEditor } from "./copilot-link.js";
 import { OpError } from "../core/ops.js";
 import { editorPage } from "./editor-page.js";
 import { AssetError, listAssets, MAX_ASSET_BYTES, saveAsset } from "./assets.js";
@@ -221,7 +222,7 @@ export async function startServer({
     guard: () => {
       if (store.group) throw Object.assign(new OpError("The editor's Copilot chat is applying changes. Retry when it has finished."), { status: 409 });
     },
-    applyOptions: (name) => ({ source: "mcp", label: `Copilot CLI: ${name}`, coalesce: "mcp", coalesceMs: 30000 }),
+    applyOptions: (name) => ({ source: "mcp", label: `Copilot (outside the editor): ${name}`, coalesce: "mcp", coalesceMs: 30000 }),
   });
 
   // Cookies are shared by every port of 127.0.0.1: name the token per port so
@@ -322,6 +323,8 @@ export async function startServer({
       }
     }
     if (req.method === "POST" && route === "/agent/handoff") return send(res, 200, await agent.handoff());
+    if (req.method === "POST" && route === "/agent/open-app") return send(res, 200, await agent.openInApp());
+    if (req.method === "POST" && route === "/copilot/install-tools") return send(res, 200, { ok: true, ...installGlobalMcp(), status: globalMcpStatus() });
     if (req.method === "GET" && route === "/agent") return send(res, 200, agent.status());
     return send(res, 404, { error: "Not found" });
   }

@@ -2,9 +2,11 @@
 // - a discovery record per running `deckforge edit`, so `deckforge mcp` can
 //   route deck tool calls through the live editor;
 // - the last chat session per deck, so the editor resumes its conversation;
-// - the MCP config and commands to continue a conversation in Copilot CLI.
-// Everything lives in the deckforge config folder, never in the deck folder.
+// - the MCP config and commands to continue a conversation in Copilot CLI,
+//   the Copilot app deep link, and the global `deckforge mcp` registration.
+// deckforge's own files live in its config folder, never in the deck folder.
 
+import { spawn } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -15,7 +17,17 @@ import { writeFileAtomic } from "./fs-util.js";
 export const MCP_SERVER_NAME = "deckforge";
 export const CLI_BIN = path.join(PACKAGE_ROOT, "bin/deckforge.js");
 
-export const deckKey = (deckPath) => crypto.createHash("sha256").update(path.resolve(deckPath)).digest("hex").slice(0, 16);
+/** Canonical deck path: symlinks resolved (Copilot starts MCP servers in the real path, e.g. /private/tmp). */
+export function canonicalDeck(deckPath) {
+  const resolved = path.resolve(deckPath);
+  try {
+    return fs.realpathSync(resolved);
+  } catch {
+    return resolved;
+  }
+}
+
+export const deckKey = (deckPath) => crypto.createHash("sha256").update(canonicalDeck(deckPath)).digest("hex").slice(0, 16);
 
 function writePrivate(file, content) {
   fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
@@ -52,7 +64,7 @@ const editorFile = (deckPath) => path.join(configDir(), "editors", `${deckKey(de
 /** Record a running editor (origin + token, private file). Returns a remover. */
 export function publishEditor({ deckPath, origin, token }) {
   const file = editorFile(deckPath);
-  const record = { pid: process.pid, origin, token, deck: path.resolve(deckPath), startedAt: new Date().toISOString() };
+  const record = { pid: process.pid, origin, token, deck: canonicalDeck(deckPath), startedAt: new Date().toISOString() };
   try {
     writePrivate(file, JSON.stringify(record, null, 2));
   } catch {
@@ -67,7 +79,7 @@ export function publishEditor({ deckPath, origin, token }) {
 /** The editor currently running for this deck, if its process is alive. */
 export function findEditor(deckPath) {
   const record = readJson(editorFile(deckPath));
-  if (!record || record.deck !== path.resolve(deckPath) || !pidAlive(record.pid)) return null;
+  if (!record || record.deck !== canonicalDeck(deckPath) || !pidAlive(record.pid)) return null;
   if (typeof record.origin !== "string" || typeof record.token !== "string") return null;
   return record;
 }
@@ -77,13 +89,13 @@ export function findEditor(deckPath) {
 const sessionsFile = () => path.join(configDir(), "sessions.json");
 
 export function rememberedSession(deckPath) {
-  const id = readJson(sessionsFile())?.[path.resolve(deckPath)]?.sessionId;
+  const id = readJson(sessionsFile())?.[canonicalDeck(deckPath)]?.sessionId;
   return typeof id === "string" && id ? id : null;
 }
 
 export function rememberSession(deckPath, sessionId) {
   const all = readJson(sessionsFile()) || {};
-  const key = path.resolve(deckPath);
+  const key = canonicalDeck(deckPath);
   if (sessionId) all[key] = { sessionId, updatedAt: new Date().toISOString() };
   else delete all[key];
   try {
@@ -152,4 +164,80 @@ export function cliCommands({ deckPath, sessionId, mcpConfigPath, platform = pro
     resume: sessionId ? ["copilot", "--resume", q(sessionId), ...common].join(" ") : null,
     fresh: ["copilot", ...common].join(" "),
   };
+}
+
+// --- Copilot app ------------------------------------------------------------
+
+/** Deep link that opens a local Copilot session in the GitHub Copilot app (it asks the user to confirm). */
+export function copilotAppUrl(sessionId) {
+  return /^[\w-]+$/.test(String(sessionId || "")) ? `ghapp://sessions/${sessionId}` : null;
+}
+
+/**
+ * Open a URL with the OS handler; resolves false when nothing handles it.
+ * DECKFORGE_OPEN_LOG=<file> records the URL instead (tests).
+ */
+export function openUrl(url, { platform = process.platform } = {}) {
+  if (process.env.DECKFORGE_OPEN_LOG) {
+    fs.appendFileSync(process.env.DECKFORGE_OPEN_LOG, `${url}\n`);
+    return Promise.resolve(true);
+  }
+  const [cmd, args] = platform === "darwin" ? ["open", [url]] : platform === "win32" ? ["cmd", ["/c", "start", "", url]] : ["xdg-open", [url]];
+  return new Promise((resolve) => {
+    let child;
+    try {
+      child = spawn(cmd, args, { stdio: "ignore", windowsHide: true });
+    } catch {
+      resolve(false);
+      return;
+    }
+    child.on("error", () => resolve(false));
+    child.on("exit", (code) => resolve(code === 0));
+  });
+}
+
+// --- global MCP registration --------------------------------------------------
+
+export const mcpConfigFile = () => path.join(copilotHome(), "mcp-config.json");
+
+/** Argument-less entry: the server edits the deck.yaml of each session's working directory. */
+export const globalMcpEntry = () => ({ type: "local", command: process.execPath, args: [CLI_BIN, "mcp"], tools: ["*"] });
+
+const isDeckforgeEntry = (entry) => Array.isArray(entry?.args) && entry.args.includes("mcp") && [entry.command, ...entry.args].some((a) => /deckforge/.test(String(a)));
+
+/** Whether Copilot sessions (CLI and app) get the deck tools from ~/.copilot/mcp-config.json. */
+export function globalMcpStatus(file = mcpConfigFile()) {
+  const entry = readJson(file)?.mcpServers?.[MCP_SERVER_NAME];
+  if (!isDeckforgeEntry(entry)) return { installed: false, file };
+  const extra = entry.args.slice(entry.args.indexOf("mcp") + 1).filter((a) => !String(a).startsWith("-"));
+  return { installed: true, file, deck: extra[0] ?? null };
+}
+
+/** Add the argument-less `deckforge mcp` server to the Copilot MCP config, keeping every other entry. */
+export function installGlobalMcp({ file = mcpConfigFile(), force = false } = {}) {
+  let config = {};
+  let mode = 0o600;
+  if (fs.existsSync(file)) {
+    try {
+      config = JSON.parse(fs.readFileSync(file, "utf8"));
+      mode = fs.statSync(file).mode & 0o777;
+    } catch (err) {
+      throw new Error(`${file} is not valid JSON (${err.message}); fix it first`, { cause: err });
+    }
+    if (!config || typeof config !== "object" || Array.isArray(config)) throw new Error(`${file} does not contain a JSON object`);
+  }
+  config.mcpServers ??= {};
+  const existing = config.mcpServers[MCP_SERVER_NAME];
+  if (existing && !isDeckforgeEntry(existing) && !force) {
+    throw new Error(`${file} already has an MCP server named "${MCP_SERVER_NAME}" that is not deckforge (use --force to replace it)`);
+  }
+  config.mcpServers[MCP_SERVER_NAME] = globalMcpEntry();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  writeFileAtomic(file, `${JSON.stringify(config, null, 2)}\n`);
+  try {
+    fs.chmodSync(file, mode);
+  } catch {
+    /* best effort (Windows) */
+  }
+  return { file, updated: Boolean(existing) };
 }

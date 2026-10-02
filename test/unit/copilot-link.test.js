@@ -8,7 +8,7 @@ import { DeckStore } from "../../src/server/store.js";
 import { AgentController, historyFromEvents } from "../../src/server/agent.js";
 import { mcpToolSpecs } from "../../src/server/deck-tools.js";
 import { createDeckBackend, handleMessage } from "../../src/server/mcp.js";
-import { cliCommands, findEditor, publishEditor, rememberedSession, sessionName, shellQuote } from "../../src/server/copilot-link.js";
+import { cliCommands, copilotAppUrl, findEditor, globalMcpStatus, installGlobalMcp, publishEditor, rememberedSession, sessionName, shellQuote } from "../../src/server/copilot-link.js";
 import * as mockSdk from "../fixtures/mock-sdk.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -46,9 +46,9 @@ async function until(fn, timeout = 3000) {
 }
 
 /** Run `deckforge mcp` with JSON-RPC messages on stdin; resolves with the responses. */
-function mcpSession(messages) {
+function mcpSession(messages, { args = [path.dirname(deckPath())], cwd } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [cli, "mcp", path.dirname(deckPath())], { env: { ...process.env, CI: "1" } });
+    const child = spawn(process.execPath, [cli, "mcp", ...args], { cwd, env: { ...process.env, CI: "1" } });
     let out = "";
     let err = "";
     child.stdout.on("data", (d) => (out += d));
@@ -85,6 +85,7 @@ describe("deckforge mcp (stdio)", () => {
     expect(names).toEqual(mcpToolSpecs().map((t) => t.name));
     expect(names).toContain("get_authoring_guide");
     expect(byId[2].result.tools.find((t) => t.name === "get_deck").annotations.readOnlyHint).toBe(true);
+    for (const tool of byId[2].result.tools) expect(tool.description).toMatch(/^deckforge: /);
     expect(byId[3].result.isError).toBe(false);
     expect(readDeck()).toContain("eyebrow: From the CLI");
     expect(fs.readFileSync(path.join(dir, "deck/deck.html"), "utf8")).toContain("From the CLI");
@@ -96,9 +97,25 @@ describe("deckforge mcp (stdio)", () => {
     expect(byId[7].error.code).toBe(-32601);
   });
 
+  it("without a deck, edits the deck.yaml of the folder it runs in", async () => {
+    const call = (id, name, args = {}) => ({ jsonrpc: "2.0", id, method: "tools/call", params: { name, arguments: args } });
+    const init = { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "test", version: "1" } } };
+    const inDeck = await mcpSession([init, call(2, "update_slide", { id: "concept", set: { eyebrow: "From cwd" } })], { args: [], cwd: path.dirname(deckPath()) });
+    expect(inDeck.code).toBe(0);
+    expect(inDeck.responses[0].result.protocolVersion).toBe("2025-11-25");
+    expect(inDeck.responses[1].result.isError).toBe(false);
+    expect(readDeck()).toContain("eyebrow: From cwd");
+    // Elsewhere the server still starts (it is registered for every session) and explains.
+    const elsewhere = await mcpSession([init, { jsonrpc: "2.0", id: 2, method: "tools/list" }, call(3, "get_deck")], { args: [], cwd: dir });
+    expect(elsewhere.code).toBe(0);
+    expect(elsewhere.responses[1].result.tools.length).toBe(mcpToolSpecs().length);
+    expect(elsewhere.responses[2].result.isError).toBe(true);
+    expect(elsewhere.responses[2].result.content[0].text).toMatch(/no deckforge deck \(deck\.yaml\) in/);
+  });
+
   it("negotiates the protocol version and ignores notifications", async () => {
     const backend = { call: async () => ({}) };
-    expect((await handleMessage({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "1999-01-01" } }, backend)).result.protocolVersion).toBe("2025-06-18");
+    expect((await handleMessage({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "1999-01-01" } }, backend)).result.protocolVersion).toBe("2025-11-25");
     expect((await handleMessage({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2024-11-05" } }, backend)).result.protocolVersion).toBe("2024-11-05");
     expect(await handleMessage({ jsonrpc: "2.0", method: "notifications/cancelled" }, backend)).toBeNull();
     expect((await handleMessage({ jsonrpc: "2.0", id: 2, method: "ping" }, backend)).result).toEqual({});
@@ -131,7 +148,7 @@ describe("deckforge mcp through a running editor", () => {
   it("publishes a private discovery record while the editor runs", async () => {
     await start();
     const record = findEditor(deckPath());
-    expect(record).toMatchObject({ pid: process.pid, origin: app.origin, token: app.token, deck: deckPath() });
+    expect(record).toMatchObject({ pid: process.pid, origin: app.origin, token: app.token, deck: fs.realpathSync(deckPath()) });
     const file = fs.readdirSync(path.join(dir, "config/editors")).map((f) => path.join(dir, "config/editors", f))[0];
     if (process.platform !== "win32") expect(fs.statSync(file).mode & 0o077).toBe(0);
     await app.close();
@@ -150,7 +167,7 @@ describe("deckforge mcp through a running editor", () => {
     expect(app.store.deck.slides.find((s) => s.id === "concept").data.eyebrow).toBe("Live 1");
     expect(changes.map((c) => c.source)).toEqual(["mcp", "mcp"]);
     expect(app.store.undoStack).toHaveLength(1);
-    expect(app.store.undoStack[0]).toMatchObject({ source: "mcp", label: "Copilot CLI: update_slide" });
+    expect(app.store.undoStack[0]).toMatchObject({ source: "mcp", label: "Copilot (outside the editor): update_slide" });
     app.store.undo();
     expect(app.store.deck.slides.find((s) => s.id === "zoom").hidden).toBe(false);
     expect(app.store.deck.slides.find((s) => s.id === "concept").data.eyebrow).toBe("01 / Explain the shift");
@@ -186,6 +203,19 @@ describe("deckforge mcp through a running editor", () => {
     } finally {
       backend.close();
       remove();
+    }
+  });
+
+  it("finds the editor through a symlinked folder (Copilot uses real paths)", async () => {
+    await start();
+    const link = path.join(dir, "linked");
+    fs.symlinkSync(path.join(dir, "deck"), link);
+    const backend = createDeckBackend({ cwd: () => link });
+    try {
+      await backend.call("update_slide", { id: "concept", set: { eyebrow: "Via link" } });
+      expect(app.store.undoStack.at(-1)).toMatchObject({ source: "mcp" });
+    } finally {
+      backend.close();
     }
   });
 
@@ -340,6 +370,75 @@ describe("Copilot session handoff", () => {
     await agent.chat({ prompt: "Polish", scope: "slide", slideId: "zoom" });
     await expect(agent.handoff()).rejects.toThrow(/still working/);
     await until(() => agent.state === "idle" && !agent.turn);
+  });
+});
+
+describe("Copilot app and global deck tools", () => {
+  it("opens the conversation in the Copilot app through its deep link", async () => {
+    const log = path.join(dir, "opened.txt");
+    process.env.DECKFORGE_OPEN_LOG = log;
+    const store = new DeckStore({ deckPath: deckPath() });
+    const agent = new AgentController({ store, factory: mockSdk });
+    try {
+      await expect(agent.openInApp()).rejects.toThrow(/no conversation yet/);
+      const events = [];
+      agent.on("event", (e) => events.push(e));
+      await agent.chat({ prompt: "Polish", scope: "slide", slideId: "zoom" });
+      await until(() => events.find((e) => e.type === "done"));
+      const info = await agent.openInApp();
+      expect(info).toMatchObject({ opened: true, handedOff: true, appUrl: `ghapp://sessions/${agent.sessionId}`, globalTools: { installed: false } });
+      expect(fs.readFileSync(log, "utf8").trim()).toBe(info.appUrl);
+      expect(agent.status().connected).toBe(false);
+    } finally {
+      delete process.env.DECKFORGE_OPEN_LOG;
+      await agent.dispose();
+      store.close();
+    }
+    expect(copilotAppUrl("../x")).toBeNull();
+  });
+
+  it("registers the argument-less server in mcp-config.json and keeps other servers", () => {
+    const file = path.join(dir, "copilot/mcp-config.json");
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify({ mcpServers: { other: { type: "http", url: "https://example.test" } } }));
+    fs.chmodSync(file, 0o640);
+    expect(globalMcpStatus()).toMatchObject({ installed: false, file });
+    expect(installGlobalMcp()).toMatchObject({ file, updated: false });
+    const config = JSON.parse(fs.readFileSync(file, "utf8"));
+    expect(config.mcpServers.other).toEqual({ type: "http", url: "https://example.test" });
+    expect(config.mcpServers.deckforge).toEqual({ type: "local", command: process.execPath, args: [cli, "mcp"], tools: ["*"] });
+    if (process.platform !== "win32") expect(fs.statSync(file).mode & 0o777).toBe(0o640);
+    expect(globalMcpStatus()).toMatchObject({ installed: true, deck: null });
+    expect(installGlobalMcp().updated).toBe(true);
+  });
+
+  it("refuses to replace a foreign server or an invalid config unless forced", () => {
+    const file = path.join(dir, "mcp.json");
+    fs.writeFileSync(file, JSON.stringify({ mcpServers: { deckforge: { type: "http", url: "https://example.test" } } }));
+    expect(() => installGlobalMcp({ file })).toThrow(/not deckforge.*--force/);
+    expect(installGlobalMcp({ file, force: true }).updated).toBe(true);
+    fs.writeFileSync(file, "{ nope");
+    expect(() => installGlobalMcp({ file })).toThrow(/not valid JSON/);
+  });
+
+  it("installs from the CLI", async () => {
+    const { execFileSync } = await import("node:child_process");
+    const out = execFileSync(process.execPath, [cli, "mcp", "--install"], { env: { ...process.env, CI: "1" }, encoding: "utf8" });
+    expect(out).toContain(`Added the deckforge MCP server in ${path.join(dir, "copilot/mcp-config.json")}`);
+    expect(globalMcpStatus().installed).toBe(true);
+  });
+
+  it("installs the deck tools from the editor", async () => {
+    const app = await startServer({ deckPath: deckPath(), mode: "edit", agentFactory: mockSdk, log: () => {} });
+    try {
+      const res = await fetch(`${app.origin}/api/copilot/install-tools`, { method: "POST", headers: { "Content-Type": "application/json", "X-Deckforge-Token": app.token }, body: "{}" });
+      expect(res.status).toBe(200);
+      expect((await res.json()).status.installed).toBe(true);
+      const anon = await fetch(`${app.origin}/api/copilot/install-tools`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      expect(anon.status).toBe(401);
+    } finally {
+      await app.close();
+    }
   });
 });
 

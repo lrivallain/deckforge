@@ -137,7 +137,7 @@ async function main() {
       if ((event.source === "agent" || event.source === "mcp") && event.changed?.length) markChanged(event.changed);
       if (event.source === "mcp" && Date.now() - lastMcpToast > 8000) {
         lastMcpToast = Date.now();
-        toast("Copilot CLI is editing this deck", { action: "Undo", onAction: undo, timeout: 5000 });
+        toast("Copilot is editing this deck from outside the editor", { action: "Undo", onAction: undo, timeout: 5000 });
       }
       if (event.state.registryVersion !== state.registryVersion) {
         applySnapshot(await api.state(), event);

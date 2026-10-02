@@ -58,7 +58,8 @@ Resolve every bundled path from **the directory containing this SKILL.md**.
   Stop any server you started once the work is done.
 - When the `deckforge-*` MCP tools are available (`deckforge mcp`, e.g. a conversation continued from the editor),
   edit that deck through them, starting with `get_authoring_guide` and `get_deck`. Do not write its `deck.yaml` directly:
-  the tools validate each change and keep an open editor in sync.
+  the tools validate each change and keep an open editor in sync. In a resumed session they may be deferred: search the
+  tools for `deckforge` before concluding they are missing.
 - Do not install software, publish, upload, commit or send the deck without explicit approval.
   A local artifact does not authorize publication.
 - If PowerPoint tooling is unavailable, say so. Do not pass off HTML, PDF or slide images as editable PowerPoint.

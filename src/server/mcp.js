@@ -1,34 +1,53 @@
-// `deckforge mcp <deck>`: a stdio MCP server exposing the deck tools to
+// `deckforge mcp [deck]`: a stdio MCP server exposing the deck tools to
 // Copilot CLI / the Copilot app (newline-delimited JSON-RPC 2.0).
+// Without a deck it uses the deck.yaml of its working directory, which Copilot
+// sets to the session's folder, so one global registration serves every deck.
 // Each call goes through the running `deckforge edit` for this deck when there
 // is one (live preview, undo), otherwise it edits deck.yaml directly.
 
 import fs from "node:fs";
+import path from "node:path";
 import readline from "node:readline";
 import { VERSION } from "../core/render.js";
 import { DeckStore } from "./store.js";
 import { MUTATING_TOOLS, deckToolHandlers, mcpToolSpecs } from "./deck-tools.js";
-import { findEditor } from "./copilot-link.js";
+import { canonicalDeck, findEditor } from "./copilot-link.js";
 
-const PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
+// Newer revisions only add optional features on top of these tools.
+const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 const READ_ONLY = new Set(["get_authoring_guide", "get_deck", "list_templates", "list_themes", "list_assets"]);
 const MUTATING = new Set(MUTATING_TOOLS);
 const PROXY_TIMEOUT_MS = 30000;
 const NOT_REACHED = new Set(["ECONNREFUSED", "EADDRNOTAVAIL", "ENOTFOUND", "EHOSTUNREACH"]);
 
-const INSTRUCTIONS = "Tools to edit one deckforge presentation (deck.yaml). Call get_authoring_guide once, then get_deck, before editing. Always edit the deck through these tools rather than writing deck.yaml or deck.html.";
+const INSTRUCTIONS = "Tools to edit one deckforge presentation (the deck.yaml of this session's folder). Call get_authoring_guide once, then get_deck, before editing. Always edit the deck through these tools rather than writing deck.yaml or deck.html.";
 
 class Unreachable extends Error {}
 
-/** Deck tools backed by the running editor, or by the deck file itself. */
-export function createDeckBackend({ deckPath, log = () => {}, fetchImpl = globalThis.fetch }) {
+/** The deck of a folder (deck.yaml), or an error that tells the model what to do. */
+export function deckInFolder(dir) {
+  const file = path.join(dir, "deck.yaml");
+  if (fs.existsSync(file)) return canonicalDeck(file);
+  throw new Error(`There is no deckforge deck (deck.yaml) in ${dir}, the folder of this Copilot session. Start Copilot in a deck folder, or create one with \`deckforge new <dir>\`.`);
+}
+
+/**
+ * Deck tools backed by the running editor, or by the deck file itself.
+ * Without deckPath the deck is looked up in cwd() on every call.
+ */
+export function createDeckBackend({ deckPath: fixedDeck, cwd = () => process.cwd(), log = () => {}, fetchImpl = globalThis.fetch }) {
   let store = null;
   let handlers = null;
+  let deckPath = null;
 
   function local() {
+    if (store && store.deckPath !== deckPath) {
+      store.close();
+      store = null;
+    }
     if (!store) {
       store = new DeckStore({ deckPath, log });
-      handlers = deckToolHandlers(store, { guide: true, applyOptions: (name) => ({ source: "mcp", label: `Copilot CLI: ${name}` }) });
+      handlers = deckToolHandlers(store, { guide: true, applyOptions: (name) => ({ source: "mcp", label: `Copilot (outside the editor): ${name}` }) });
     } else {
       // Pick up edits made meanwhile (editor, git, text editor).
       const source = fs.readFileSync(store.deckPath, "utf8");
@@ -61,6 +80,7 @@ export function createDeckBackend({ deckPath, log = () => {}, fetchImpl = global
 
   return {
     async call(name, args = {}) {
+      deckPath = fixedDeck ? canonicalDeck(fixedDeck) : deckInFolder(cwd());
       const editor = findEditor(deckPath);
       if (editor) {
         try {
@@ -84,7 +104,8 @@ export function createDeckBackend({ deckPath, log = () => {}, fetchImpl = global
 function toolList() {
   return mcpToolSpecs().map((t) => ({
     name: t.name,
-    description: t.description,
+    // Copilot defers MCP tools on resume and finds them by searching: keep "deckforge" searchable.
+    description: `deckforge: ${t.description}`,
     inputSchema: t.parameters,
     annotations: { readOnlyHint: READ_ONLY.has(t.name), destructiveHint: t.name === "remove_slide" || t.name === "remove_overlay", openWorldHint: false },
   }));
@@ -129,7 +150,7 @@ export async function handleMessage(message, backend) {
 }
 
 /** Serve MCP over stdio until the input closes. */
-export async function runMcpServer({ deckPath, input = process.stdin, output = process.stdout, log = (msg) => process.stderr.write(`[deckforge mcp] ${msg}\n`) }) {
+export async function runMcpServer({ deckPath = null, input = process.stdin, output = process.stdout, log = (msg) => process.stderr.write(`[deckforge mcp] ${msg}\n`) }) {
   const backend = createDeckBackend({ deckPath, log });
   const write = (msg) => output.write(`${JSON.stringify(msg)}\n`);
   const rl = readline.createInterface({ input, crlfDelay: Infinity });

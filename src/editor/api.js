@@ -54,6 +54,8 @@ export const api = {
   agentStatus: () => request("GET", "/api/agent"),
   agentConnect: () => request("POST", "/api/agent/connect", {}),
   agentHandoff: () => request("POST", "/api/agent/handoff", {}),
+  agentOpenApp: () => request("POST", "/api/agent/open-app", {}),
+  installCopilotTools: () => request("POST", "/api/copilot/install-tools", {}),
   improve: (payload, { signal } = {}) => request("POST", "/api/agent/improve", payload, { signal }),
 };
 
