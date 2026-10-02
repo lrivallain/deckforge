@@ -15,7 +15,29 @@ const { themes, errors: themeErrors } = loadThemes(null);
 describe("built-in themes", () => {
   it("load without errors", () => {
     expect(themeErrors).toEqual([]);
-    expect(Object.keys(themes).sort()).toEqual(["atelier", "build"]);
+    expect(Object.keys(themes).sort()).toEqual(["atelier", "aurora", "build"]);
+  });
+  it("aurora is a dark theme whose text colours reach 4.5:1 on its slides", () => {
+    const theme = themes.aurora;
+    expect(theme.colorScheme).toBe("dark");
+    expect(theme.css).toContain("color-scheme: dark;");
+    expect(theme.css).not.toMatch(/url\(/);
+    const luminance = (hex) => {
+      const [r, g, b] = hex.match(/[0-9a-f]{2}/gi).map((c) => {
+        const v = parseInt(c, 16) / 255;
+        return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const contrast = (a, b) => {
+      const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    const p = theme.palette;
+    for (const key of ["ink", "muted", "primary-text", "accent-text"]) {
+      expect(contrast(p[key], p.paper), key).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(p[key], p.node), `${key} on node`).toBeGreaterThanOrEqual(4.5);
+    }
   });
   it("build theme reproduces the build-presentation tokens exactly", () => {
     const p = themes.build.palette;
@@ -48,7 +70,8 @@ describe("built-in templates", () => {
   it("all parse without errors and render their sample data", () => {
     expect(templateErrors).toEqual([]);
     expect(Object.keys(templates).sort()).toEqual([
-      "bullets", "concept-map", "image", "image-text", "implementation-map", "lifecycle", "quote", "resources", "section", "title", "two-column", "zoom",
+      "agenda", "bullets", "closing", "concept-map", "cover", "image", "image-text", "implementation-map", "lifecycle", "metric",
+      "points", "quote", "resources", "section", "split", "statement", "title", "two-column", "visual", "zoom",
     ]);
     for (const template of Object.values(templates)) {
       expect(template.issues.filter((i) => i.level === "error"), template.name).toEqual([]);
@@ -58,6 +81,14 @@ describe("built-in templates", () => {
       expect(html).toContain(`class="slide df-t-${template.name}`);
       expect(validateDeck(deck, { templates, themes }).filter((i) => i.level === "error")).toEqual([]);
     }
+  });
+  it("essentials templates are grouped and the aurora example uses all of them without issues", () => {
+    const essentials = Object.values(templates).filter((t) => t.category === "essentials").map((t) => t.name).sort();
+    expect(essentials).toEqual(["agenda", "closing", "cover", "metric", "points", "split", "statement", "visual"]);
+    const deck = parseDeckYaml(fs.readFileSync(path.join(root, "examples/aurora/deck.yaml"), "utf8"));
+    expect(deck.meta.theme).toBe("aurora");
+    for (const name of essentials) expect(deck.slides.some((s) => s.template === name), name).toBe(true);
+    expect(validateDeck(deck, { templates, themes }).filter((i) => i.level !== "info")).toEqual([]);
   });
 });
 

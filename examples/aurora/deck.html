@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en" data-theme="aurora">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="deckforge 0.1.0">
+  <title>Ship less. Ship better.</title>
+  <meta name="description" content="Show the Aurora theme and the Essentials templates with neutral content">
+  <link rel="stylesheet" href="deckforge/deckforge.viewer.css">
+  <style id="df-theme">
+@font-face { font-family: "Inter"; font-weight: 800; font-style: normal; font-display: swap; src: local("Inter ExtraBold"), local("Inter-ExtraBold"); }
+@font-face { font-family: "Inter"; font-weight: 700; font-style: normal; font-display: swap; src: local("Inter Bold"), local("Inter-Bold"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: local("Inter SemiBold"), local("Inter-SemiBold"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: local("Inter Medium"), local("Inter-Medium"); }
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: local("Inter Regular"), local("Inter-Regular"); }
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; font-style: normal; font-display: swap; src: local("JetBrains Mono Regular"), local("JetBrainsMono-Regular"); }
+:root {
+  color-scheme: dark;
+  --df-bg: #050507;
+  --df-paper: #0B0B10;
+  --df-line: #23232E;
+  --df-ink: #F4F4F7;
+  --df-muted: #A0A0B4;
+  --df-node: #14141C;
+  --df-primary: #8B7BFF;
+  --df-primary-soft: #1C1838;
+  --df-primary-line: #4A3F94;
+  --df-accent: #3DE0C8;
+  --df-accent-soft: #0E2A28;
+  --df-accent-line: #1F6B61;
+  --df-frame: #0F1F1E;
+  --df-ok: #4ADE80;
+  --df-dashed: #4A4A5E;
+  --df-chrome: #050507;
+  --df-accent-text: #3DE0C8;
+  --df-primary-text: #A59AFF;
+  --df-font-heading: "Inter", -apple-system, "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --df-font-body: "Inter", -apple-system, "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --df-font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --df-radius-slide: 20px;
+  --df-radius-card: 14px;
+  --df-radius-panel: 18px;
+  --df-radius-frame: 20px;
+  --df-radius-small: 10px;
+  --df-radius-pill: 99px;
+  --df-space-padding: 4.5cqw 6cqw 3cqw;
+  --df-space-gap: 1.6cqw;
+  --df-space-grid: 1.4cqw;
+  --df-motion-duration: .7s;
+  --df-motion-easing: cubic-bezier(.16, 1, .3, 1);
+  --df-motion-distance: 14px;
+  --df-motion-stagger: .1s;
+  --df-shadow-slide: 0 40px 120px rgb(0 0 0 / 60%);
+}
+  </style>
+  <style id="df-templates">
+/* template: cover */
+.df-t-cover .cover-body {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1.8cqw;}
+.df-t-cover .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase;}
+.df-t-cover h1 {font-size: 7cqw; line-height: 1; letter-spacing: -.045em; max-width: 78cqw;}
+.df-t-cover .lead {font-size: 2cqw; line-height: 1.4; color: var(--df-muted); max-width: 56cqw;}
+.df-t-cover .cover-meta {display: flex; justify-content: space-between; gap: 2cqw; font-size: 1.5cqw; color: var(--df-muted);}
+/* template: agenda */
+.df-t-agenda .agenda {flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 5cqw; align-items: center;}
+.df-t-agenda .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.2cqw;}
+.df-t-agenda h1 {font-size: 4.6cqw; line-height: 1.02; letter-spacing: -.04em;}
+.df-t-agenda .chapters {list-style: none; padding: 0;}
+.df-t-agenda .chapters li {display: flex; align-items: baseline; gap: 2.4cqw; padding: 1.2cqw 0; border-top: 1px solid var(--df-line);}
+.df-t-agenda .chapters li:last-child {border-bottom: 1px solid var(--df-line);}
+.df-t-agenda .n {font: 400 1.3cqw var(--df-font-mono); color: var(--df-accent-text);}
+.df-t-agenda .chapter {font: 600 2.3cqw / 1.2 var(--df-font-heading); letter-spacing: -.02em;}
+/* template: statement */
+.df-t-statement .statement {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2cqw;}
+.df-t-statement .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase;}
+.df-t-statement .big {font: 700 5cqw / 1.08 var(--df-font-heading); letter-spacing: -.035em; max-width: 80cqw;}
+.df-t-statement .note {font-size: 1.7cqw; line-height: 1.4; color: var(--df-muted); max-width: 60cqw;}
+/* template: points */
+.df-t-points .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8cqw;}
+.df-t-points h1 {font-size: 4.4cqw; line-height: 1.05; letter-spacing: -.04em;}
+.df-t-points .rows {flex: 1; list-style: none; padding: 0; display: flex; flex-direction: column; justify-content: center;}
+.df-t-points .rows li {display: flex; align-items: baseline; gap: 3cqw; padding: 1.6cqw 0; border-top: 1px solid var(--df-line);}
+.df-t-points .rows li:last-child {border-bottom: 1px solid var(--df-line);}
+.df-t-points .n {flex: none; font: 400 1.3cqw var(--df-font-mono); color: var(--df-accent-text);}
+.df-t-points .point {font: 500 2.6cqw / 1.2 var(--df-font-heading); letter-spacing: -.02em;}
+.df-t-points .point strong {font-weight: 700;}
+/* template: split */
+.df-t-split .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8cqw;}
+.df-t-split h1 {font-size: 4.4cqw; line-height: 1.05; letter-spacing: -.04em;}
+.df-t-split .cols {flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center;}
+.df-t-split .col {display: flex; flex-direction: column; gap: 1.4cqw; padding: 2cqw 4cqw 2cqw 0; border-top: 2px solid var(--df-line);}
+.df-t-split .col-right {padding: 2cqw 0 2cqw 4cqw;}
+.df-t-split .cols.hl .col-right {border-top-color: var(--df-accent);}
+.df-t-split .label {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase;}
+.df-t-split .cols.hl .col-right .label {color: var(--df-accent-text);}
+.df-t-split .text {font: 500 2.5cqw / 1.25 var(--df-font-heading); letter-spacing: -.02em;}
+.df-t-split .cols.hl .col:not(.col-right) .text {color: var(--df-muted);}
+/* template: metric */
+.df-t-metric .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8cqw;}
+.df-t-metric h1 {font-size: 4.4cqw; line-height: 1.05; letter-spacing: -.04em;}
+.df-t-metric .metrics {flex: 1; min-height: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3cqw; align-items: center;}
+.df-t-metric .metric {display: flex; flex-direction: column; gap: 1cqw; padding-top: 1.6cqw; border-top: 1px solid var(--df-line);}
+.df-t-metric .value {font: 700 8cqw / .95 var(--df-font-heading); letter-spacing: -.05em; color: var(--df-ink); white-space: nowrap;}
+.df-t-metric .metric.focus .value {color: var(--df-accent);}
+.df-t-metric .metric.focus {border-top-color: var(--df-accent);}
+.df-t-metric .label {font-size: 1.8cqw; line-height: 1.3; color: var(--df-muted);}
+.df-t-metric .source {font: 400 1.1cqw / 1.4 var(--df-font-mono); color: var(--df-muted);}
+/* template: visual */
+.df-t-visual .visual {position: absolute; inset: 0; border: 0; border-radius: 0;}
+.df-t-visual .visual::after {content: ""; position: absolute; inset: 0; background: linear-gradient(to top, var(--df-paper) 0%, transparent 55%); pointer-events: none;}
+.df-t-visual .visual-text {position: relative; margin-top: auto; display: flex; flex-direction: column; gap: 1cqw; max-width: 70cqw;}
+.df-t-visual .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase;}
+.df-t-visual .line {font: 700 3.8cqw / 1.1 var(--df-font-heading); letter-spacing: -.035em;}
+/* template: quote */
+.df-t-quote .quote-body {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2cqw; padding: 0 6cqw 0 4cqw;}
+.df-t-quote .quote-body > .eyebrow, .df-t-quote figcaption {margin-left: 7cqw;}
+.df-t-quote blockquote {position: relative; padding-left: 7cqw;}
+.df-t-quote blockquote p {font: 600 3.6cqw / 1.2 var(--df-font-heading); letter-spacing: -.01em;}
+.df-t-quote blockquote::before {content: "\201C"; position: absolute; left: 0; top: -1.4cqw; font: 800 10cqw / 1 var(--df-font-heading); color: var(--df-accent);}
+.df-t-quote figcaption {display: flex; gap: 1.2cqw; align-items: baseline; font-size: 1.7cqw; border-top: 2px solid var(--df-accent-line); padding-top: 1.2cqw;}
+.df-t-quote figcaption strong {font-weight: 600;}
+.df-t-quote figcaption span {color: var(--df-muted); font: 400 1.3cqw var(--df-font-mono); text-transform: uppercase; letter-spacing: .08em;}
+/* template: closing */
+.df-t-closing .closing {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1.8cqw;}
+.df-t-closing .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase;}
+.df-t-closing h1 {font-size: 7cqw; line-height: 1; letter-spacing: -.045em;}
+.df-t-closing .lead {font-size: 2.2cqw; line-height: 1.35; max-width: 60cqw;}
+.df-t-closing .contact {font: 400 1.6cqw / 1.4 var(--df-font-mono);}
+.df-t-closing .contact a {color: var(--df-primary-text);}
+  </style>
+</head>
+<body>
+  <noscript><p class="no-script">All slides are shown below. Use the browser's print command for a PDF.</p></noscript>
+  <main class="stage" aria-label="Ship less. Ship better.">
+<section class="slide df-t-cover" id="slide-cover" data-slide-id="cover" data-template="cover" data-title="Cover" aria-labelledby="cover-title">
+  <div class="slide-inner">
+<div class="cover-body">
+  <p class="kicker reveal">Product review · 2026</p>
+  <h1 id="cover-title" class="reveal">Ship less. <span class="accent">Ship better.</span></h1>
+  <p class="lead reveal">How one release gate cut rework in half.</p>
+</div>
+<footer class="cover-meta reveal">
+  <span>Presenter name</span>
+  <span>Event or date</span>
+</footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Open with the promise, not the process. One sentence on why this matters now.</p></aside>
+</section>
+<section class="slide df-t-agenda" id="slide-agenda" data-slide-id="agenda" data-template="agenda" data-title="Agenda" aria-labelledby="agenda-title">
+  <div class="slide-inner">
+<div class="agenda">
+  <div class="agenda-head reveal">
+    <p class="kicker">Agenda</p>
+    <h1 id="agenda-title">Where we are <span class="accent">going</span></h1>
+  </div>
+  <ol class="chapters">
+    <li class="reveal"><span class="n">01</span><span class="chapter">Why releases slip</span></li><li class="reveal"><span class="n">02</span><span class="chapter">The release gate</span></li><li class="reveal"><span class="n">03</span><span class="chapter">What it changed</span></li><li class="reveal"><span class="n">04</span><span class="chapter">Next steps</span></li>
+  </ol>
+</div>
+<footer class="foot"><span>Aurora specimen / Essentials templates</span><span class="num">02 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-statement" id="slide-idea" data-slide-id="idea" data-template="statement" data-title="The idea" aria-labelledby="idea-title">
+  <div class="slide-inner">
+<div class="statement">
+  <p class="kicker reveal">The idea</p>
+  <p id="idea-title" class="big reveal">Every release should pass <span class="accent">one gate</span> that everyone can name.</p>
+  <p class="note reveal">Not more process. One shared checkpoint with a single owner.</p>
+</div>
+<footer class="foot"><span>Aurora specimen / Essentials templates</span><span class="num">03 / 09</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Pause after the sentence. This is the line people should repeat after the talk.</p></aside>
+</section>
+<section class="slide df-t-points" id="slide-changes" data-slide-id="changes" data-template="points" data-title="What changes" aria-labelledby="changes-title">
+  <div class="slide-inner">
+<header class="reveal">
+  
+  <h1 id="changes-title">What <span class="accent">changes</span></h1>
+</header>
+<ol class="rows">
+  <li class="reveal"><span class="n">01</span><span class="point">One owner per release decision</span></li><li class="reveal"><span class="n">02</span><span class="point">One shared version to review</span></li><li class="reveal"><span class="n">03</span><span class="point"><strong>One gate</strong> before anything ships</span></li>
+</ol>
+<footer class="foot"><span>Aurora specimen / Essentials templates</span><span class="num">04 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-split" id="slide-before-after" data-slide-id="before-after" data-template="split" data-title="Before and after" aria-labelledby="before-after-title">
+  <div class="slide-inner">
+<header class="reveal">
+  
+  <h1 id="before-after-title">Before and <span class="accent">after</span></h1>
+</header>
+<div class="cols hl">
+  <section class="col reveal">
+    <p class="label">Before</p>
+    <p class="text">Drafts travel by email and every reviewer sees a different version.</p>
+  </section>
+  <section class="col col-right reveal">
+    <p class="label">After</p>
+    <p class="text">One shared version, one named owner and a gate before anything ships.</p>
+  </section>
+</div>
+<footer class="foot"><span>Aurora specimen / Essentials templates</span><span class="num">05 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-metric" id="slide-results" data-slide-id="results" data-template="metric" data-title="Results" aria-labelledby="results-title">
+  <div class="slide-inner">
+<header class="reveal">
+  
+  <h1 id="results-title">What the gate <span class="accent">changed</span></h1>
+</header>
+<div class="metrics">
+  <div class="metric focus reveal"><p class="value">−48%</p><p class="label">Rework after release</p></div><div class="metric reveal"><p class="value">3×</p><p class="label">Faster reviews</p></div><div class="metric reveal"><p class="value">0</p><p class="label">Unowned decisions</p></div>
+</div>
+<p class="source reveal">Source: illustrative figures for the specimen deck</p>
+<footer class="foot"><span>Aurora specimen / Essentials templates</span><span class="num">06 / 09</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Replace these with your own measured numbers and name the source.</p></aside>
+</section>
+<section class="slide df-t-visual" id="slide-interlude" data-slide-id="interlude" data-template="visual" data-title="Interlude" aria-labelledby="interlude-title">
+  <div class="slide-inner">
+<figure class="media visual"><img class="df-img" src="assets/aurora-sky.svg" alt="Abstract night sky with violet and mint northern lights above dark hills" loading="lazy" decoding="async" style="object-fit: cover; object-position: 50% 40%"></figure>
+<div class="visual-text">
+  <p class="kicker reveal">Interlude</p>
+  <p id="interlude-title" class="line reveal">Quiet launches are <span class="accent">good launches</span>.</p>
+</div>
+  </div>
+</section>
+<section class="slide df-t-quote" id="slide-voice" data-slide-id="voice" data-template="quote" data-title="In their words" aria-labelledby="voice-title">
+  <div class="slide-inner">
+<figure class="quote-body">
+  <p class="eyebrow reveal">In their words</p>
+  <blockquote class="reveal"><p id="voice-title">The best review is the one where everyone looks at <span class="blue">the same version</span>.</p></blockquote>
+  <figcaption class="reveal"><strong>Name Surname</strong><span>Role, organisation</span></figcaption>
+</figure>
+<footer class="foot"><span>Aurora specimen / Essentials templates</span><span class="num">08 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-closing" id="slide-closing" data-slide-id="closing" data-template="closing" data-title="Closing" aria-labelledby="closing-title">
+  <div class="slide-inner">
+<div class="closing">
+  <p class="kicker reveal">Next step</p>
+  <h1 id="closing-title" class="reveal">Thank <span class="accent">you</span>.</h1>
+  <p class="lead reveal">Try the release gate on one team for the next two sprints.</p>
+  <p class="contact reveal"><a href="https://example.com/release-gate" target="_blank" rel="noopener noreferrer">example.com/release-gate</a></p>
+</div>
+<footer class="foot"><span>Aurora specimen / Essentials templates</span><span class="num">09 / 09</span></footer>
+  </div>
+</section>
+  </main>
+  <nav class="controls" aria-label="Slide controls" hidden>
+  <button id="df-previous" type="button" aria-label="Previous slide">Previous</button>
+  <label class="sr-only" for="df-slide-select">Choose a slide</label>
+  <select id="df-slide-select"></select>
+  <button id="df-next" type="button" aria-label="Next slide">Next</button>
+  <span class="controls-sep" aria-hidden="true"></span>
+  <button id="df-static" type="button" aria-pressed="false" title="Disable animations (S)">Static</button>
+  <button id="df-notes" type="button" aria-pressed="false" title="Show speaker notes (N)">Notes</button>
+  <button id="df-presenter" type="button" title="Open presenter view (P)">Presenter</button>
+  <button id="df-fullscreen" type="button" aria-pressed="false" title="Fullscreen (F)">Fullscreen</button>
+  <span id="df-announcement" class="sr-only" role="status" aria-live="polite"></span>
+</nav>
+  <script src="deckforge/deckforge.viewer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+---
+name: split
+label: Split
+description: Two plain columns under one headline, for a before/after or an either/or. Simpler than "two-column"; one side can be highlighted.
+category: essentials
+order: 5
+slots:
+  kicker: { type: text, max: 40, sample: "" }
+  title: { type: richtext, max: 50, required: true, sample: 'Before and <span class="accent">after</span>' }
+  leftLabel: { type: text, max: 24, sample: Before }
+  leftText: { type: richtext, max: 120, sample: Drafts travel by email and every reviewer sees a different version. }
+  rightLabel: { type: text, max: 24, sample: After }
+  rightText: { type: richtext, max: 120, sample: "One shared version, one named owner and a gate before anything ships." }
+  highlightRight: { type: boolean, sample: true, description: Highlight the right column as the recommendation }
+---
+<header class="reveal">
+  {{#if kicker}}<p class="kicker">{{kicker}}</p>{{/if}}
+  <h1 id="{{slide.titleId}}">{{title}}</h1>
+</header>
+<div class="cols{{#if highlightRight}} hl{{/if}}">
+  <section class="col reveal">
+    {{#if leftLabel}}<p class="label">{{leftLabel}}</p>{{/if}}
+    <p class="text">{{leftText}}</p>
+  </section>
+  <section class="col col-right reveal">
+    {{#if rightLabel}}<p class="label">{{rightLabel}}</p>{{/if}}
+    <p class="text">{{rightText}}</p>
+  </section>
+</div>
+{{> foot}}
+
+<style scoped>
+.kicker { font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8cqw; }
+h1 { font-size: 4.4cqw; line-height: 1.05; letter-spacing: -.04em; }
+.cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; }
+.col { display: flex; flex-direction: column; gap: 1.4cqw; padding: 2cqw 4cqw 2cqw 0; border-top: 2px solid var(--df-line); }
+.col-right { padding: 2cqw 0 2cqw 4cqw; }
+.cols.hl .col-right { border-top-color: var(--df-accent); }
+.label { font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; }
+.cols.hl .col-right .label { color: var(--df-accent-text); }
+.text { font: 500 2.5cqw / 1.25 var(--df-font-heading); letter-spacing: -.02em; }
+.cols.hl .col:not(.col-right) .text { color: var(--df-muted); }
+</style>

@@ -1,0 +1,24 @@
+---
+name: visual
+label: Visual
+description: One full-bleed picture with a single line of text at the bottom. Simpler than "image"; let the picture carry the point.
+category: essentials
+order: 7
+slots:
+  image: { type: image, required: true, description: "PNG, JPEG, WebP, GIF or SVG. Write an alt text that says what the picture shows." }
+  kicker: { type: text, max: 40, sample: Field view }
+  line: { type: richtext, max: 80, sample: 'This is what reviewers <span class="accent">actually see</span>.' }
+---
+<figure class="media visual">{{image}}</figure>
+<div class="visual-text">
+  {{#if kicker}}<p class="kicker reveal">{{kicker}}</p>{{/if}}
+  {{#if line}}<p id="{{slide.titleId}}" class="line reveal">{{line}}</p>{{/if}}
+</div>
+
+<style scoped>
+.visual { position: absolute; inset: 0; border: 0; border-radius: 0; }
+.visual::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, var(--df-paper) 0%, transparent 55%); pointer-events: none; }
+.visual-text { position: relative; margin-top: auto; display: flex; flex-direction: column; gap: 1cqw; max-width: 70cqw; }
+.kicker { font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; }
+.line { font: 700 3.8cqw / 1.1 var(--df-font-heading); letter-spacing: -.035em; }
+</style>

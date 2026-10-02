@@ -1,0 +1,69 @@
+name: aurora
+label: Aurora
+description: >-
+  Dark, modern slides: a near-black canvas, violet primary and mint accent
+  like northern lights, oversized tight sans headings and generous space.
+  Pairs best with the Essentials templates. Uses local fonts only.
+colorScheme: dark
+palette:
+  bg: "#050507"
+  chrome: "#050507"
+  paper: "#0B0B10"
+  line: "#23232E"
+  ink: "#F4F4F7"
+  muted: "#A0A0B4"
+  node: "#14141C"
+  primary: "#8B7BFF"
+  primary-soft: "#1C1838"
+  primary-line: "#4A3F94"
+  primary-text: "#A59AFF"
+  accent: "#3DE0C8"
+  accent-soft: "#0E2A28"
+  accent-line: "#1F6B61"
+  accent-text: "#3DE0C8"
+  frame: "#0F1F1E"
+  dashed: "#4A4A5E"
+  ok: "#4ADE80"
+fonts:
+  heading:
+    family: Inter
+    fallback: '-apple-system, "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif'
+    faces:
+      - weight: 800
+        local: [Inter ExtraBold, Inter-ExtraBold]
+      - weight: 700
+        local: [Inter Bold, Inter-Bold]
+      - weight: 600
+        local: [Inter SemiBold, Inter-SemiBold]
+      - weight: 500
+        local: [Inter Medium, Inter-Medium]
+  body:
+    family: Inter
+    fallback: '-apple-system, "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif'
+    faces:
+      - weight: 400
+        local: [Inter Regular, Inter-Regular]
+  mono:
+    family: JetBrains Mono
+    fallback: '"SF Mono", Menlo, Consolas, monospace'
+    faces:
+      - weight: 400
+        local: [JetBrains Mono Regular, JetBrainsMono-Regular]
+radii:
+  slide: 20px
+  card: 14px
+  panel: 18px
+  frame: 20px
+  small: 10px
+  pill: 99px
+spacing:
+  padding: 4.5cqw 6cqw 3cqw
+  gap: 1.6cqw
+  grid: 1.4cqw
+motion:
+  duration: .7s
+  easing: cubic-bezier(.16, 1, .3, 1)
+  distance: 14px
+  stagger: .1s
+shadow:
+  slide: 0 40px 120px rgb(0 0 0 / 60%)

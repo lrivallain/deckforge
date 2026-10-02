@@ -1,0 +1,35 @@
+---
+name: points
+label: Points
+description: Short headline and up to four numbered points on plain rows, without cards. Simpler than "bullets".
+category: essentials
+order: 4
+slots:
+  kicker: { type: text, max: 40, sample: "" }
+  title: { type: richtext, max: 50, required: true, sample: 'What <span class="accent">changes</span>' }
+  points:
+    type: list
+    of: richtext
+    max: 4
+    maxLength: 70
+    sample: [One owner per decision, One shared version to review, One release gate before shipping]
+---
+<header class="reveal">
+  {{#if kicker}}<p class="kicker">{{kicker}}</p>{{/if}}
+  <h1 id="{{slide.titleId}}">{{title}}</h1>
+</header>
+<ol class="rows">
+  {{#each points}}<li class="reveal"><span class="n">{{@number}}</span><span class="point">{{this}}</span></li>{{/each}}
+</ol>
+{{> foot}}
+
+<style scoped>
+.kicker { font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8cqw; }
+h1 { font-size: 4.4cqw; line-height: 1.05; letter-spacing: -.04em; }
+.rows { flex: 1; list-style: none; padding: 0; display: flex; flex-direction: column; justify-content: center; }
+.rows li { display: flex; align-items: baseline; gap: 3cqw; padding: 1.6cqw 0; border-top: 1px solid var(--df-line); }
+.rows li:last-child { border-bottom: 1px solid var(--df-line); }
+.n { flex: none; font: 400 1.3cqw var(--df-font-mono); color: var(--df-accent-text); }
+.point { font: 500 2.6cqw / 1.2 var(--df-font-heading); letter-spacing: -.02em; }
+.point strong { font-weight: 700; }
+</style>

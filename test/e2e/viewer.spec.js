@@ -141,6 +141,37 @@ test("viewer has no detectable accessibility violations", async ({ page }) => {
   }
 });
 
+test("aurora example: no accessibility violations, overflow or network requests", async ({ page }) => {
+  const aurora = tempDeck({ example: "aurora" });
+  try {
+    const requests = [];
+    page.on("request", (r) => requests.push(r.url()));
+    await page.goto(url(aurora));
+    await page.locator("#df-static").click();
+    const total = await page.locator(".stage > .slide").count();
+    expect(total).toBe(9);
+    for (let i = 0; i < total; i++) {
+      const slide = page.locator(".stage > .slide:not([hidden])");
+      const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+      expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`), `slide ${i + 1}`).toEqual([]);
+      const overflowing = await slide.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return [...el.querySelectorAll(".slide-inner *")]
+          .filter((child) => {
+            const r = child.getBoundingClientRect();
+            return r.width && (r.right > box.right + 1 || r.bottom > box.bottom + 1 || r.left < box.left - 1 || r.top < box.top - 1);
+          })
+          .map((child) => `${child.tagName.toLowerCase()}.${child.className}`);
+      });
+      expect(overflowing, `slide ${i + 1} overflows`).toEqual([]);
+      await page.keyboard.press("ArrowRight");
+    }
+    expect(requests.filter((u) => !u.startsWith("file://") && !u.startsWith("data:"))).toEqual([]);
+  } finally {
+    aurora.cleanup();
+  }
+});
+
 test("matches build-presentation starter.html pixel for pixel (when available)", async ({ browser }) => {
   const starter = path.join(os.homedir(), ".copilot/skills/build-presentation/assets/starter.html");
   test.skip(!fs.existsSync(starter), "starter.html reference not installed");

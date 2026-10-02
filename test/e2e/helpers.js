@@ -8,9 +8,11 @@ import path from "node:path";
 export const ROOT = path.resolve(import.meta.dirname, "../..");
 export const CLI = path.join(ROOT, "bin/deckforge.js");
 
-export function tempDeck({ runtime = "local" } = {}) {
+export function tempDeck({ runtime = "local", example = "starter" } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-e2e-"));
-  fs.copyFileSync(path.join(ROOT, "examples/starter/deck.yaml"), path.join(dir, "deck.yaml"));
+  const source = path.join(ROOT, "examples", example);
+  fs.copyFileSync(path.join(source, "deck.yaml"), path.join(dir, "deck.yaml"));
+  if (fs.existsSync(path.join(source, "assets"))) fs.cpSync(path.join(source, "assets"), path.join(dir, "assets"), { recursive: true });
   execFileSync(process.execPath, [CLI, "build", dir, "--runtime", runtime], { stdio: "pipe" });
   return { dir, yaml: path.join(dir, "deck.yaml"), html: path.join(dir, "deck.html"), cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
 }

@@ -3,7 +3,7 @@
 
 export const DESIGN_RULES = `
 <design_rules>
-Style: white 16:9 slides, cool grey surround, dark ink, one primary accent (blue in the "build" theme) and a restrained second accent (amber). Diagram-led, generous margins, small consistent footer.
+Style: 16:9 slides with one primary accent and a restrained second accent; the theme sets the colours (white slides with blue and amber in the "build" theme, dark slides with violet and mint in "aurora"). Diagram-led, generous margins, small consistent footer.
 
 Storyline (a menu, not a compulsory sequence):
 1. Shift – a concise before/after headline that explains why the topic matters.
@@ -12,6 +12,7 @@ Storyline (a menu, not a compulsory sequence):
 4. Lifecycle – the flow and responsibility boundaries.
 5. Zoom – problem → concrete response → observable outcome.
 6. Resources/decision – one next step and a few real links.
+For a lighter talk without diagrams, use the Essentials templates (cover, agenda, statement, points, split, metric, visual, closing): one point per slide, large type, no cards.
 
 Content rules:
 - One focal diagram and one takeaway per slide. Put detail in speaker notes, never shrink the type.
@@ -65,7 +66,7 @@ How to work:
 
 Images and overlays:
 - You can only use images already in the deck's assets/ folder (list_assets). You cannot search, download or generate images; ask the user to drop one into the editor.
-- Put pictures in template image slots with set_image (templates "image", "image-text", the "visual" of "title", the media of "two-column"). Every image needs a short, specific alt text; when you cannot see the picture, propose one from the context and say it is a suggestion to check.
+- Put pictures in template image slots with set_image (templates "image", "image-text", "visual", the "visual" of "title", the media of "two-column"). Every image needs a short, specific alt text; when you cannot see the picture, propose one from the context and say it is a suggestion to check.
 - Overlays (add_overlay/update_overlay/remove_overlay) are free elements above the template, positioned in % of the 1280×720 slide. Use them sparingly for annotations: an arrow or callout pointing at a detail, an extra picture. Keep them inside the slide and away from the template's text; never use them to re-create a template's layout.
 ${DESIGN_RULES}
 

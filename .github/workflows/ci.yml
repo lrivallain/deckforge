@@ -30,6 +30,7 @@ jobs:
         run: |
           npm run build
           node bin/deckforge.js build examples/starter
+          node bin/deckforge.js build examples/aurora
           git diff --exit-code -- dist examples
       - run: npm test
       - run: npx playwright install --with-deps chromium webkit

@@ -1,0 +1,37 @@
+---
+name: agenda
+label: Agenda
+description: Numbered list of up to six chapters next to a short headline. Use it once, after the cover.
+category: essentials
+order: 2
+slots:
+  kicker: { type: text, max: 40, sample: Agenda }
+  title: { type: richtext, max: 40, required: true, sample: 'Where we are <span class="accent">going</span>' }
+  items:
+    type: list
+    of: text
+    max: 6
+    maxLength: 40
+    sample: [Why releases slip, What we tried, The release gate, What it changed, Next steps]
+---
+<div class="agenda">
+  <div class="agenda-head reveal">
+    {{#if kicker}}<p class="kicker">{{kicker}}</p>{{/if}}
+    <h1 id="{{slide.titleId}}">{{title}}</h1>
+  </div>
+  <ol class="chapters">
+    {{#each items}}<li class="reveal"><span class="n">{{@number}}</span><span class="chapter">{{this}}</span></li>{{/each}}
+  </ol>
+</div>
+{{> foot}}
+
+<style scoped>
+.agenda { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 5cqw; align-items: center; }
+.kicker { font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.2cqw; }
+h1 { font-size: 4.6cqw; line-height: 1.02; letter-spacing: -.04em; }
+.chapters { list-style: none; padding: 0; }
+.chapters li { display: flex; align-items: baseline; gap: 2.4cqw; padding: 1.2cqw 0; border-top: 1px solid var(--df-line); }
+.chapters li:last-child { border-bottom: 1px solid var(--df-line); }
+.n { font: 400 1.3cqw var(--df-font-mono); color: var(--df-accent-text); }
+.chapter { font: 600 2.3cqw / 1.2 var(--df-font-heading); letter-spacing: -.02em; }
+</style>

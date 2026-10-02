@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#05050B"/>
+      <stop offset=".6" stop-color="#0B0B18"/>
+      <stop offset="1" stop-color="#101022"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3DE0C8" stop-opacity="0"/>
+      <stop offset=".35" stop-color="#3DE0C8" stop-opacity=".85"/>
+      <stop offset=".7" stop-color="#5FE3A1" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#3DE0C8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8B7BFF" stop-opacity="0"/>
+      <stop offset=".4" stop-color="#8B7BFF" stop-opacity=".8"/>
+      <stop offset=".8" stop-color="#C77DFF" stop-opacity=".5"/>
+      <stop offset="1" stop-color="#8B7BFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="28"/></filter>
+    <filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <g filter="url(#glow)">
+    <path d="M-40 300 C 220 140, 420 360, 680 220 S 1120 120, 1320 260 L 1320 340 C 1100 220, 900 330, 680 300 S 220 230, -40 380 Z" fill="url(#mint)"/>
+    <path d="M-40 200 C 260 80, 520 260, 760 150 S 1140 60, 1320 160 L 1320 220 C 1120 130, 900 240, 740 210 S 260 150, -40 260 Z" fill="url(#violet)"/>
+  </g>
+  <g filter="url(#soft)" opacity=".7">
+    <path d="M120 330 C 360 220, 560 380, 820 270 S 1140 230, 1240 300" stroke="#3DE0C8" stroke-width="6" fill="none"/>
+    <path d="M60 230 C 320 140, 560 280, 800 190 S 1120 130, 1260 200" stroke="#8B7BFF" stroke-width="5" fill="none"/>
+  </g>
+  <g fill="#F4F4F7">
+    <circle cx="96" cy="70" r="1.6"/><circle cx="240" cy="120" r="1.2"/><circle cx="410" cy="58" r="1.4"/>
+    <circle cx="560" cy="102" r="1"/><circle cx="702" cy="46" r="1.6"/><circle cx="880" cy="88" r="1.2"/>
+    <circle cx="1010" cy="40" r="1.4"/><circle cx="1150" cy="96" r="1"/><circle cx="1230" cy="52" r="1.3"/>
+    <circle cx="330" cy="30" r="1"/><circle cx="960" cy="140" r="1"/><circle cx="640" cy="150" r="1.1"/>
+  </g>
+  <path d="M0 560 L 140 500 L 260 540 L 400 470 L 520 520 L 660 455 L 800 515 L 930 480 L 1060 530 L 1180 490 L 1280 520 L 1280 720 L 0 720 Z" fill="#08080F"/>
+  <path d="M0 610 L 180 570 L 330 600 L 470 560 L 640 605 L 780 575 L 950 610 L 1110 580 L 1280 600 L 1280 720 L 0 720 Z" fill="#050509"/>
+</svg>
