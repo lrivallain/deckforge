@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { startServer, resolveInside, protectDeckHtml } from "../../src/server/http.js";
 import { DeckStore } from "../../src/server/store.js";
@@ -400,5 +400,41 @@ describe("CLI", () => {
   it("refuses non-loopback hosts", () => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));
     expect(() => execFileSync(process.execPath, [cli, "serve", path.join(root, "examples/starter"), "--host", "0.0.0.0"], { env, stdio: "pipe" })).toThrow(/loopback/);
+  });
+  it("lists the catalogue with deck-local templates", () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));
+    fs.mkdirSync(path.join(dir, "templates"));
+    fs.writeFileSync(path.join(dir, "templates/metric.html"), "---\nname: metric\ndescription: One number.\nslots:\n  value: { type: text, max: 8, required: true }\n---\n<p>{{value}}</p>\n");
+    fs.writeFileSync(path.join(dir, "templates/broken.html"), "---\nname: other\n---\n<p></p>\n");
+    const json = JSON.parse(execFileSync(process.execPath, [cli, "templates", dir, "--json"], { env, encoding: "utf8" }));
+    const byName = Object.fromEntries(json.templates.map((t) => [t.name, t]));
+    expect(byName["concept-map"].scope).toBe("builtin");
+    expect(byName["concept-map"].slots.audiences).toMatchObject({ type: "cards", max: 3 });
+    expect(byName.metric).toMatchObject({ scope: "deck", description: "One number.", slots: { value: { type: "text", max: 8, required: true } } });
+    expect(json.themes.map((t) => t.name)).toEqual(expect.arrayContaining(["build", "atelier"]));
+    expect(json.icons).toContain("rocket");
+    expect(json.loadErrors).toEqual([expect.objectContaining({ message: expect.stringContaining("does not match") })]);
+    const text = execFileSync(process.execPath, [cli, "templates", dir], { env, encoding: "utf8", stdio: "pipe" });
+    expect(text).toContain("- metric [content, deck]: One number.");
+    expect(text).toContain("value (text, max 8, required)");
+  });
+  it("reports build results as JSON", () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));
+    fs.copyFileSync(path.join(root, "examples/starter/deck.yaml"), path.join(dir, "deck.yaml"));
+    const ok = JSON.parse(execFileSync(process.execPath, [cli, "build", dir, "--json"], { env, encoding: "utf8" }));
+    expect(ok).toMatchObject({ ok: true, runtime: "local", slides: 4, visibleSlides: 4, issues: [], outPath: path.join(dir, "deck.html") });
+    fs.writeFileSync(path.join(dir, "deck.yaml"), "meta: { title: T }\nslides:\n  - { id: a, template: nope }\n  - { id: b, template: bullets, data: { title: Hi, bogus: 1 } }\n");
+    const bad = spawnSync(process.execPath, [cli, "build", dir, "--json"], { env, encoding: "utf8" });
+    expect(bad.status).toBe(2);
+    expect(bad.stderr).toBe("");
+    const report = JSON.parse(bad.stdout);
+    expect(report.ok).toBe(false);
+    expect(report.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ level: "error", slide: "a", message: expect.stringContaining("Unknown template") }),
+      expect.objectContaining({ level: "warning", slide: "b", message: expect.stringContaining("bogus") }),
+    ]));
+    const missing = spawnSync(process.execPath, [cli, "build", path.join(dir, "nope"), "--json"], { env, encoding: "utf8" });
+    expect(missing.status).toBe(1);
+    expect(JSON.parse(missing.stdout).error).toContain("does not exist");
   });
 });

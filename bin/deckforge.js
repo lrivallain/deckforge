@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// deckforge CLI: new | build | edit | serve
+// deckforge CLI: new | build | templates | edit | serve | skill
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -8,22 +8,30 @@ import { parseArgs } from "node:util";
 import { VERSION } from "../src/core/render.js";
 import { RUNTIME_MODES, stringifyDeck, normalizeDeck } from "../src/core/deck.js";
 import { buildDeckFile } from "../src/server/build.js";
-import { PACKAGE_ROOT, configDir } from "../src/server/registry.js";
+import { PACKAGE_ROOT, configDir, describeCatalog } from "../src/server/registry.js";
+import { describeSlot } from "../src/server/prompt.js";
+import { ICON_NAMES } from "../src/core/icons.js";
+import { LEGACY_SKILL_NAME, copilotSkillsDir, installCopilotSkill } from "../src/server/skill.js";
 
 const HELP = `deckforge ${VERSION} — themeable, template-driven HTML presentations
 
 Usage
   deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora]]
-  deckforge build <deck.yaml|dir> [--runtime local|cdn|inline] [--out deck.html]
+  deckforge build <deck.yaml|dir> [--runtime local|cdn|inline] [--out deck.html] [--json]
+  deckforge templates [deck.yaml|dir] [--json]
   deckforge edit <deck.yaml|dir> [--port 0] [--token <t>] [--runtime …] [--no-open]
   deckforge serve <deck.yaml|dir> [--port 0] [--no-open]
+  deckforge skill install-copilot [--force] [--dest <skills dir>] [--replace-build-presentation]
 
 Commands
-  new     Create a deck folder with a deck.yaml (a title slide, or --example for a full specimen:
-          "starter" (default, diagram-led) or "aurora" (dark theme, Essentials templates))
-  build   Render deck.yaml to a static deck.html next to it
-  edit    Start the local editor (127.0.0.1 only, random port and per-run token)
-  serve   Serve the built deck read-only, rebuilding and reloading on change
+  new        Create a deck folder with a deck.yaml (a title slide, or --example for a full specimen:
+             "starter" (default, diagram-led) or "aurora" (dark theme, Essentials templates))
+  build      Render deck.yaml to a static deck.html next to it (--json: machine-readable report)
+  templates  List the templates (with their slots), themes and icons a deck can use
+  edit       Start the local editor (127.0.0.1 only, random port and per-run token)
+  serve      Serve the built deck read-only, rebuilding and reloading on change
+  skill      install-copilot: install the deckforge GitHub Copilot skill into
+             $COPILOT_HOME/skills (default ~/.copilot/skills)
 
 Runtime modes (how deck.html loads the viewer)
   local   copy deckforge/deckforge.viewer.{js,css} next to deck.html (default)
@@ -37,8 +45,11 @@ ones next to --out, inline embeds them as data URIs, cdn keeps relative paths.
 Templates/themes lookup: <deck>/templates|themes → ${path.join(configDir(), "templates|themes")} → built-ins
 `;
 
+let jsonOutput = false;
+
 function fail(message) {
-  console.error(`deckforge: ${message}`);
+  if (jsonOutput) console.log(JSON.stringify({ error: message }, null, 2));
+  else console.error(`deckforge: ${message}`);
   process.exit(1);
 }
 
@@ -107,10 +118,14 @@ const { values, positionals } = parseArgs({
     theme: { type: "string" },
     example: { type: "string" },
     force: { type: "boolean" },
+    json: { type: "boolean" },
+    dest: { type: "string" },
+    "replace-build-presentation": { type: "boolean" },
   },
 });
 
 const [command, target] = positionals;
+jsonOutput = Boolean(values.json);
 if (values.version) {
   console.log(VERSION);
   process.exit(0);
@@ -158,9 +173,61 @@ switch (command) {
     const file = resolveDeck(target);
     try {
       const result = buildDeckFile(file, { runtime: values.runtime, out: values.out });
+      const errors = result.issues.some((i) => i.level === "error");
+      if (jsonOutput) {
+        console.log(JSON.stringify({
+          ok: !errors,
+          deck: file,
+          outPath: result.outPath,
+          runtime: result.runtime,
+          slides: result.deck.slides.length,
+          visibleSlides: result.deck.slides.filter((s) => !s.hidden).length,
+          issues: result.issues,
+          loadErrors: result.loadErrors.map(({ path: p, message }) => ({ path: p, message })),
+          assets: result.assets,
+        }, null, 2));
+        if (errors) process.exitCode = 2;
+        break;
+      }
       printIssues(result.issues, result.loadErrors);
       console.log(`Built ${path.relative(process.cwd(), result.outPath)} (${result.runtime} runtime, ${result.deck.slides.filter((s) => !s.hidden).length} slides)`);
-      if (result.issues.some((i) => i.level === "error")) process.exitCode = 2;
+      if (errors) process.exitCode = 2;
+    } catch (err) {
+      fail(err.message);
+    }
+    break;
+  }
+  case "templates": {
+    let deckDir = path.resolve(target || ".");
+    if (!fs.existsSync(deckDir)) fail(`${deckDir} does not exist`);
+    if (fs.statSync(deckDir).isFile()) deckDir = path.dirname(deckDir);
+    const catalog = describeCatalog(deckDir);
+    if (jsonOutput) {
+      console.log(JSON.stringify({ deckDir, ...catalog, icons: ICON_NAMES }, null, 2));
+      break;
+    }
+    printIssues([], catalog.loadErrors);
+    console.log("Templates (deck, then user, then built-in; the first name found wins)");
+    for (const t of catalog.templates) {
+      console.log(`- ${t.name} [${t.category}${t.scope === "builtin" ? "" : `, ${t.scope}`}]: ${t.description}`);
+      console.log(`  slots: ${Object.entries(t.slots).map(([k, s]) => describeSlot(k, s)).join("; ")}`);
+    }
+    console.log(`\nThemes: ${catalog.themes.map((t) => (t.scope === "builtin" ? t.name : `${t.name} (${t.scope})`)).join(", ")}`);
+    console.log(`Icons: ${ICON_NAMES.join(" ")}`);
+    break;
+  }
+  case "skill": {
+    if (target !== "install-copilot") fail(`unknown skill action "${target ?? ""}" (expected: deckforge skill install-copilot)`);
+    try {
+      const skillsDir = values.dest ? path.resolve(values.dest) : copilotSkillsDir();
+      const result = installCopilotSkill({ skillsDir, force: values.force, replaceLegacy: values["replace-build-presentation"], version: VERSION });
+      console.log(`${result.upgraded ? "Updated" : "Installed"} the deckforge Copilot skill in ${result.target}`);
+      if (result.legacyRemoved) console.log(`Removed the ${LEGACY_SKILL_NAME} skill it replaces (${result.legacy})`);
+      else if (result.legacy) {
+        console.log(`\nNote: ${result.legacy} is still installed. The deckforge skill replaces it;`);
+        console.log("remove it, or re-run with --replace-build-presentation, so both do not answer the same prompts.");
+      }
+      console.log("\nStart a new Copilot session to load it (check with /skills).");
     } catch (err) {
       fail(err.message);
     }
