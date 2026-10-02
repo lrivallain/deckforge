@@ -183,6 +183,7 @@ export function createOverlayLayer({ frame, getScale, onRejected, focusStage }) 
   const root = h("div", { class: "ov-layer", "data-testid": "overlay-layer" }, guides, boxes);
   let gesture = null;
   let afterGesture = null;
+  let drawn = "";
 
   const doc = () => frame.contentDocument;
   const scale = () => getScale() || 1;
@@ -232,6 +233,10 @@ export function createOverlayLayer({ frame, getScale, onRejected, focusStage }) 
     const slide = selectedSlide();
     const selected = selectedOverlays();
     const warned = new Set((state.overlayWarnings.get(slide?.id) || []).map((w) => w.overlayId));
+    // Keep the same boxes and handles while nothing changed (no flicker under the pointer).
+    const key = JSON.stringify([slide?.id, selected.map((o) => [o.id, o.x, o.y, o.w, o.h, o.rotate || 0, warned.has(o.id)])]);
+    if (key === drawn && boxes.childElementCount === selected.length) return;
+    drawn = key;
     boxes.replaceChildren(...selected.map((o) => {
       const box = h("div", {
         class: `ov-box${warned.has(o.id) ? " is-warn" : ""}`,
@@ -490,6 +495,8 @@ export function createOverlayLayer({ frame, getScale, onRejected, focusStage }) 
     const pending = afterGesture;
     afterGesture = null;
     pending?.();
+    // The boxes were moved live: redraw them from the deck.
+    drawn = "";
     render();
   }
 

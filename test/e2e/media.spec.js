@@ -22,6 +22,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 const stage = (page) => page.frameLocator("[data-testid=stage-frame]");
+/** Bounding box of a locator, waiting until it is attached and laid out. */
+async function boxOf(locator) {
+  let box = null;
+  await expect.poll(async () => (box = await locator.boundingBox().catch(() => null))).not.toBeNull();
+  return box;
+}
 const overlaysOf = (yaml, id) => parseDeckYaml(yaml).slides.find((s) => s.id === id)?.overlays || [];
 
 test.describe("editor", () => {
@@ -61,7 +67,7 @@ test.describe("editor", () => {
 
     // Focal point: click the thumbnail.
     await page.getByTestId("image-thumb").scrollIntoViewIfNeeded();
-    const thumb = await page.getByTestId("image-thumb").boundingBox();
+    const thumb = await boxOf(page.getByTestId("image-thumb"));
     await page.mouse.click(thumb.x + thumb.width * 0.25, thumb.y + thumb.height * 0.75);
     await waitForFile(editor.readYaml, (y) => /focus: 2\d% 7\d%/.test(y));
     expect(editor.readYaml()).toContain("alt: Blue gradient with a pale sun over two hills");
@@ -81,9 +87,10 @@ test.describe("editor", () => {
     await expect(box).toBeVisible();
     await expect(stage(page).locator('.df-ov-shape[data-ov-id="shape-1"]')).toBeVisible();
     const start = overlaysOf(editor.readYaml(), "concept")[0];
+    await expect(page.locator('input[data-path="@ov:shape-1:x"]')).toHaveValue(String(Math.round(start.x * 12.8 * 10) / 10));
 
     // Drag (snaps to the 8 px grid when no element edge is close).
-    const b = await box.boundingBox();
+    const b = await boxOf(box);
     await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
     await page.mouse.down();
     await page.mouse.move(b.x + b.width / 2 - 90, b.y + b.height / 2 - 70, { steps: 6 });
@@ -97,7 +104,7 @@ test.describe("editor", () => {
     await expect(page.locator('input[data-path="@ov:shape-1:x"]')).toHaveValue(String(Math.round(moved.x * 12.8 * 10) / 10));
 
     // Resize from the east handle.
-    const e = await page.getByTestId("handle-e").boundingBox();
+    const e = await boxOf(page.getByTestId("handle-e"));
     await page.mouse.move(e.x + e.width / 2, e.y + e.height / 2);
     await page.mouse.down();
     await page.mouse.move(e.x + 60, e.y + e.height / 2, { steps: 5 });
@@ -174,7 +181,7 @@ test.describe("editor", () => {
     await stage(page).locator('df-slot[data-df-slot="audiences.0.title"]').hover();
     const grip = page.getByTestId("reorder-grip");
     await expect(grip).toBeVisible();
-    const g = await grip.boundingBox();
+    const g = await boxOf(grip);
     const target = await stage(page).locator('df-slot[data-df-slot="audiences.2.title"]').boundingBox();
     await page.mouse.move(g.x + g.width / 2, g.y + g.height / 2);
     await page.mouse.down();
@@ -187,7 +194,7 @@ test.describe("editor", () => {
     // Inspector: drag the last capability to the top.
     const rows = page.locator('.field[data-path="capabilities"] .list-row');
     await page.locator('.field[data-path="capabilities"]').scrollIntoViewIfNeeded();
-    const handle = await rows.nth(3).locator(".drag-handle").boundingBox();
+    const handle = await boxOf(rows.nth(3).locator(".drag-handle"));
     const first = await rows.nth(0).boundingBox();
     await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
     await page.mouse.down();
