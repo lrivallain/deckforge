@@ -10,15 +10,15 @@
 
 <p align="center">
   <a href="https://github.com/lrivallain/deckforge/actions/workflows/ci.yml"><img src="https://github.com/lrivallain/deckforge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://lrivallain.github.io/deckforge/"><img src="https://img.shields.io/badge/docs-lrivallain.github.io%2Fdeckforge-0F6CBD" alt="Documentation"></a>
+  <a href="https://ludovic.rivallain.fr/deckforge/"><img src="https://img.shields.io/badge/docs-ludovic.rivallain.fr%2Fdeckforge-0F6CBD" alt="Documentation"></a>
   <img src="https://img.shields.io/badge/node-%E2%89%A520.19-339933" alt="Node.js 20.19 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-C2620A" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="https://lrivallain.github.io/deckforge/guide/getting-started"><b>Get started</b></a> ·
-  <a href="https://lrivallain.github.io/deckforge/"><b>Documentation</b></a> ·
-  <a href="https://lrivallain.github.io/deckforge/demo/aurora.html"><b>Live demo</b></a>
+  <a href="https://ludovic.rivallain.fr/deckforge/guide/getting-started"><b>Get started</b></a> ·
+  <a href="https://ludovic.rivallain.fr/deckforge/"><b>Documentation</b></a> ·
+  <a href="https://ludovic.rivallain.fr/deckforge/demo/aurora.html"><b>Live demo</b></a>
 </p>
 
 ![The deckforge editor](docs/public/screenshots/editor.png)
@@ -53,13 +53,13 @@ To start from a complete deck, run `deckforge new my-talk --example aurora`.
 
 | | |
 |---|---|
-| [Getting started](https://lrivallain.github.io/deckforge/guide/getting-started) | Install and create your first deck |
-| [Write a deck](https://lrivallain.github.io/deckforge/guide/writing-decks) | The basics of `deck.yaml` |
-| [Themes](https://lrivallain.github.io/deckforge/guide/themes) · [Templates](https://lrivallain.github.io/deckforge/guide/templates) | Galleries of themes and templates |
-| [Editor](https://lrivallain.github.io/deckforge/guide/editor) · [Copilot](https://lrivallain.github.io/deckforge/guide/copilot) | Edit slides visually or by asking Copilot |
-| [Present and share](https://lrivallain.github.io/deckforge/guide/presenting) | Viewer, print to PDF, runtime modes |
-| [Copilot skill](https://lrivallain.github.io/deckforge/guide/copilot-skill) | Let the Copilot CLI build a deck from a brief |
-| [Reference](https://lrivallain.github.io/deckforge/reference/cli) | CLI, `deck.yaml`, theme and template files, security model |
+| [Getting started](https://ludovic.rivallain.fr/deckforge/guide/getting-started) | Install and create your first deck |
+| [Write a deck](https://ludovic.rivallain.fr/deckforge/guide/writing-decks) | The basics of `deck.yaml` |
+| [Themes](https://ludovic.rivallain.fr/deckforge/guide/themes) · [Templates](https://ludovic.rivallain.fr/deckforge/guide/templates) | Galleries of themes and templates |
+| [Editor](https://ludovic.rivallain.fr/deckforge/guide/editor) · [Copilot](https://ludovic.rivallain.fr/deckforge/guide/copilot) | Edit slides visually or by asking Copilot |
+| [Present and share](https://ludovic.rivallain.fr/deckforge/guide/presenting) | Viewer, print to PDF, runtime modes |
+| [Copilot skill](https://ludovic.rivallain.fr/deckforge/guide/copilot-skill) | Let the Copilot CLI build a deck from a brief |
+| [Reference](https://ludovic.rivallain.fr/deckforge/reference/cli) | CLI, `deck.yaml`, theme and template files, security model |
 
 ## Contributing
 

@@ -1,7 +1,7 @@
 import { defineConfig } from "vitepress";
 
 const base = "/deckforge/";
-const site = "https://lrivallain.github.io/deckforge/";
+const site = "https://ludovic.rivallain.fr/deckforge/";
 
 export default defineConfig({
   base,
