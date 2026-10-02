@@ -93,7 +93,7 @@ async function main() {
   const rail = createRail({ onAddSlide: addSlide });
   let stage = null;
   const inspector = createInspector({ onFieldFocus: (path) => stage?.highlightSlot(path) });
-  stage = createStage({ onSlotFocus: (path) => inspector.revealField(path) });
+  stage = createStage({ onSlotFocus: (path, opts) => inspector.revealField(path, opts) });
 
   app.removeAttribute("aria-busy");
   app.replaceChildren(topbar.root, h("main", { class: "workspace" }, rail.root, stage.root, inspector.root, chat.root));

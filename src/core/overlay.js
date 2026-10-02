@@ -34,12 +34,13 @@ const DEFAULT_DATA = {
   image: { src: "", alt: "", fit: "cover", focus: "50% 50%" },
 };
 
+// Default sizes (in %) land on the 8 px editor grid of the 1280×720 slide.
 export const DEFAULT_SIZE = {
-  text: { w: 30, h: 10 },
-  callout: { w: 28, h: 14 },
-  arrow: { w: 15, h: 6 },
-  shape: { w: 18, h: 18 },
-  image: { w: 30, h: 30 },
+  text: { w: 30, h: 10 }, // 384×72
+  callout: { w: 27.5, h: 14.44 }, // 352×104
+  arrow: { w: 15, h: 6.67 }, // 192×48
+  shape: { w: 15, h: 26.67 }, // 192×192
+  image: { w: 30, h: 40 }, // 384×288
 };
 
 export class OverlayError extends Error {

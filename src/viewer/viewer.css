@@ -209,7 +209,10 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
   border: 1.5px dashed var(--df-dashed); border-radius: inherit; cursor: pointer;
 }
 .df-edit .df-img-empty.df-drop, .df-edit [data-df-image].df-drop { outline: 3px solid var(--df-primary); outline-offset: -3px; }
-.df-edit .df-ov { cursor: move; }
+.df-edit .df-ov { cursor: move; -webkit-user-select: none; user-select: none; }
+.df-edit .df-ov:hover { outline: 1.5px dashed color-mix(in srgb, var(--df-primary) 55%, transparent); outline-offset: 1px; }
+.df-edit .df-gesture, .df-edit .df-gesture * { -webkit-user-select: none !important; user-select: none !important; }
+.df-edit .df-reorderable:hover { outline: 1px dashed color-mix(in srgb, var(--df-primary) 35%, transparent); outline-offset: 2px; }
 .df-edit .df-ov-empty { display: grid; place-items: center; width: 100%; height: 100%; font: 400 1.2cqw var(--df-font-mono); color: var(--df-muted); border: 1.5px dashed var(--df-dashed); }
 .df-edit .df-reorderable.df-dragging { opacity: .45; }
 /* Template sample text: shown while editing, never published. */

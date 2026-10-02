@@ -37,6 +37,10 @@ export const state = {
   agent: { state: "idle", error: null, hint: null, messages: [] },
   highlights: new Map(),
   connection: "connecting",
+  // Selected overlay ids on the selected slide.
+  overlaySelection: [],
+  // slideId → [{ overlayId, slot }] measured on the stage preview.
+  overlayWarnings: new Map(),
 };
 
 const listeners = new Set();
@@ -98,6 +102,8 @@ export function applySnapshot(snapshot, info = {}) {
     const fallback = info.removedIndex !== undefined ? Math.min(info.removedIndex, ids.length - 1) : 0;
     state.selectedId = ids[Math.max(0, fallback)] ?? null;
   }
+  const present = new Set((selectedSlide()?.overlays || []).map((o) => o.id));
+  state.overlaySelection = state.overlaySelection.filter((id) => present.has(id));
   notify(info);
 }
 
@@ -108,7 +114,20 @@ export function selectedSlide() {
 export function select(id) {
   if (state.selectedId === id) return;
   state.selectedId = id;
+  state.overlaySelection = [];
   notify({ selection: true });
+}
+
+export function selectOverlays(ids) {
+  const next = [...new Set(ids)];
+  if (next.length === state.overlaySelection.length && next.every((id, i) => id === state.overlaySelection[i])) return;
+  state.overlaySelection = next;
+  notify({ overlaySelection: true });
+}
+
+export function selectedOverlays() {
+  const slide = selectedSlide();
+  return (slide?.overlays || []).filter((o) => state.overlaySelection.includes(o.id));
 }
 
 export function currentTheme() {
@@ -125,7 +144,8 @@ export function slidePosition(slide) {
 
 export function slideDocument(slide, { edit = false, theme = currentTheme(), deck = state.deck, templates = state.templates } = {}) {
   const { index, total } = deck === state.deck ? slidePosition(slide) : { index: 0, total: 1 };
-  return renderSlideDocument(deck, slide, { templates, theme, viewerCssHref: VIEWER_CSS, viewerCss: viewerCssText, edit, index, total });
+  // Previews are about:blank documents: point deck assets at the server.
+  return renderSlideDocument(deck, slide, { templates, theme, viewerCssHref: VIEWER_CSS, viewerCss: viewerCssText, edit, index, total, assetBase: "/deck/" });
 }
 
 export function markChanged(ids) {
