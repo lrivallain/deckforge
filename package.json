@@ -23,7 +23,7 @@
   "bugs": {
     "url": "https://github.com/lrivallain/deckforge/issues"
   },
-  "homepage": "https://ludovic.rivallain.fr/deckforge/",
+  "homepage": "https://deckforge.vuptime.io/",
   "type": "module",
   "bin": {
     "deckforge": "bin/deckforge.js"

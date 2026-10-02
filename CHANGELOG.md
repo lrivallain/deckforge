@@ -20,7 +20,7 @@ First public version. Add the release date to this heading when you tag it.
 - Copilot assistant with slide or deck scope and deck-only tools, where each turn is one undo step.
 - GitHub Copilot skill (`deckforge skill install-copilot`).
 - CLI: `new`, `build`, `templates`, `edit`, `serve`, `skill`.
-- Documentation site at <https://ludovic.rivallain.fr/deckforge/>, with screenshots and live example decks.
+- Documentation site at <https://deckforge.vuptime.io/>, with screenshots and live example decks.
 - deckforge icon: favicon for the editor and the site, and a social card.
 - Community files, issue and pull request templates, Dependabot, and a release workflow that runs on `v*` tags.
 

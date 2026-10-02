@@ -20,4 +20,4 @@ These parts are especially in scope:
 - HTML output: escaping of slot text, the rich-text allow-list, theme value validation, SVG upload filtering;
 - the Copilot assistant's tool boundary: it must not reach files, the shell or the network.
 
-The design is described in the [security model](https://ludovic.rivallain.fr/deckforge/reference/security).
+The design is described in the [security model](https://deckforge.vuptime.io/reference/security).

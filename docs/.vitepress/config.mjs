@@ -1,7 +1,7 @@
 import { defineConfig } from "vitepress";
 
-const base = "/deckforge/";
-const site = "https://ludovic.rivallain.fr/deckforge/";
+const base = "/";
+const site = "https://deckforge.vuptime.io/";
 
 export default defineConfig({
   base,
