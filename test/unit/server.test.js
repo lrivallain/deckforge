@@ -382,6 +382,21 @@ describe("CLI", () => {
     expect(() => execFileSync(process.execPath, [cli, "build", target, "--runtime", "bogus"], { env, stdio: "pipe" })).toThrow();
     expect(execFileSync(process.execPath, [cli, "--version"], { env, encoding: "utf8" }).trim()).toMatch(/^\d+\.\d+\.\d+$/);
   });
+  it("creates decks from the bundled examples", () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));
+    const aurora = path.join(dir, "aurora");
+    execFileSync(process.execPath, [cli, "new", aurora, "--example", "aurora"], { env });
+    expect(fs.readFileSync(path.join(aurora, "deck.yaml"), "utf8")).toBe(fs.readFileSync(path.join(root, "examples/aurora/deck.yaml"), "utf8"));
+    expect(fs.existsSync(path.join(aurora, "assets/aurora-sky.svg"))).toBe(true);
+    expect(fs.readFileSync(path.join(aurora, "deck.html"), "utf8")).toContain('data-theme="aurora"');
+    const starter = path.join(dir, "starter");
+    execFileSync(process.execPath, [cli, "new", starter, "--example"], { env });
+    expect(fs.readFileSync(path.join(starter, "deck.yaml"), "utf8")).toBe(fs.readFileSync(path.join(root, "examples/starter/deck.yaml"), "utf8"));
+    const before = path.join(dir, "before");
+    execFileSync(process.execPath, [cli, "new", "--example", before], { env });
+    expect(fs.readFileSync(path.join(before, "deck.yaml"), "utf8")).toContain("theme: build");
+    expect(() => execFileSync(process.execPath, [cli, "new", path.join(dir, "x"), "--example=nope"], { env, stdio: "pipe" })).toThrow(/unknown example "nope"/);
+  });
   it("refuses non-loopback hosts", () => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));
     expect(() => execFileSync(process.execPath, [cli, "serve", path.join(root, "examples/starter"), "--host", "0.0.0.0"], { env, stdio: "pipe" })).toThrow(/loopback/);

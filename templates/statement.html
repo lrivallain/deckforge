@@ -1,0 +1,24 @@
+---
+name: statement
+label: Statement
+description: One idea in one sentence, set very large, with an optional small note. Use it for the point the audience must repeat.
+category: essentials
+order: 3
+slots:
+  kicker: { type: text, max: 40, sample: The idea }
+  text: { type: richtext, max: 110, required: true, sample: 'Every slide should make <span class="accent">exactly one point</span> the room can repeat.' }
+  note: { type: text, max: 90, sample: "" }
+---
+<div class="statement">
+  {{#if kicker}}<p class="kicker reveal">{{kicker}}</p>{{/if}}
+  <p id="{{slide.titleId}}" class="big reveal">{{text}}</p>
+  {{#if note}}<p class="note reveal">{{note}}</p>{{/if}}
+</div>
+{{> foot}}
+
+<style scoped>
+.statement { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2cqw; }
+.kicker { font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; }
+.big { font: 700 5cqw / 1.08 var(--df-font-heading); letter-spacing: -.035em; max-width: 80cqw; }
+.note { font-size: 1.7cqw; line-height: 1.4; color: var(--df-muted); max-width: 60cqw; }
+</style>

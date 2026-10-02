@@ -1,0 +1,96 @@
+meta:
+  title: Ship less. Ship better.
+  lang: en
+  theme: aurora
+  footer: Aurora specimen / Essentials templates
+  brief:
+    topic: A single release gate for product teams
+    audience: Engineering and product leads
+    goal: Show the Aurora theme and the Essentials templates with neutral content
+    duration: 8 minutes
+slides:
+  - id: cover
+    template: cover
+    title: Cover
+    data:
+      kicker: Product review · 2026
+      title: Ship less. <span class="accent">Ship better.</span>
+      subtitle: How one release gate cut rework in half.
+      byline: Presenter name
+      details: Event or date
+    notes: |
+      Open with the promise, not the process. One sentence on why this matters now.
+  - id: agenda
+    template: agenda
+    title: Agenda
+    data:
+      kicker: Agenda
+      title: Where we are <span class="accent">going</span>
+      items: [Why releases slip, The release gate, What it changed, Next steps]
+  - id: idea
+    template: statement
+    title: The idea
+    data:
+      kicker: The idea
+      text: Every release should pass <span class="accent">one gate</span> that everyone can name.
+      note: Not more process. One shared checkpoint with a single owner.
+    notes: |
+      Pause after the sentence. This is the line people should repeat after the talk.
+  - id: changes
+    template: points
+    title: What changes
+    data:
+      title: What <span class="accent">changes</span>
+      points:
+        - One owner per release decision
+        - One shared version to review
+        - <strong>One gate</strong> before anything ships
+  - id: before-after
+    template: split
+    title: Before and after
+    data:
+      title: Before and <span class="accent">after</span>
+      leftLabel: Before
+      leftText: Drafts travel by email and every reviewer sees a different version.
+      rightLabel: After
+      rightText: One shared version, one named owner and a gate before anything ships.
+      highlightRight: true
+  - id: results
+    template: metric
+    title: Results
+    data:
+      title: What the gate <span class="accent">changed</span>
+      metrics:
+        - { value: "−48%", label: Rework after release, focus: true }
+        - { value: 3×, label: Faster reviews }
+        - { value: "0", label: Unowned decisions }
+      source: "Source: illustrative figures for the specimen deck"
+    notes: |
+      Replace these with your own measured numbers and name the source.
+  - id: interlude
+    template: visual
+    title: Interlude
+    data:
+      image:
+        src: assets/aurora-sky.svg
+        alt: Abstract night sky with violet and mint northern lights above dark hills
+        fit: cover
+        focus: 50% 40%
+      kicker: Interlude
+      line: Quiet launches are <span class="accent">good launches</span>.
+  - id: voice
+    template: quote
+    title: In their words
+    data:
+      eyebrow: In their words
+      quote: The best review is the one where everyone looks at <span class="blue">the same version</span>.
+      author: Name Surname
+      role: Role, organisation
+  - id: closing
+    template: closing
+    title: Closing
+    data:
+      kicker: Next step
+      title: Thank <span class="accent">you</span>.
+      text: Try the release gate on one team for the next two sprints.
+      link: { label: example.com/release-gate, href: "https://example.com/release-gate" }

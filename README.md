@@ -61,13 +61,16 @@ deckforge build my-talk --runtime inline                    # one self-contained
 
 To start from the full specimen deck, run `deckforge new my-talk --example`. It is the same deck as
 [`examples/starter`](examples/starter), which reproduces the `build-presentation`
-`starter.html` pixel for pixel.
+`starter.html` pixel for pixel. For a lighter, dark deck, run `deckforge new my-talk --example aurora`:
+[`examples/aurora`](examples/aurora) uses the `aurora` theme and every Essentials template.
+
+![The aurora example deck](docs/aurora.png)
 
 ## CLI
 
 | Command | What it does |
 |---|---|
-| `deckforge new <dir> [--title T] [--theme build] [--example] [--force]` | Create a deck folder with `deck.yaml` and build it |
+| `deckforge new <dir> [--title T] [--theme build] [--example [starter\|aurora]] [--force]` | Create a deck folder with `deck.yaml` and build it. `--example` copies a bundled example deck (and its assets); bare `--example` means `starter` |
 | `deckforge build <deck.yaml\|dir> [--runtime local\|cdn\|inline] [--out file] [--json]` | Render `deck.yaml` to `deck.html`. Prints validation issues; exits with code 2 on errors. `--json` prints a machine-readable report (`ok`, `outPath`, `issues`, `loadErrors`, `assets`) |
 | `deckforge templates [deck.yaml\|dir] [--json]` | List the templates a deck can use, with their slots, plus themes and icons. Deck-local and user templates are included |
 | `deckforge edit <deck.yaml\|dir> [--port 0] [--token T] [--runtime …] [--no-open]` | Start the local editor |
@@ -143,6 +146,9 @@ deckforge looks up themes in this order:
 3. the built-in themes:
    - **`build`** has the exact `build-presentation` tokens.
    - **`atelier`** is a warm ivory theme with teal and rose accents and serif headings.
+   - **`aurora`** is a dark, modern theme: a near-black canvas, violet primary and mint accent, oversized
+     tight sans headings (Inter, else the system UI font) and generous space. It pairs best with the
+     Essentials templates.
 
 ```yaml
 name: my-theme
@@ -181,7 +187,7 @@ The lookup order is the same as for themes: `templates/` in the deck folder, the
 name: team-grid                 # must match the file name
 label: Team grid
 description: Up to three cards under a headline.
-category: content               # structure | diagram | content | media (template picker groups)
+category: content               # essentials | structure | diagram | content | media (template picker groups)
 order: 10                       # optional sort order in the picker
 class: map-slide                # optional extra classes on the <section>
 slots:
@@ -240,6 +246,13 @@ icon arrow`, `h1 .old`, `.blue/.primary` and `.amber/.accent`. Built-in template
 (problem → response), `bullets`, `two-column` (optional `leftMedia`/`rightMedia`), `quote`, `resources`,
 `image` (framed with a caption, or full-bleed with a text panel) and `image-text` (picture + headline +
 points; `imageRight` switches the side). Empty optional images keep the original layouts pixel for pixel.
+
+The **Essentials** templates are a simpler baseline: one point per slide, large type, no cards, icons or
+diagrams. They work with every theme and are listed first in the template picker: `cover` (kicker,
+oversized headline, byline), `agenda` (up to six numbered chapters), `statement` (one sentence set very
+large), `points` (up to four numbered rows), `split` (two plain columns, one can be highlighted),
+`metric` (up to three big numbers), `visual` (full-bleed picture with one line) and `closing`
+(thank-you, next step and a link).
 
 ## Runtime modes and CDN
 
@@ -407,7 +420,7 @@ Editor previews are written into same-origin `about:blank` iframes with `documen
 `srcdoc` or `blob:` URLs, which some WebKit hosts (for example Tauri WKWebView) never load. An e2e test
 disables `srcdoc` to guard this.
 
-`dist/` and `examples/starter/deck.html` are committed, because the CDN serves them from Git tags.
+`dist/`, `examples/starter/deck.html` and `examples/aurora/deck.html` are committed, because the CDN serves them from Git tags.
 CI checks that they are up to date. The e2e tests mock the Copilot SDK with
 `test/fixtures/mock-sdk.js` (`DECKFORGE_AGENT_MOCK`).
 

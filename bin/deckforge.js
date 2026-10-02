@@ -16,7 +16,7 @@ import { LEGACY_SKILL_NAME, copilotSkillsDir, installCopilotSkill } from "../src
 const HELP = `deckforge ${VERSION} — themeable, template-driven HTML presentations
 
 Usage
-  deckforge new <dir> [--title "My talk"] [--theme build] [--example]
+  deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora]]
   deckforge build <deck.yaml|dir> [--runtime local|cdn|inline] [--out deck.html] [--json]
   deckforge templates [deck.yaml|dir] [--json]
   deckforge edit <deck.yaml|dir> [--port 0] [--token <t>] [--runtime …] [--no-open]
@@ -24,7 +24,8 @@ Usage
   deckforge skill install-copilot [--force] [--dest <skills dir>] [--replace-build-presentation]
 
 Commands
-  new        Create a deck folder with a deck.yaml (a title slide, or --example for the full specimen)
+  new        Create a deck folder with a deck.yaml (a title slide, or --example for a full specimen:
+             "starter" (default, diagram-led) or "aurora" (dark theme, Essentials templates))
   build      Render deck.yaml to a static deck.html next to it (--json: machine-readable report)
   templates  List the templates (with their slots), themes and icons a deck can use
   edit       Start the local editor (127.0.0.1 only, random port and per-run token)
@@ -75,7 +76,33 @@ function printIssues(issues = [], loadErrors = []) {
   for (const i of issues) console.error(`  ${i.level === "error" ? "✗" : i.level === "info" ? "·" : "!"} ${i.slide ? `[${i.slide}] ` : ""}${i.message}`);
 }
 
+// `--example` takes an optional example name: bare `--example` means "starter".
+// Only consume the next token when it names a bundled example, so
+// `new my-talk --example` and `new --example my-talk` keep working.
+const EXAMPLES_DIR = path.join(PACKAGE_ROOT, "examples");
+const exampleNames = () => {
+  try {
+    return fs.readdirSync(EXAMPLES_DIR).filter((name) => fs.existsSync(path.join(EXAMPLES_DIR, name, "deck.yaml"))).sort();
+  } catch {
+    return [];
+  }
+};
+const argv = [];
+for (let i = 2; i < process.argv.length; i++) {
+  const arg = process.argv[i];
+  if (arg !== "--example") {
+    argv.push(arg);
+    continue;
+  }
+  const next = process.argv[i + 1];
+  if (next && !next.startsWith("-") && exampleNames().includes(next)) {
+    argv.push(`--example=${next}`);
+    i++;
+  } else argv.push("--example=starter");
+}
+
 const { values, positionals } = parseArgs({
+  args: argv,
   allowPositionals: true,
   options: {
     help: { type: "boolean", short: "h" },
@@ -89,7 +116,7 @@ const { values, positionals } = parseArgs({
     "no-open": { type: "boolean" },
     title: { type: "string" },
     theme: { type: "string" },
-    example: { type: "boolean" },
+    example: { type: "string" },
     force: { type: "boolean" },
     json: { type: "boolean" },
     dest: { type: "string" },
@@ -123,7 +150,11 @@ switch (command) {
     fs.mkdirSync(dir, { recursive: true });
     let yaml;
     if (values.example) {
-      yaml = fs.readFileSync(path.join(PACKAGE_ROOT, "examples/starter/deck.yaml"), "utf8");
+      const available = exampleNames();
+      if (!available.includes(values.example)) fail(`unknown example "${values.example}" (available: ${available.join(", ")})`);
+      yaml = fs.readFileSync(path.join(EXAMPLES_DIR, values.example, "deck.yaml"), "utf8");
+      const assets = path.join(EXAMPLES_DIR, values.example, "assets");
+      if (fs.existsSync(assets)) fs.cpSync(assets, path.join(dir, "assets"), { recursive: true, force: Boolean(values.force) });
     } else {
       const title = values.title || path.basename(dir);
       yaml = stringifyDeck(normalizeDeck({

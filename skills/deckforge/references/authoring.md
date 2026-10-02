@@ -89,6 +89,15 @@ The editor manages `placeholders` (slots still showing sample text, never publis
 | A real, sourced statement | `quote` | Never invent or paraphrase a quote |
 | Picture that proves a point | `image` (framed, or `fullBleed`), `image-text` (`imageRight` alternates sides) | Approved images only |
 | Resources and decision (G) | `resources` | 2–3 groups with real, descriptive links, and one next step |
+| Light opening (Essentials) | `cover`, `agenda` | Kicker, oversized headline, subtitle and byline; then up to 6 numbered chapters |
+| One point, large type (Essentials) | `statement`, `points` | One sentence (≤110 chars) with an optional note; or up to 4 numbered rows, no cards |
+| Plain comparison (Essentials) | `split` | Two columns of one sentence each. `highlightRight` marks the recommendation |
+| Numbers (Essentials) | `metric` | Up to 3 big values with a label (`focus` on one) and a `source`. Real figures only |
+| Picture and one line (Essentials) | `visual` | Full-bleed approved image with a kicker and one line at the bottom |
+| Close (Essentials) | `closing` | Short headline, the one action you ask for and a `link` |
+
+The Essentials templates (`cover` … `closing`) are a simpler, diagram-free baseline that works with
+every theme. They pair well with the dark `aurora` theme (`deckforge new <dir> --example aurora`).
 
 Always confirm the names against `deckforge templates --json`. Deck-local and user templates
 can add to this list or override entries in it.

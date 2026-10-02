@@ -1,0 +1,30 @@
+---
+name: cover
+label: Cover
+description: Minimal opening slide with a small kicker, one oversized headline, a short line of context and a byline. Simpler than "title".
+category: essentials
+order: 1
+slots:
+  kicker: { type: text, max: 40, sample: Product review · 2026 }
+  title: { type: richtext, max: 60, required: true, sample: 'Ship less. <span class="accent">Ship better.</span>' }
+  subtitle: { type: text, max: 100, sample: "How one release gate cut rework in half." }
+  byline: { type: text, max: 50, sample: Presenter name }
+  details: { type: text, max: 50, sample: Event or date }
+---
+<div class="cover-body">
+  {{#if kicker}}<p class="kicker reveal">{{kicker}}</p>{{/if}}
+  <h1 id="{{slide.titleId}}" class="reveal">{{title}}</h1>
+  {{#if subtitle}}<p class="lead reveal">{{subtitle}}</p>{{/if}}
+</div>
+<footer class="cover-meta reveal">
+  <span>{{byline}}</span>
+  <span>{{details}}</span>
+</footer>
+
+<style scoped>
+.cover-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1.8cqw; }
+.kicker { font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; }
+h1 { font-size: 7cqw; line-height: 1; letter-spacing: -.045em; max-width: 78cqw; }
+.lead { font-size: 2cqw; line-height: 1.4; color: var(--df-muted); max-width: 56cqw; }
+.cover-meta { display: flex; justify-content: space-between; gap: 2cqw; font-size: 1.5cqw; color: var(--df-muted); }
+</style>
