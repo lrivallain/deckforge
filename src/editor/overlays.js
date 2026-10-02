@@ -177,7 +177,7 @@ export function nudgeSelected(dx, dy) {
 
 // ------------------------------------------------------------ stage layer
 
-export function createOverlayLayer({ frame, getScale, onRejected }) {
+export function createOverlayLayer({ frame, getScale, onRejected, focusStage }) {
   const guides = h("div", { class: "ov-guides" });
   const boxes = h("div", { class: "ov-boxes" });
   const root = h("div", { class: "ov-layer", "data-testid": "overlay-layer" }, guides, boxes);
@@ -494,6 +494,7 @@ export function createOverlayLayer({ frame, getScale, onRejected }) {
   }
 
   function onBoxPointerDown(e, id) {
+    focusStage?.();
     if (e.shiftKey) {
       e.preventDefault();
       selectOverlays(state.overlaySelection.filter((x) => x !== id));
@@ -510,6 +511,8 @@ export function createOverlayLayer({ frame, getScale, onRejected }) {
       return;
     }
     const id = el.dataset.ovId;
+    // Keyboard shortcuts must reach the overlays, not a focused rail item.
+    focusStage?.();
     if (e.shiftKey) {
       e.preventDefault();
       const has = state.overlaySelection.includes(id);
@@ -521,8 +524,7 @@ export function createOverlayLayer({ frame, getScale, onRejected }) {
   }
 
   function wire(d) {
-    if (!d || d.__dfOverlayWired) return;
-    d.__dfOverlayWired = true;
+    if (!d) return;
     d.addEventListener("pointerdown", onFramePointerDown, true);
     d.addEventListener("keydown", onKeyDown);
   }

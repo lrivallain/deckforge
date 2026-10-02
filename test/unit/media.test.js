@@ -276,6 +276,13 @@ describe("DeckStore overlay undo", () => {
     expect(fs.readFileSync(store.deckPath, "utf8")).not.toContain("overlays:");
   });
 
+  it("adds no undo step for a change that changes nothing", () => {
+    store.apply("add_overlay", { id: "concept", overlay: { kind: "shape", x: 10, y: 10, w: 10, h: 10 } });
+    store.apply("update_overlay", { id: "concept", overlayId: "shape-1", props: { x: 10 } });
+    store.apply("update_slide", { id: "concept", set: { eyebrow: "01 / Explain the shift" } });
+    expect(store.undoStack.length).toBe(1);
+  });
+
   it("coalesces keyboard nudges", () => {
     store.apply("add_overlay", { id: "concept", overlay: { kind: "shape", x: 10, y: 10, w: 10, h: 10 } });
     for (let i = 1; i <= 3; i++) store.apply("update_overlay", { id: "concept", overlayId: "shape-1", props: { x: 10 + i } }, { coalesce: "nudge" });

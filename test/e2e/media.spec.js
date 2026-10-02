@@ -93,6 +93,9 @@ test.describe("editor", () => {
     expect(moved.y).toBeLessThan(start.y);
     expect(moved.w).toBe(start.w);
 
+    // Wait until the editor applied the move (the selection box is redrawn then).
+    await expect(page.locator('input[data-path="@ov:shape-1:x"]')).toHaveValue(String(Math.round(moved.x * 12.8 * 10) / 10));
+
     // Resize from the east handle.
     const e = await page.getByTestId("handle-e").boundingBox();
     await page.mouse.move(e.x + e.width / 2, e.y + e.height / 2);
@@ -131,6 +134,39 @@ test.describe("editor", () => {
     await expect(page.getByTestId("overlay-issues")).toContainText("no alt text");
     const img = stage(page).locator(".df-ov-image img");
     await expect.poll(() => img.evaluate((el) => el.complete && el.naturalWidth > 0)).toBe(true);
+  });
+
+  test("selects overlays by clicking them in the preview after switching slides", async ({ page }) => {
+    // Another template rewrites the preview document (document.open drops its listeners).
+    await page.locator('.rail-item[data-id="lifecycle"]').click();
+    await expect(stage(page).locator("section.slide")).toHaveAttribute("data-template", "lifecycle");
+    for (const kind of ["Text", "Callout"]) {
+      await page.getByTestId("insert-menu").click();
+      await page.getByRole("menuitem", { name: new RegExp(`^${kind}`) }).click();
+      await expect(stage(page).locator(`.df-ov-${kind.toLowerCase()}`)).toBeVisible();
+    }
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("overlay-box")).toHaveCount(0);
+    await page.locator('.rail-item[data-id="concept"]').click();
+    await page.locator('.rail-item[data-id="lifecycle"]').click();
+    await expect(stage(page).locator(".df-ov")).toHaveCount(2);
+
+    // Both are centred: click corners that do not overlap.
+    await stage(page).locator(".df-ov-text").click({ position: { x: 4, y: 4 } });
+    await expect(page.getByTestId("overlay-box")).toHaveCount(1);
+    await expect(page.getByTestId("overlay-panel")).toContainText("Text overlay");
+    const callout = await stage(page).locator(".df-ov-callout").boundingBox();
+    await stage(page).locator(".df-ov-callout").click({ modifiers: ["Shift"], position: { x: callout.width - 4, y: 4 }, force: true });
+    await expect(page.getByTestId("overlay-box")).toHaveCount(2);
+    await expect(page.getByTestId("overlay-panel")).toContainText("2 overlays");
+    // Duplicate and delete from the keyboard.
+    await page.keyboard.press("ControlOrMeta+d");
+    await waitForFile(editor.readYaml, (y) => overlaysOf(y, "lifecycle").length === 4);
+    await page.keyboard.press("Delete");
+    await waitForFile(editor.readYaml, (y) => overlaysOf(y, "lifecycle").length === 2);
+    // Clicking the template deselects.
+    await stage(page).locator("h1").click();
+    await expect(page.getByTestId("overlay-box")).toHaveCount(0);
   });
 
   test("reorders cards on the slide and list items in the inspector", async ({ page }) => {

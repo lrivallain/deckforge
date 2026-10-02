@@ -120,7 +120,12 @@ export function imageControl({ value, label, path, onChange, required = false, d
       altHint.classList.toggle("is-warn", !length || alt.value.length > ALT_MAX);
     };
     refreshAlt();
-    const sendAlt = debounce(() => commit({ alt: alt.value }, { coalesce: `${path}.alt` }), 300);
+    let sentAlt = image.alt;
+    const sendAlt = debounce(() => {
+      if (alt.value === sentAlt) return;
+      sentAlt = alt.value;
+      commit({ alt: alt.value }, { coalesce: `${path}.alt` });
+    }, 300);
     alt.addEventListener("input", () => {
       refreshAlt();
       sendAlt();

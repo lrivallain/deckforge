@@ -148,11 +148,28 @@ export function writeFrame(frame, html) {
   doc.open();
   doc.write(html);
   doc.close();
+  // document.open() erases the document's event listeners but keeps the same
+  // Document object: listeners must be re-attached per write (see wiredFor).
+  frame._generation = (frame._generation || 0) + 1;
   frame._doc = frame.contentDocument;
   frame._head = head;
   frame._body = body;
   frame.dataset.ready = "1";
   frame.dispatchEvent(new CustomEvent("frame-updated"));
+  return true;
+}
+
+/**
+ * True the first time it is called for `key` since the frame's document was
+ * (re)written: use it to attach document-level listeners exactly once.
+ */
+export function wiredFor(frame, key) {
+  const doc = frame.contentDocument;
+  if (!doc) return false;
+  const marks = (doc.__dfWired ||= {});
+  const generation = `${frame._generation || 0}`;
+  if (marks[key] === generation) return false;
+  marks[key] = generation;
   return true;
 }
 

@@ -1,6 +1,6 @@
 // Center stage: live 16:9 preview of the selected slide with inline editing.
 
-import { h, icon, fitFrame, frameIsCurrent, writeFrame, debounce, toast } from "./dom.js";
+import { h, icon, fitFrame, frameIsCurrent, writeFrame, wiredFor, debounce, toast } from "./dom.js";
 import { notify, selectedSlide, selectOverlays, slideDocument, state, slidePosition } from "./state.js";
 import { opQuiet } from "./actions.js";
 import { sanitizeRichText } from "../core/html.js";
@@ -44,13 +44,18 @@ export function setSlotImage(slide, path, src) {
 export function createStage({ onSlotFocus }) {
   const frame = h("iframe", { class: "stage-frame", title: "Slide preview (click text to edit)", "data-testid": "stage-frame" });
   // A rejected gesture (e.g. Copilot is editing) leaves the live DOM moved: re-render it.
-  const layer = createOverlayLayer({ frame, getScale: () => scale, onRejected: () => {
-    frame._body = null;
-    update({});
-  } });
+  const layer = createOverlayLayer({
+    frame,
+    getScale: () => scale,
+    onRejected: () => {
+      frame._body = null;
+      update({});
+    },
+    focusStage: () => canvas.focus({ preventScroll: true }),
+  });
   const reorder = createPreviewReorder({ frame, layer: layer.root });
   const wrap = h("div", { class: "stage-frame-wrap" }, frame, layer.root);
-  const canvas = h("div", { class: "stage-canvas" }, wrap);
+  const canvas = h("div", { class: "stage-canvas", tabindex: "-1" }, wrap);
   const title = h("span", { class: "stage-title" });
   const templateBadge = h("span", { class: "badge" });
   const hiddenBadge = h("span", { class: "badge badge-warn" }, "Hidden in presentation");
@@ -200,8 +205,7 @@ export function createStage({ onSlotFocus }) {
   function wire() {
     const doc = frame.contentDocument;
     if (!doc) return;
-    if (!doc.__dfWired) {
-      doc.__dfWired = true;
+    if (wiredFor(frame, "stage")) {
       doc.addEventListener("click", (e) => {
         if (e.target.closest("a")) e.preventDefault();
         const image = e.target.closest("[data-df-image]");
@@ -222,8 +226,8 @@ export function createStage({ onSlotFocus }) {
       doc.addEventListener("drop", (e) => onDrop(e, true));
       doc.addEventListener("paste", onPaste);
     }
-    layer.wire(doc);
-    reorder.wire(doc, () => layer.busy());
+    if (wiredFor(frame, "overlays")) layer.wire(doc);
+    if (wiredFor(frame, "reorder")) reorder.wire(doc, () => layer.busy());
     reorder.refresh();
     measure();
     for (const el of doc.querySelectorAll(".df-slot")) {

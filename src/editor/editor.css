@@ -177,6 +177,7 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .stage-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .stage-title { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stage-hint { color: var(--ui-faint); font-size: 12.5px; white-space: nowrap; }
+.stage-canvas:focus { outline: none; }
 .stage-canvas { flex: 1; min-height: 0; margin: 14px 28px 28px; display: grid; place-items: center; }
 .stage-canvas[hidden], .stage-empty[hidden] { display: none; }
 .stage-frame-wrap { position: relative; overflow: hidden; border-radius: 12px; box-shadow: var(--ui-shadow-lg); background: #fff; }

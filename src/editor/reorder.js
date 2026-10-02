@@ -92,8 +92,7 @@ export function createPreviewReorder({ frame, layer }) {
 
   function wire(doc, isBusy) {
     busy = isBusy;
-    if (!doc || doc.__dfReorderWired) return;
-    doc.__dfReorderWired = true;
+    if (!doc) return;
     doc.addEventListener("pointermove", (e) => {
       if (drag || busy() || e.buttons) return;
       const item = itemAt(e.target);
