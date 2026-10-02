@@ -1,12 +1,14 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { startServer, resolveInside, protectDeckHtml } from "../../src/server/http.js";
 import { DeckStore } from "../../src/server/store.js";
 import { AgentController, cleanImproved, deckToolSpecs, MAX_IMPROVE_CHARS } from "../../src/server/agent.js";
 import { systemPrompt } from "../../src/server/prompt.js";
+import { generateToken } from "../../src/server/token.js";
+import { devCliArgs } from "../../scripts/dev-args.js";
 import * as mockSdk from "../fixtures/mock-sdk.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -435,6 +437,22 @@ describe("AgentController", () => {
   });
 });
 
+describe("access tokens", () => {
+  it("never start with a dash", () => {
+    for (let i = 0; i < 10000; i++) expect(generateToken(12)).not.toMatch(/^-/);
+  });
+  it("keep at least 96 bits of entropy", () => {
+    expect(generateToken()).toMatch(/^[A-Za-z0-9_][A-Za-z0-9_-]{23}$/);
+    expect(generateToken(16)).toHaveLength(22);
+  });
+  it("are passed to the dev server in --token=<t> form", () => {
+    const args = devCliArgs({ mode: "edit", deckPath: "deck.yaml", port: 4370, token: "-NFv45AdyFre63PU" });
+    expect(args).toContain("--token=-NFv45AdyFre63PU");
+    expect(args).not.toContain("--token");
+    expect(devCliArgs({ mode: "serve", deckPath: "deck.yaml", port: 4370, token: "x" }).some((a) => a.startsWith("--token"))).toBe(false);
+  });
+});
+
 describe("CLI", () => {
   const env = { ...process.env, DECKFORGE_CONFIG_DIR: path.join(os.tmpdir(), "deckforge-test-no-config"), CI: "1" };
   it("creates and builds decks in every runtime mode", () => {
@@ -466,6 +484,34 @@ describe("CLI", () => {
     execFileSync(process.execPath, [cli, "new", "--example", before], { env });
     expect(fs.readFileSync(path.join(before, "deck.yaml"), "utf8")).toContain("theme: build");
     expect(() => execFileSync(process.execPath, [cli, "new", path.join(dir, "x"), "--example=nope"], { env, stdio: "pipe" })).toThrow(/unknown example "nope"/);
+  });
+  it("accepts a --token=<t> value that starts with a dash", async () => {
+    const deckPath = makeDeck();
+    const child = spawn(process.execPath, [cli, "edit", deckPath, "--port", "0", "--token=-abc", "--no-open"], { env, stdio: ["ignore", "pipe", "pipe"] });
+    try {
+      let output = "";
+      const url = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(`editor did not start:\n${output}`)), 10000);
+        const onData = (chunk) => {
+          output += chunk;
+          const match = output.match(/Editor: (\S+)/);
+          if (match) {
+            clearTimeout(timer);
+            resolve(match[1]);
+          }
+        };
+        child.stdout.on("data", onData);
+        child.stderr.on("data", onData);
+        child.once("exit", (code) => reject(new Error(`editor exited (${code}):\n${output}`)));
+      });
+      expect(new URL(url).searchParams.get("token")).toBe("-abc");
+      const res = await fetch(url, { redirect: "manual" });
+      expect(res.status).toBe(302);
+      const page = await fetch(new URL("/", url), { headers: { cookie: res.headers.get("set-cookie").split(";")[0] } });
+      expect(page.status).toBe(200);
+    } finally {
+      child.kill("SIGTERM");
+    }
   });
   it("refuses non-loopback hosts", () => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));

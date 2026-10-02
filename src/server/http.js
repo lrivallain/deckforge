@@ -13,6 +13,7 @@ import { AgentController } from "./agent.js";
 import { editorPage } from "./editor-page.js";
 import { AssetError, listAssets, MAX_ASSET_BYTES, saveAsset } from "./assets.js";
 import { escapeHtml } from "../core/html.js";
+import { generateToken } from "./token.js";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -188,7 +189,7 @@ export async function startServer({
   mode = "edit",
   port = 0,
   host = "127.0.0.1",
-  token = crypto.randomBytes(18).toString("base64url"),
+  token = generateToken(),
   runtime,
   agentFactory,
   log = (msg) => console.error(`[deckforge] ${msg}`),

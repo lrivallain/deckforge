@@ -22,7 +22,7 @@ export function tempDeck({ runtime = "local", example = "starter", theme = null 
 export async function startEditor({ env = {} } = {}) {
   const deck = tempDeck();
   const token = `e2e${Math.random().toString(36).slice(2)}`;
-  const child = spawn(process.execPath, [CLI, "edit", deck.dir, "--port", "0", "--token", token, "--no-open"], {
+  const child = spawn(process.execPath, [CLI, "edit", deck.dir, "--port", "0", `--token=${token}`, "--no-open"], {
     env: { ...process.env, DECKFORGE_AGENT_MOCK: path.join(ROOT, "test/fixtures/mock-sdk.js"), ...env },
     stdio: ["ignore", "pipe", "pipe"],
   });

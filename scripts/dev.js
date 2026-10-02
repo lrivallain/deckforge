@@ -13,12 +13,13 @@
 // .demo/preview-token.
 
 import { spawn } from "node:child_process";
-import crypto from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { generateToken } from "../src/server/token.js";
+import { devCliArgs } from "./dev-args.js";
 
 const PORT_RANGE = [4370, 4399];
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -138,7 +139,8 @@ if (flag("--reset")) {
 } else if (!fs.existsSync(path.join(work, "deck.yaml"))) {
   restoreExample();
 }
-if (!fs.existsSync(tokenFile)) fs.writeFileSync(tokenFile, crypto.randomBytes(12).toString("base64url"));
+// An existing token is kept as is (even one starting with "-") so the URL stays stable.
+if (!fs.existsSync(tokenFile)) fs.writeFileSync(tokenFile, generateToken(16));
 const token = fs.readFileSync(tokenFile, "utf8").trim();
 const port = await pickPort();
 // Keep port numbers out of everything printed before the "Editor:" line: the
@@ -186,8 +188,7 @@ run(["scripts/build.js", "--watch"]);
 // Give esbuild a moment to produce dist/ before the server starts.
 setTimeout(() => {
   if (stopping) return;
-  const cliArgs = [mode, path.join(work, "deck.yaml"), "--port", String(port), "--no-open"];
-  if (mode === "edit") cliArgs.push("--token", token);
+  const cliArgs = devCliArgs({ mode, deckPath: path.join(work, "deck.yaml"), port, token });
   run(
     ["--watch-preserve-output", "--watch-path=src", "--watch-path=bin", "--watch-path=dist", "scripts/dev-server.js"],
     { DECKFORGE_DEV_ARGS: JSON.stringify(cliArgs) },
