@@ -1,0 +1,51 @@
+---
+name: timeline
+label: Timeline
+description: >-
+  Up to seven dated events on one horizontal line: incident phases, a
+  migration plan or a release history. Mark the key moments with focus.
+category: technical
+order: 1
+slots:
+  eyebrow: { type: text, max: 40, sample: Incident timeline }
+  title: { type: richtext, max: 60, required: true, sample: 'Detected in 4 minutes, <span class="amber">resolved in 52</span>' }
+  subtitle: { type: text, max: 60, sample: "All times UTC, 14 September." }
+  events:
+    type: cards
+    max: 7
+    fields:
+      time: { type: text, max: 14 }
+      title: { type: text, max: 28 }
+      text: { type: text, max: 80 }
+      focus: { type: boolean, description: Mark this as a key moment }
+    sample:
+      - { time: "09:12", title: Deploy, text: Release 4.18 rolls out to all regions. }
+      - { time: "09:16", title: Alert fires, text: Error rate on checkout passes 5%., focus: true }
+      - { time: "09:31", title: Rollback starts, text: On-call engineer reverts to 4.17. }
+      - { time: "09:48", title: Traffic recovers, text: Error rate back under 0.1%. }
+      - { time: "10:04", title: Resolved, text: Incident closed and postmortem scheduled., focus: true }
+  takeawayLabel: { type: text, max: 20, sample: The takeaway }
+  takeaway: { type: text, max: 90, sample: "" }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<ol class="timeline">
+  {{#each events}}<li class="event{{#if focus}} focus{{/if}} reveal"><p class="time">{{time}}</p><span class="dot" aria-hidden="true"></span><h2>{{title}}</h2><p class="text">{{text}}</p></li>{{/each}}
+</ol>
+{{#if takeaway}}<p class="outcome reveal"><strong>{{takeawayLabel}}</strong><span>{{takeaway}}</span></p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.timeline { flex: 1; min-height: 0; list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-content: center; position: relative; }
+.event { position: relative; display: flex; flex-direction: column; gap: .9cqw; padding: 0 1.2cqw 0 0; }
+.event::before { content: ""; position: absolute; left: 0; right: 0; top: calc(2.2cqw + .9cqw + .8cqw); height: 2px; background: var(--df-primary-line); }
+.event:last-child::before { right: auto; width: 1.6cqw; }
+.time { font: 400 1.5cqw / 1.4 var(--df-font-mono); color: var(--df-muted); height: 2.2cqw; white-space: nowrap; }
+.dot { position: relative; width: 1.6cqw; height: 1.6cqw; border-radius: 50%; background: var(--df-paper); border: 2px solid var(--df-primary); }
+.event h2 { font-size: 2cqw; }
+.text { font-size: 1.5cqw; line-height: 1.4; color: var(--df-muted); }
+.focus .dot { background: var(--df-accent); border-color: var(--df-accent); }
+.focus .time { color: var(--df-accent-text, var(--df-accent)); }
+</style>

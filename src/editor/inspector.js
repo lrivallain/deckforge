@@ -129,6 +129,16 @@ export function createInspector({ onFieldFocus }) {
     return h("div", { class: "field field-inline", dataset: { path } }, input, h("label", { for: id }, humanize(path.split(".").pop())), slot.description ? h("span", { class: "field-hint" }, slot.description) : null);
   }
 
+  function numberControl(slot, value, path, slideId) {
+    const id = nextId();
+    const input = h("input", { id, type: "number", step: "any", class: "input", value: value ?? "", inputmode: "decimal", dataset: { path } });
+    const parse = (raw) => (raw === "" || !Number.isFinite(Number(raw)) ? "" : Number(raw));
+    input.addEventListener("input", () => sendLater(slideId, path, parse(input.value)));
+    input.addEventListener("focus", () => onFieldFocus?.(path));
+    setters.set(path, (v) => { if (document.activeElement !== input) input.value = v ?? ""; });
+    return field(humanize(path.split(".").pop()), input, { hint: slot.description, id, path });
+  }
+
   function iconControl(slot, value, path, slideId) {
     const id = nextId();
     const preview = h("span", { class: "icon-preview", html: renderIcon(value) });
@@ -249,6 +259,7 @@ export function createInspector({ onFieldFocus }) {
     switch (slot.type) {
       case "richtext": return textControl(slot, value, path, slideId, { richtext: true });
       case "boolean": return booleanControl(slot, value, path, slideId);
+      case "number": return numberControl(slot, value, path, slideId);
       case "icon": return iconControl(slot, value, path, slideId);
       case "link": return linkControl(slot, value, path, slideId);
       case "list": return listControl(slot, value, path, slideId);

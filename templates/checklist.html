@@ -1,0 +1,59 @@
+---
+name: checklist
+label: Checklist
+description: >-
+  Up to seven points to confirm, each with an owner and a due date; ticked
+  items show as done. Use it for go/no-go reviews and follow-up actions.
+category: technical
+order: 6
+slots:
+  eyebrow: { type: text, max: 40, sample: Before the cut-over }
+  title: { type: richtext, max: 60, required: true, sample: 'Five points to confirm <span class="blue">before Friday</span>' }
+  subtitle: { type: text, max: 60, sample: Go/no-go on 18 September. }
+  ownerHeader: { type: text, max: 12, sample: Owner }
+  dueHeader: { type: text, max: 12, sample: Due }
+  items:
+    type: cards
+    max: 7
+    fields:
+      item: { type: text, max: 70 }
+      owner: { type: text, max: 22 }
+      due: { type: text, max: 12 }
+      done: { type: boolean, description: Show this point as confirmed }
+    sample:
+      - { item: Restore test of the last full backup, owner: DBA team, due: 15 Sep, done: true }
+      - { item: Rollback runbook reviewed by on-call, owner: SRE lead, due: 16 Sep, done: true }
+      - { item: Load test at twice the peak traffic, owner: Performance, due: 16 Sep }
+      - { item: Customer notice sent, owner: Support, due: 17 Sep }
+      - { item: Change approved by the CAB, owner: Change manager, due: 17 Sep }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="checklist-wrap reveal">
+  <table class="checklist">
+    <caption class="sr-only">{{slide.title}}</caption>
+    <thead><tr><th scope="col" class="check"><span class="sr-only">Done</span></th><th scope="col"></th><th scope="col">{{ownerHeader}}</th><th scope="col">{{dueHeader}}</th></tr></thead>
+    <tbody>
+      {{#each items}}<tr{{#if done}} class="done"{{/if}}><td class="check"><span class="box" role="img" aria-label="{{#if done}}Done{{else}}Open{{/if}}"></span></td><th scope="row">{{item}}</th><td class="owner">{{owner}}</td><td class="due">{{due}}</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{> foot}}
+
+<style scoped>
+.checklist-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+.checklist { width: 100%; border-collapse: collapse; font-size: 1.85cqw; line-height: 1.3; }
+.checklist th, .checklist td { padding: 1cqw 1.2cqw; border-bottom: 1px solid var(--df-line); text-align: left; }
+.checklist thead th { font: 400 1.15cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink); }
+.checklist tbody th { font-weight: 500; }
+.checklist .check { width: 4cqw; }
+.checklist .owner, .checklist .due { width: 18%; color: var(--df-muted); white-space: nowrap; }
+.checklist .due { width: 10%; font: 400 1.4cqw var(--df-font-mono); }
+.box { display: grid; place-items: center; width: 2.2cqw; height: 2.2cqw; border: 2px solid var(--df-primary); border-radius: var(--df-radius-small); }
+.done .box { background: var(--df-ok); border-color: var(--df-ok); }
+.done .box::after { content: "✓"; color: var(--df-paper); font: 700 1.5cqw / 1 var(--df-font-body); }
+.done th { color: var(--df-muted); }
+</style>

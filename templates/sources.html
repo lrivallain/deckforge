@@ -1,0 +1,41 @@
+---
+name: sources
+label: Sources
+description: >-
+  Appendix that lists the sources behind the deck, each with the slide it
+  supports. deckforge adds it at the end of the built deck from the slides'
+  "sources:" fields; you can also use it by hand.
+category: structure
+order: 9
+slots:
+  eyebrow: { type: text, max: 40, sample: Appendix }
+  title: { type: text, max: 40, required: true, sample: Sources }
+  entries:
+    type: cards
+    fields:
+      number: { type: text, max: 4, description: Slide number }
+      slide: { type: text, max: 80, description: Slide title }
+      source: { type: link, description: "The source: a label, with a link when there is one" }
+    sample:
+      - { number: "03", slide: Current run cost, source: { label: "Cost export, August 2026", href: "" } }
+      - { number: "05", slide: Incident timeline, source: { label: Postmortem PM-112, href: "" } }
+      - { number: "07", slide: Options, source: { label: Vendor pricing page, href: "https://example.com/pricing" } }
+---
+<header class="reveal">
+  {{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}
+  <h1 id="{{slide.titleId}}">{{title}}</h1>
+</header>
+<ol class="entries reveal">
+  {{#each entries}}<li><span class="num">{{number}}</span><span class="where">{{slide}}</span><span class="what">{{source}}</span></li>{{/each}}
+</ol>
+{{> foot}}
+
+<style scoped>
+.entries { flex: 1; min-height: 0; list-style: none; margin: 0; padding: 0; column-gap: 3cqw; font-size: 1.45cqw; line-height: 1.35; }
+.entries:has(> li:nth-child(9)) { columns: 2; font-size: 1.2cqw; }
+.entries li { display: grid; grid-template-columns: 3cqw minmax(0, 26cqw) minmax(0, 1fr); gap: 1.4cqw; padding: .7cqw 0; border-bottom: 1px solid var(--df-line); break-inside: avoid; }
+.entries:has(> li:nth-child(9)) li { grid-template-columns: 2.6cqw minmax(0, 11cqw) minmax(0, 1fr); }
+.num { font-family: var(--df-font-mono); color: var(--df-primary); }
+.where { color: var(--df-muted); }
+.what { overflow-wrap: anywhere; }
+</style>

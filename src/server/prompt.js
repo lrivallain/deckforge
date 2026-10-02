@@ -13,10 +13,12 @@ Storyline (a menu, not a compulsory sequence):
 5. Zoom – problem → concrete response → observable outcome.
 6. Resources/decision – one next step and a few real links.
 For a lighter talk without diagrams, use the Essentials templates (cover, agenda, statement, points, split, metric, visual, closing): one point per slide, large type, no cards.
+For technical reviews (architecture, postmortem, assessment, decision), use the data templates (bars, donut, compare-bars, kpis, table) and the technical ones (timeline, options-matrix, risk-register, decision, funnel, checklist).
 
 Content rules:
 - One focal diagram and one takeaway per slide. Put detail in speaker notes, never shrink the type.
 - Headlines are assertive and short: they must wrap at most twice. Use the richtext classes "old" (muted previous state) and "blue"/"amber" (emphasis) sparingly, e.g. <span class="old">From X.</span><span class="blue">To Y.</span>.
+- "number" slots take plain numbers (1200, 9.5): charts compute bar lengths, segments and totals from them, so never write percentages or units there.
 - Cards: a title and one short sentence. At most four response cards. Respect each slot's "max" (characters for text, items for lists/cards).
 - Eyebrows are short uppercase-style labels such as "02 / Keep the same map".
 - Amber explains a distinction (a highlighted card, a governance frame), it does not decorate everything. Color is never the only signal.

@@ -3,7 +3,7 @@
 // The input deck is never mutated.
 
 import { makeSlideId, normalizeSlide } from "./deck.js";
-import { sampleData } from "./template.js";
+import { sampleData, toNumber } from "./template.js";
 import { RUNTIME_MODES } from "./deck.js";
 import { IMAGE_FITS, isSafeImageSrc, normalizeFocus } from "./image.js";
 import { normalizeOverlay, OverlayError } from "./overlay.js";
@@ -71,6 +71,7 @@ function hasContent(value) {
   if (typeof value === "string") return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
   if (value && typeof value === "object") return Object.keys(value).length > 0;
+  if (typeof value === "number") return Number.isFinite(value);
   return false; // booleans are layout switches, never placeholder content
 }
 
@@ -78,6 +79,7 @@ function compatible(slot, value) {
   if (value === undefined || value === null) return false;
   if (slot.type === "list" || slot.type === "cards") return Array.isArray(value);
   if (slot.type === "boolean") return typeof value === "boolean";
+  if (slot.type === "number") return typeof value === "number" || (typeof value === "string" && value.trim() !== "" && Number.isFinite(toNumber(value)));
   if (slot.type === "link" || slot.type === "image") return typeof value === "string" || (typeof value === "object" && !Array.isArray(value));
   return typeof value === "string";
 }

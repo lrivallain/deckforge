@@ -71,6 +71,46 @@ test.describe("CLI export", () => {
       deck.cleanup();
     }
   });
+  test("exports the technical starters' charts and tables", async () => {
+    const assessment = tempDeck({ example: "assessment", runtime: "inline" });
+    const review = tempDeck({ example: "architecture-review", runtime: "inline" });
+    try {
+      const exported = async (deck) => {
+        const report = JSON.parse(execFileSync(process.execPath, [CLI, "export", deck.dir, "--json"], { encoding: "utf8" }));
+        expect(report.ok).toBe(true);
+        expect(report.warnings.filter((w) => !/^Font "/.test(w))).toEqual([]);
+        return readPptx(report.outPath);
+      };
+
+      const a = await exported(assessment);
+      expect(a.slides).toHaveLength(9);
+      for (const xml of a.slides) expectValidParagraphs(xml);
+      // The donut ring is a vector picture; its legend and centre label stay editable text.
+      expect(a.slides[2]).toContain("asvg:svgBlip");
+      expect(texts(a.slides[2])).toEqual(expect.arrayContaining(["1,050", "Hardware and support", "39%"]));
+      // The screen-reader data tables (sr-only) are not exported a second time.
+      expect(texts(a.slides[2]).filter((t) => t === "Hardware and support")).toHaveLength(1);
+      expect(texts(a.slides[3]).filter((t) => t === "Customer portal")).toHaveLength(1);
+      // The computed table total and the generated Sources appendix are exported.
+      expect(texts(a.slides[3])).toEqual(expect.arrayContaining(["Total", "43.4", "15.6", "4.7", "12"]));
+      expect(texts(a.slides[8])).toContain("Sources");
+
+      // Hatched "projected" bars become repeating-gradient pictures sized from the values.
+      const r = await exported(review);
+      const hatches = await Promise.all(r.media.filter((m) => m.endsWith(".svg")).map((m) => r.zip.file(m).async("string")));
+      const widths = hatches
+        .filter((svg) => svg.includes('spreadMethod="repeat"'))
+        .map((svg) => Number(/width="([\d.]+)"/.exec(svg)[1]))
+        .filter((w) => w > 20)
+        .sort((x, y) => y - x);
+      const projected = [160, 40, 15, 10];
+      expect(widths).toHaveLength(projected.length);
+      widths.forEach((w, i) => expect(Math.abs(w / widths[0] - projected[i] / projected[0])).toBeLessThan(0.01));
+    } finally {
+      assessment.cleanup();
+      review.cleanup();
+    }
+  });
 });
 
 test.describe("editor export", () => {

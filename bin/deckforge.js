@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// deckforge CLI: new | build | export | templates | edit | serve | mcp | skill
+// deckforge CLI: new | build | diff | export | templates | edit | serve | mcp | skill
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { VERSION } from "../src/core/render.js";
-import { RUNTIME_MODES, stringifyDeck, normalizeDeck } from "../src/core/deck.js";
+import { RUNTIME_MODES, stringifyDeck, normalizeDeck, parseDeckYaml } from "../src/core/deck.js";
+import { diffDecks, formatDiff } from "../src/core/diff.js";
 import { buildDeckFile } from "../src/server/build.js";
 import { PACKAGE_ROOT, configDir, describeCatalog } from "../src/server/registry.js";
 import { describeSlot } from "../src/server/prompt.js";
@@ -16,8 +17,9 @@ import { LEGACY_SKILL_NAME, copilotSkillsDir, installCopilotSkill } from "../src
 const HELP = `deckforge ${VERSION} — themeable, template-driven HTML presentations
 
 Usage
-  deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora|agent-native]]
-  deckforge build <deck.yaml|dir> [--runtime local|cdn|inline] [--out deck.html] [--json]
+  deckforge new <dir> [--title "My talk"] [--theme build] [--example [<name>]]
+  deckforge build <deck.yaml|dir> [--runtime local|cdn|inline] [--out deck.html] [--check-offline] [--strip-notes] [--json]
+  deckforge diff <a.yaml|dir|-> <b.yaml|dir> [--json]
   deckforge export <deck.yaml|dir> [--out deck.pptx] [--json]
   deckforge templates [deck.yaml|dir] [--json]
   deckforge edit <deck.yaml|dir> [--port 0] [--token <t>] [--runtime …] [--no-open]
@@ -27,10 +29,15 @@ Usage
   deckforge skill install-copilot [--force] [--dest <skills dir>] [--replace-build-presentation]
 
 Commands
-  new        Create a deck folder with a deck.yaml (a title slide, or --example for a full specimen:
-             "starter" (default, diagram-led), "aurora" (dark theme, Essentials templates) or
-             "agent-native" (the agent model pitch built by the Copilot skill))
-  build      Render deck.yaml to a static deck.html next to it (--json: machine-readable report)
+  new        Create a deck folder with a deck.yaml (a title slide, or --example for a full deck:
+             EXAMPLES)
+  build      Render deck.yaml to a static deck.html next to it (--json: machine-readable report).
+             --check-offline fails (exit 2) when the output loads anything over http(s), such as
+             https:// images or the cdn runtime. Inline decks always get a CSP that blocks the network
+             (build warns about the remote resources it blocks).
+             --strip-notes leaves the speaker notes out, for a copy to share
+  diff       Per-slide summary of the changes between two deck.yaml files, for reviews
+             ("-" reads the first one from stdin, e.g. git show main:deck.yaml | deckforge diff - deck.yaml)
   export     Export deck.yaml to an editable PowerPoint deck.pptx next to it (native text,
              shapes and pictures; needs Playwright: npm i -g playwright && npx playwright install chromium)
   templates  List the templates (with their slots), themes and icons a deck can use
@@ -47,7 +54,7 @@ Commands
 Runtime modes (how deck.html loads the viewer)
   local   copy deckforge/deckforge.viewer.{js,css} next to deck.html (default)
   cdn     reference https://cdn.jsdelivr.net/gh/lrivallain/deckforge@v${VERSION}/dist/
-  inline  embed everything into one self-contained file
+  inline  embed everything into one self-contained file, with a CSP that blocks the network
 
 Images live in <deck>/assets/ (added from the editor). local copies the used
 ones next to --out, inline embeds them as data URIs, cdn keeps relative paths.
@@ -55,6 +62,16 @@ ones next to --out, inline embeds them as data URIs, cdn keeps relative paths.
 
 Templates/themes lookup: <deck>/templates|themes → ${path.join(configDir(), "templates|themes")} → built-ins
 `;
+
+const EXAMPLE_HELP = {
+  starter: "diagram-led specimen",
+  aurora: "dark theme, Essentials templates",
+  "architecture-review": "architecture or design review",
+  postmortem: "incident postmortem",
+  assessment: "migration or cost assessment",
+  "decision-record": "options → recommendation, ADR-style",
+  "agent-native": "the agent model pitch, built from a brief by the Copilot skill",
+};
 
 let jsonOutput = false;
 
@@ -133,6 +150,8 @@ const { values, positionals } = parseArgs({
     dest: { type: "string" },
     "replace-build-presentation": { type: "boolean" },
     install: { type: "boolean" },
+    "check-offline": { type: "boolean" },
+    "strip-notes": { type: "boolean" },
   },
 });
 
@@ -143,7 +162,8 @@ if (values.version) {
   process.exit(0);
 }
 if (values.help || !command) {
-  console.log(HELP);
+  const examples = exampleNames().map((name) => `"${name}"${name === "starter" ? " (default)" : ""}${EXAMPLE_HELP[name] ? `: ${EXAMPLE_HELP[name]}` : ""}`);
+  console.log(HELP.replace("EXAMPLES", examples.join(",\n             ")));
   process.exit(command || values.help ? 0 : 1);
 }
 if (values.runtime && !RUNTIME_MODES.includes(values.runtime)) fail(`--runtime must be one of ${RUNTIME_MODES.join(", ")}`);
@@ -184,7 +204,7 @@ switch (command) {
   case "build": {
     const file = resolveDeck(target);
     try {
-      const result = buildDeckFile(file, { runtime: values.runtime, out: values.out });
+      const result = buildDeckFile(file, { runtime: values.runtime, out: values.out, checkOffline: values["check-offline"], stripNotes: values["strip-notes"] });
       const errors = result.issues.some((i) => i.level === "error");
       if (jsonOutput) {
         console.log(JSON.stringify({
@@ -197,13 +217,37 @@ switch (command) {
           issues: result.issues,
           loadErrors: result.loadErrors.map(({ path: p, message }) => ({ path: p, message })),
           assets: result.assets,
+          ...(result.external ? { offline: { ok: !result.external.length, external: result.external } } : {}),
         }, null, 2));
         if (errors) process.exitCode = 2;
         break;
       }
       printIssues(result.issues, result.loadErrors);
-      console.log(`Built ${path.relative(process.cwd(), result.outPath)} (${result.runtime} runtime, ${result.deck.slides.filter((s) => !s.hidden).length} slides)`);
+      console.log(`Built ${path.relative(process.cwd(), result.outPath)} (${result.runtime} runtime, ${result.deck.slides.filter((s) => !s.hidden).length} slides${values["strip-notes"] ? ", no speaker notes" : ""})`);
+      if (result.external) {
+        if (result.external.length) console.error(`Not offline: ${result.external.length} network reference${result.external.length > 1 ? "s" : ""} (see above).`);
+        else console.log(`Offline check passed: no network references${result.runtime === "inline" ? "; a CSP blocks the network" : ""}.`);
+      }
       if (errors) process.exitCode = 2;
+    } catch (err) {
+      fail(err.message);
+    }
+    break;
+  }
+  case "diff": {
+    const second = positionals[2];
+    if (!target || !second) fail("usage: deckforge diff <a.yaml|dir|-> <b.yaml|dir>");
+    const read = (arg) => {
+      if (arg === "-") return { label: "stdin", yaml: fs.readFileSync(0, "utf8") };
+      const file = resolveDeck(arg);
+      return { label: path.relative(process.cwd(), file) || file, yaml: fs.readFileSync(file, "utf8") };
+    };
+    try {
+      const a = read(target);
+      const b = read(second);
+      const diff = diffDecks(parseDeckYaml(a.yaml), parseDeckYaml(b.yaml));
+      if (jsonOutput) console.log(JSON.stringify({ from: a.label, to: b.label, ...diff }, null, 2));
+      else console.log(formatDiff(diff, { from: a.label, to: b.label }));
     } catch (err) {
       fail(err.message);
     }

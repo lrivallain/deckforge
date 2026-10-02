@@ -1,0 +1,64 @@
+---
+name: options-matrix
+label: Options matrix
+description: >-
+  Up to four options rated against up to five criteria, with the recommended
+  option highlighted and the recommendation stated below. Keep each rating to
+  one or two words.
+category: technical
+order: 2
+slots:
+  eyebrow: { type: text, max: 40, sample: Options }
+  title: { type: richtext, max: 60, required: true, sample: 'Managed Kubernetes <span class="blue">balances cost and control</span>' }
+  subtitle: { type: text, max: 60, sample: Scored by the platform team. }
+  optionHeader: { type: text, max: 16, sample: Option }
+  criteria: { type: list, max: 5, maxLength: 18, sample: [Run cost, Migration effort, Team skills, Lock-in] }
+  options:
+    type: cards
+    max: 4
+    fields:
+      name: { type: text, max: 26 }
+      ratings: { type: list, max: 5, maxLength: 16, description: "One rating per criterion, in the same order" }
+      recommended: { type: boolean, description: Highlight this option as the recommendation }
+    sample:
+      - { name: Stay on VMs, ratings: [High, None, Strong, Low] }
+      - { name: Managed Kubernetes, ratings: [Medium, Medium, Good, Medium], recommended: true }
+      - { name: Serverless rewrite, ratings: [Low, High, Weak, High] }
+  recommendationLabel: { type: text, max: 20, sample: Recommendation }
+  recommendation: { type: richtext, max: 120, sample: Move the stateless services to managed Kubernetes first; keep the databases on VMs until Q2. }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="matrix-wrap reveal">
+  <table class="matrix">
+    <caption class="sr-only">{{slide.title}}</caption>
+    <thead><tr><th scope="col">{{optionHeader}}</th>{{#each criteria}}<th scope="col">{{this}}</th>{{/each}}</tr></thead>
+    <tbody>
+      {{#each options}}<tr{{#if recommended}} class="chosen"{{/if}}><th scope="row">{{name}}</th>{{#each ratings}}<td data-rating="{{this}}">{{this}}</td>{{/each}}</tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{#if recommendation}}<p class="outcome reveal"><strong>{{recommendationLabel}}</strong><span>{{recommendation}}</span></p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.matrix-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+.matrix { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 1.75cqw; line-height: 1.25; }
+.matrix th, .matrix td { padding: 1.1cqw 1.2cqw; border-bottom: 1px solid var(--df-line); text-align: center; }
+.matrix th:first-child { text-align: left; width: 26%; }
+.matrix thead th { font: 400 1.2cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink); }
+.matrix tbody th { font: 600 1.9cqw / 1.2 var(--df-font-heading); }
+.matrix tr.chosen > * { background: var(--df-primary-soft); border-bottom-color: var(--df-primary-line); }
+.matrix tr.chosen th { color: var(--df-primary); box-shadow: inset .4cqw 0 0 var(--df-primary); }
+.matrix td[data-rating="good" i], .matrix td[data-rating="strong" i], .matrix td[data-rating="yes" i], .matrix td[data-rating="✓"],
+.matrix td[data-rating="poor" i], .matrix td[data-rating="weak" i], .matrix td[data-rating="no" i], .matrix td[data-rating="✗"] { font-weight: 600; }
+.matrix td[data-rating="good" i]::before, .matrix td[data-rating="strong" i]::before, .matrix td[data-rating="yes" i]::before,
+.matrix td[data-rating="poor" i]::before, .matrix td[data-rating="weak" i]::before, .matrix td[data-rating="no" i]::before {
+  content: ""; display: inline-block; width: .9cqw; height: .9cqw; margin-right: .6cqw; border-radius: 50%; background: var(--df-ok); vertical-align: .1em;
+}
+.matrix td[data-rating="poor" i]::before, .matrix td[data-rating="weak" i]::before, .matrix td[data-rating="no" i]::before { background: var(--df-accent); }
+.matrix td[data-rating="poor" i], .matrix td[data-rating="weak" i], .matrix td[data-rating="no" i], .matrix td[data-rating="✗"] { color: var(--df-accent-text, var(--df-ink)); }
+</style>

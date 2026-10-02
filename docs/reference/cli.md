@@ -9,6 +9,7 @@ deckforge --help | --version
 |---|---|
 | [`new`](#new) | Create a deck folder |
 | [`build`](#build) | Render `deck.yaml` to `deck.html` and report issues |
+| [`diff`](#diff) | Summarise the changes between two decks, slide by slide |
 | [`export`](#export) | Export the deck to an editable PowerPoint file |
 | [`templates`](#templates) | List templates, slots, themes and icons |
 | [`edit`](#edit) | Start the local editor |
@@ -21,16 +22,28 @@ deckforge --help | --version
 ## new
 
 ```bash
-deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora|agent-native]] [--force]
+deckforge new <dir> [--title "My talk"] [--theme build] [--example [<name>]] [--force]
 ```
 
 Creates `<dir>/deck.yaml` with a title slide and builds it. `--example` copies a bundled example deck and its
 assets instead (`starter` by default). `--force` overwrites an existing `deck.yaml`.
 
+| Example | What it is |
+|---|---|
+| `starter` | The diagram-led specimen: concept map, implementation map, lifecycle, zoom |
+| `aurora` | The Essentials templates on the dark `aurora` theme |
+| `architecture-review` | An architecture or design review: key figures, flow, latency chart, options, ADR, risks, checklist |
+| `postmortem` | An incident postmortem: impact, timeline, blast radius, root cause, follow-up actions |
+| `assessment` | A migration or cost assessment: scope funnel, cost split, cost table, current vs target, risks, plan |
+| `decision-record` | A decision record: context, options matrix, cost comparison, ADR, the ask |
+
+The four technical starters use the `inline` runtime and the [chart templates](../guide/templates#charts-and-data).
+See [Technical decks](../guide/technical-decks).
+
 ## build
 
 ```bash
-deckforge build <deck> [--runtime local|cdn|inline] [--out deck.html] [--json]
+deckforge build <deck> [--runtime local|cdn|inline] [--out deck.html] [--check-offline] [--strip-notes] [--json]
 ```
 
 Renders the deck and prints validation issues. It exits with code **2** when there are errors.
@@ -39,9 +52,35 @@ Renders the deck and prints validation issues. It exits with code **2** when the
 |---|---|
 | `--runtime` | How the page loads the viewer. See [runtime modes](../guide/presenting#runtime-modes). The default is `meta.runtime`, or `local` |
 | `--out`, `-o` | Output file. The default is `deck.html` next to `deck.yaml` |
-| `--json` | Prints a machine-readable report: `ok`, `outPath`, `issues`, `loadErrors`, `assets` |
+| `--check-offline` | Fails (exit code 2) when the output would load anything over `http(s)`: `https://` images, remote fonts, the `cdn` runtime. Without it, an `inline` build only warns about them, because its Content-Security-Policy blocks the network. See [Share offline](../guide/offline) |
+| `--strip-notes` | Leaves the speaker notes out of the output, for a copy to share |
+| `--json` | Prints a machine-readable report: `ok`, `outPath`, `issues`, `loadErrors`, `assets`, and `offline {ok, external}` with `--check-offline` |
 
 It also lists assets that no slide uses. It never deletes them.
+
+## diff
+
+```bash
+deckforge diff <a.yaml|dir|-> <b.yaml|dir> [--json]
+```
+
+Prints one line per slide that was added (`+`), removed (`-`), moved (`↕`) or changed (`~`), with the fields and
+slots that changed, then the changed `meta` keys. `-` reads the first deck from standard input:
+
+```bash
+git show origin/main:talk/deck.yaml | deckforge diff - talk
+```
+
+```text
+deckforge diff stdin → talk/deck.yaml
+  meta: title
+~ latency [bars]: items (5 → 6 items)
++ risks [risk-register] added at 7
+  1 added, 0 removed, 1 changed, 0 moved, 8 unchanged
+```
+
+`--json` prints `meta`, `slides[]` (`id`, `template`, `status`, `from`, `to`, `changes`) and `summary`. It always
+exits with code 0 when both decks parse. See [Decks in git and CI](../guide/git-ci).
 
 ## export
 

@@ -7,6 +7,12 @@
 //   {{> foot}}                   built-in partial (slide footer)
 //   {{slide.number}} {{slide.total}} {{slide.titleId}} {{slide.footer}} {{deck.title}}
 //   {{! comment }}
+//
+// Data-driven charts (number fields of a cards slot, computed at render time):
+//   inside {{#each cards}}: {{@pct.f}} (% of the slot scale), {{@share.f}} (% of the
+//   field total), {{@start.f}} (cumulative share before the item), {{@percent.f}}
+//   (rounded share for display)
+//   anywhere: {{cards.@sum.f}} {{cards.@max.f}} {{cards.@min.f}} {{cards.@avg.f}} {{cards.@count}}
 
 import YAML from "yaml";
 import { escapeAttr, escapeHtml, isSafeUrl, sanitizeRichText, stripTags, textToHtml } from "./html.js";
@@ -14,7 +20,8 @@ import { renderIcon } from "./icons.js";
 import { scopeCss } from "./css.js";
 import { normalizeImage, renderImage } from "./image.js";
 
-export const SLOT_TYPES = ["text", "richtext", "list", "cards", "icon", "link", "boolean", "image"];
+export const SLOT_TYPES = ["text", "richtext", "number", "list", "cards", "icon", "link", "boolean", "image"];
+export const CARD_SCALES = ["max", "total"];
 const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 const RESERVED_SLOTS = new Set(["slide", "deck", "this"]);
 
@@ -139,7 +146,7 @@ function parse(source) {
 
 // ---------------------------------------------------------------- schema
 
-const SLOT_PROPERTIES = new Set(["type", "max", "required", "sample", "description", "label", "fields", "of", "maxLength"]);
+const SLOT_PROPERTIES = new Set(["type", "max", "required", "sample", "description", "label", "fields", "of", "maxLength", "scale"]);
 
 function normalizeSlot(name, def, errors, where = "") {
   if (typeof def === "string") def = { type: def };
@@ -160,6 +167,13 @@ function normalizeSlot(name, def, errors, where = "") {
     const fields = {};
     for (const [key, value] of Object.entries(def.fields || {})) fields[key] = normalizeSlot(key, value, errors, `${where}${name}.`);
     slot.fields = fields;
+    if (def.scale !== undefined && !CARD_SCALES.includes(def.scale)) {
+      errors.push(`Slot "${where}${name}" scale must be one of ${CARD_SCALES.join(", ")}`);
+      delete slot.scale;
+    }
+  } else if (def.scale !== undefined) {
+    errors.push(`Slot "${where}${name}" scale only applies to cards slots`);
+    delete slot.scale;
   }
   if (slot.type === "list") slot.of = ["text", "richtext"].includes(def.of) ? def.of : "text";
   if (slot.max !== undefined && !(Number.isInteger(slot.max) && slot.max > 0)) {
@@ -271,8 +285,90 @@ function linkParts(value) {
   return { label: String(value.label ?? value.href ?? ""), href: String(value.href ?? "") };
 }
 
-function formatValue(value, type, { inTag, edit, path, placeholder, assetUrl }) {
+/** A number from a number slot value (a YAML number or a numeric string), or NaN. */
+export function toNumber(value) {
+  if (typeof value === "number") return value;
+  if (typeof value !== "string" || !value.trim()) return NaN;
+  return Number(value.trim().replace(/[\s_\u00a0\u202f]/g, ""));
+}
+
+const formatters = new Map();
+
+/** Locale-aware display of a number, without float noise (0.1 + 0.2 → 0.3). */
+export function formatNumber(value, lang = "en") {
+  const n = Number(Number(value).toFixed(6));
+  if (!Number.isFinite(n)) return "";
+  const decimals = Math.min(6, (String(n).split(".")[1] || "").length);
+  const key = `${lang}:${decimals}`;
+  if (!formatters.has(key)) {
+    let format;
+    try {
+      format = new Intl.NumberFormat(lang, { maximumFractionDigits: decimals });
+    } catch {
+      format = new Intl.NumberFormat("en", { maximumFractionDigits: decimals });
+    }
+    formatters.set(key, format);
+  }
+  return formatters.get(key).format(n);
+}
+
+const round3 = (n) => Math.round(n * 1000) / 1000;
+const positive = (value) => {
+  const n = toNumber(value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+/**
+ * Chart values of a cards list, computed from its number fields at render
+ * time so bar lengths and segments can never drift from the figures.
+ * Negative or non-numeric values count as 0. Percentages are rounded to 0.001.
+ */
+export function chartStats(items, schema = {}) {
+  const fields = Object.entries(schema.fields || {}).filter(([, f]) => f.type === "number").map(([k]) => k);
+  const list = Array.isArray(items) ? items : [];
+  const sums = Object.fromEntries(fields.map((f) => [f, list.reduce((acc, item) => acc + positive(item?.[f]), 0)]));
+  const scale = schema.scale === "total"
+    ? Math.max(0, ...Object.values(sums))
+    : Math.max(0, ...list.map((item) => fields.reduce((acc, f) => acc + positive(item?.[f]), 0)));
+  const running = Object.fromEntries(fields.map((f) => [f, 0]));
+  return list.map((item) => {
+    const pct = {};
+    const share = {};
+    const start = {};
+    const percent = {};
+    for (const f of fields) {
+      const v = positive(item?.[f]);
+      pct[f] = scale ? round3((v / scale) * 100) : 0;
+      share[f] = sums[f] ? round3((v / sums[f]) * 100) : 0;
+      start[f] = sums[f] ? round3((running[f] / sums[f]) * 100) : 0;
+      percent[f] = share[f] < 10 ? Math.round(share[f] * 10) / 10 : Math.round(share[f]);
+      running[f] += v;
+    }
+    return { "@pct": pct, "@share": share, "@start": start, "@percent": percent };
+  });
+}
+
+/** {{cards.@sum.field}} and friends. */
+function aggregate(items, op, field) {
+  if (op === "@count") return items.length;
+  if (!["@sum", "@max", "@min", "@avg"].includes(op) || !field) return undefined;
+  const values = items.map((item) => toNumber(item?.[field])).filter(Number.isFinite);
+  if (!values.length) return undefined;
+  if (op === "@sum") return values.reduce((a, b) => a + b, 0);
+  if (op === "@max") return Math.max(...values);
+  if (op === "@min") return Math.min(...values);
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+function formatNumberValue(value, lang) {
+  if (value === "" || value === undefined || value === null) return "";
+  const n = toNumber(value);
+  return Number.isFinite(n) ? formatNumber(n, lang) : String(value);
+}
+
+function formatValue(value, type, { inTag, edit, path, placeholder, assetUrl, lang }) {
   if (value === undefined || value === null) value = "";
+  if (type === "number") return inTag ? escapeAttr(formatNumberValue(value, lang)) : escapeHtml(formatNumberValue(value, lang));
   if (inTag) {
     if (type === "link") return escapeAttr(isSafeUrl(linkParts(value).href) ? linkParts(value).href : "");
     if (type === "boolean") return value ? "true" : "false";
@@ -321,8 +417,13 @@ function lookup(path, frames) {
   for (let i = frames.length - 1; i >= 0; i--) {
     const frame = frames[i];
     if (head.startsWith("@")) {
-      if (frame.loop && head in frame.loop) return { value: frame.loop[head], type: "text" };
-      continue;
+      if (!frame.loop || !(head in frame.loop)) continue;
+      const value = frame.loop[head];
+      if (value && typeof value === "object") {
+        const sub = parts[1];
+        return { value: sub && Object.hasOwn(value, sub) ? value[sub] : undefined, type: head === "@percent" ? "number" : "text" };
+      }
+      return { value, type: "text" };
     }
     if (head === "this") {
       if (frame.item === undefined) continue;
@@ -340,8 +441,13 @@ function resolveIn(value, schema, rest, path) {
   let current = value;
   let currentSchema = schema;
   let currentPath = path;
-  for (const part of rest) {
+  for (let i = 0; i < rest.length; i++) {
+    const part = rest[i];
     if (current === undefined || current === null) break;
+    if (Array.isArray(current) && part.startsWith("@")) {
+      const value = aggregate(current, part, rest[i + 1]);
+      return { value, type: "number", schema: { type: "number" }, path: null };
+    }
     if (typeof current !== "object" || !Object.hasOwn(current, part)) {
       current = undefined;
       break;
@@ -369,7 +475,7 @@ function renderNodes(nodes, frames, options, out) {
         const { value, type, path } = lookup(node.path, frames);
         const editable = options.edit && path && !path.startsWith("slide.") && !path.startsWith("deck.");
         const placeholder = Boolean(editable && options.placeholders?.has(path.split(".")[0]));
-        out.push(formatValue(value, type, { inTag: node.inTag, edit: editable, path, placeholder, assetUrl: options.assetUrl }));
+        out.push(formatValue(value, type, { inTag: node.inTag, edit: editable && type !== "number", path, placeholder, assetUrl: options.assetUrl, lang: options.lang }));
         break;
       }
       case "partial": {
@@ -393,6 +499,7 @@ function renderNodes(nodes, frames, options, out) {
           break;
         }
         const schema = resolved.schema || {};
+        const stats = schema.type === "cards" ? chartStats(items, schema) : null;
         items.forEach((item, index) => {
           const isCards = schema.type === "cards";
           const itemPath = resolved.path ? `${resolved.path}.${index}` : null;
@@ -405,6 +512,7 @@ function renderNodes(nodes, frames, options, out) {
               "@number": String(index + 1).padStart(2, "0"),
               "@first": index === 0,
               "@last": index === items.length - 1,
+              ...(stats ? stats[index] : {}),
             },
           };
           if (isCards) {
@@ -435,7 +543,7 @@ export function renderTemplate(template, data, ctx = {}) {
     path: "",
   };
   const frames = [builtins, { fields: template.slots, value: data || {}, path: "" }];
-  renderNodes(template.ast.children, frames, { edit: Boolean(ctx.edit), placeholders: ctx.placeholders, assetUrl: ctx.assetUrl }, out);
+  renderNodes(template.ast.children, frames, { edit: Boolean(ctx.edit), placeholders: ctx.placeholders, assetUrl: ctx.assetUrl, lang: ctx.deck?.lang || "en" }, out);
   return out.join("");
 }
 
@@ -481,8 +589,16 @@ export function checkSlotLimits(template, data) {
       if (slot.max && value.length > slot.max) issues.push({ level: "warning", slot: path, message: `"${path}" has ${value.length} items (max ${slot.max})` });
       if (slot.type === "cards") value.forEach((item, i) => {
         for (const [key, field] of Object.entries(slot.fields || {})) check(field, item?.[key], `${path}.${i}.${key}`);
+        for (const key of Object.keys(item && typeof item === "object" ? item : {})) {
+          // Usually an unquoted comma in a YAML flow mapping: { text: a, b }.
+          if (!Object.hasOwn(slot.fields || {}, key)) issues.push({ level: "warning", slot: `${path}.${i}`, message: `"${path}.${i}" has an unknown field "${key.slice(0, 40)}" (quote values that contain commas)` });
+        }
       });
       else if (slot.maxLength) value.forEach((item, i) => check({ type: slot.of, max: slot.maxLength }, item, `${path}.${i}`));
+      return;
+    }
+    if (slot.type === "number") {
+      if (!Number.isFinite(toNumber(value))) issues.push({ level: "warning", slot: path, message: `"${path}" must be a number (got "${String(value).slice(0, 30)}")` });
       return;
     }
     if ((slot.type === "text" || slot.type === "richtext") && slot.max) {

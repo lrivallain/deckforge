@@ -115,6 +115,27 @@ test("changing template and theme", async ({ page }) => {
   expect(primary.toUpperCase()).toBe("#0B6A66");
 });
 
+test("number fields drive chart sizes and are saved as numbers", async ({ page }) => {
+  await railItem(page, "lifecycle").click();
+  await page.getByTestId("change-template").click();
+  await page.locator('.picker-card[data-template="bars"]').click();
+  await page.getByRole("button", { name: "Apply template" }).click();
+  await expect(stage(page).locator(".bar-row")).toHaveCount(5);
+  // Sample figures are editor-only placeholders: make them real by editing one value.
+  const value = page.locator('input[type="number"][data-path="items.1.value"]');
+  await expect(value).toHaveValue("18");
+  await value.fill("84");
+  await waitForFile(editor.readYaml, (y) => /value: 84\n/.test(y));
+  // Compute (42 + 6 projected) is no longer the largest row: Databases at 84 is.
+  await expect(stage(page).locator(".bar-row").nth(1).locator(".bar").first()).toHaveAttribute("style", "--size: 100%");
+  await expect(stage(page).locator(".bar-row").nth(0).locator(".bar").first()).toHaveAttribute("style", "--size: 50%");
+  // Numbers are edited in the inspector, never inline on the slide.
+  await expect(stage(page).locator('[data-df-slot="items.1.value"]')).toHaveCount(0);
+  await expect(stage(page).locator('.chart df-slot[data-df-slot="items.1.label"]')).toHaveAttribute("contenteditable", "plaintext-only");
+  // The screen-reader copy of the data is not an editing target.
+  await expect(stage(page).locator('.sr-only df-slot[data-df-slot="items.1.label"]')).not.toHaveAttribute("contenteditable");
+});
+
 test("deck settings update meta and brief", async ({ page }) => {
   await page.getByTestId("open-settings").click();
   const dialog = page.getByRole("dialog");

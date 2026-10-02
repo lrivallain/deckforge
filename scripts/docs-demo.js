@@ -10,7 +10,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, "docs/public/demo");
 fs.mkdirSync(out, { recursive: true });
 
-for (const name of ["starter", "aurora", "agent-native"]) {
+const examples = fs.readdirSync(path.join(root, "examples")).filter((name) => fs.existsSync(path.join(root, "examples", name, "deck.yaml")));
+for (const name of examples) {
   const file = path.join(out, `${name}.html`);
   execFileSync(process.execPath, [path.join(root, "bin/deckforge.js"), "build", path.join(root, "examples", name), "--runtime", "inline", "--out", file], { stdio: "inherit" });
 }

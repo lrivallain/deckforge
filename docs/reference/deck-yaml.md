@@ -25,6 +25,9 @@ slides:
     footer: optional per-slide footer override (rich text)
     notes: |
       Speaker notes. Blank lines separate paragraphs.
+    sources:                  # optional: in the notes and on the generated Sources slide
+      - Q3 incident review (internal)
+      - { label: Price list, href: "https://example.com/prices" }
     data:                     # slot values defined by the template
       eyebrow: 01 / Explain the shift
       title: <span class="old">From X.</span><span class="blue">To Y.</span>
@@ -51,6 +54,7 @@ slides:
 | `description` | string | `<meta name="description">` of the page |
 | `subtitle`, `author`, `date` | string | Available to templates, for example <code v-pre>{{deck.author}}</code> |
 | `brief` | mapping | `topic`, `audience`, `goal`, `duration`, `sources`: context for Copilot |
+| `sourcesSlide` | `false` \| string | `false` leaves out the generated Sources slide; a string is its title. The default title is `Sources` |
 
 ## Slides
 
@@ -62,6 +66,7 @@ slides:
 | `hidden` | boolean | Kept in the deck, not presented |
 | `footer` | rich text | Footer override for this slide |
 | `notes` | string | Speaker notes. Blank lines separate paragraphs |
+| `sources` | string or list | Where the slide's facts come from: strings or `{label, href}`. See [Sources](#sources) |
 | `data` | mapping | Slot values, as defined by the template |
 | `overlays` | list | Free elements above the template (see below) |
 
@@ -74,6 +79,20 @@ Two optional per-slide fields are managed by the editor:
 - `stash`: content of slots the current template does not use. When you switch templates, nothing is
   lost: switching back to a template with those slots restores them. A navigation `title` that only
   repeated the old template's name is dropped, so the title follows the headline.
+
+## Sources
+
+Each `sources:` entry is listed at the end of the slide's speaker notes. When at least one visible slide has sources,
+`deckforge build` adds a **Sources** appendix slide at the end of `deck.html`: every source, with the number and
+title of the slide it supports. Entries that are `http(s)` URLs, or have an `href`, become links. The appendix uses
+the `sources` template, which a deck can override; `meta.sourcesSlide` renames it or turns it off.
+The appendix is generated at build time: the editor doesn't show it as a slide.
+
+## Number values
+
+`number` slots, such as the values of the [chart templates](../guide/templates#charts-and-data), take a plain YAML
+number: `1200`, `9.5`, `-3`. Don't add units, thousands separators or `%`; the template formats the number for
+`meta.lang` and computes bar lengths, segments and totals from it.
 
 ## Image values
 

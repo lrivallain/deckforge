@@ -40,6 +40,7 @@ export function stringifyDeck(deck) {
       if (slide.placeholders?.length) out.placeholders = slide.placeholders;
       if (slide.stash && Object.keys(slide.stash).length) out.stash = slide.stash;
       if (slide.overlays?.length) out.overlays = slide.overlays.map(stringifyOverlay);
+      if (slide.sources?.length) out.sources = slide.sources;
       if (slide.notes) out.notes = slide.notes;
       return out;
     }),
@@ -70,6 +71,26 @@ export function makeSlideId(existing, base = "slide") {
   for (let i = 2; ; i++) if (!used.has(`${safe}-${i}`)) return `${safe}-${i}`;
 }
 
+/**
+ * Per-slide `sources:` — a string or a list of strings / {label, href}.
+ * Listed in the speaker notes and on the generated Sources appendix slide.
+ */
+export function normalizeSources(raw) {
+  if (raw === undefined || raw === null || raw === "") return [];
+  const out = [];
+  for (const entry of [].concat(raw)) {
+    if (typeof entry === "string" || typeof entry === "number") {
+      const text = String(entry).trim();
+      if (text) out.push(text);
+    } else if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+      const label = String(entry.label ?? "").trim();
+      const href = String(entry.href ?? "").trim();
+      if (label || href) out.push(href ? { label: label || href, href } : label);
+    } else throw new DeckError("Each source must be a string or a {label, href} mapping");
+  }
+  return out;
+}
+
 export function normalizeSlide(raw, existingIds = []) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new DeckError("Each slide must be a mapping");
   if (!raw.template || typeof raw.template !== "string") throw new DeckError(`Slide ${raw.id ?? "?"} has no template`);
@@ -84,6 +105,12 @@ export function normalizeSlide(raw, existingIds = []) {
   };
   if (raw.title) slide.title = String(raw.title);
   if (raw.footer) slide.footer = String(raw.footer);
+  try {
+    const sources = normalizeSources(raw.sources);
+    if (sources.length) slide.sources = sources;
+  } catch (err) {
+    throw new DeckError(`Slide ${id}: ${err.message}`);
+  }
   // Slots filled with template sample text: shown in the editor only.
   if (Array.isArray(raw.placeholders)) {
     const keys = raw.placeholders.map(String).filter((k) => Object.hasOwn(slide.data, k));
@@ -114,6 +141,9 @@ export function normalizeDeck(raw) {
     if (!RUNTIME_MODES.includes(metaIn.runtime)) throw new DeckError(`meta.runtime must be one of ${RUNTIME_MODES.join(", ")}`);
     meta.runtime = metaIn.runtime;
   }
+  // false: no generated Sources appendix; a string: its title.
+  if (metaIn.sourcesSlide === false) meta.sourcesSlide = false;
+  else if (typeof metaIn.sourcesSlide === "string" && metaIn.sourcesSlide.trim()) meta.sourcesSlide = metaIn.sourcesSlide.trim();
   if (!/^[a-zA-Z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(meta.lang)) throw new DeckError(`Invalid meta.lang "${meta.lang}"`);
   const brief = {};
   if (metaIn.brief && typeof metaIn.brief === "object") {

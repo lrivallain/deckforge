@@ -44,11 +44,11 @@ features:
     link: /guide/writing-decks
   - icon: ✏️
     title: Live editor, themes and templates
-    details: Edit text in place, use a typed inspector, add images and overlays with snapping. 4 themes and 20 templates, and you can add your own.
+    details: Edit text in place, use a typed inspector, add images and overlays with snapping. 4 themes and 32 templates, from one-idea slides to data-driven charts, and you can add your own.
     link: /guide/editor
   - icon: 🚀
     title: One static file, or PowerPoint
-    details: Keyboard navigation, speaker notes, a presenter window and print to PDF, with no network requests by default. Or export an editable .pptx.
+    details: Keyboard navigation, speaker notes, a presenter window and print to PDF, with no network requests by default. Technical starters share offline. Or export an editable .pptx.
     link: /guide/presenting
 ---
 

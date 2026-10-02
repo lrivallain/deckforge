@@ -68,6 +68,17 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
   font: 400 1.1cqw / 1.4 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase;
 }
 .foot .num { color: var(--df-primary); white-space: nowrap; }
+/* Chart series colours (data templates): .series-N sets --series from the theme palette. */
+.series-0 { --series: var(--df-primary); }
+.series-1 { --series: var(--df-accent); }
+.series-2 { --series: var(--df-ok); }
+.series-3 { --series: var(--df-muted); }
+.series-4 { --series: var(--df-primary-line); }
+.series-5 { --series: var(--df-accent-line); }
+.series-6 { --series: var(--df-ink); }
+.series-7 { --series: var(--df-line); }
+.swatch { display: inline-block; flex: none; width: 1.1cqw; height: 1.1cqw; border-radius: 3px; background: var(--series, var(--df-primary)); }
+.source { font: 400 1.1cqw / 1.4 var(--df-font-mono); color: var(--df-muted); }
 .df-missing { margin: auto; text-align: center; display: grid; gap: 1cqw; color: var(--df-muted); }
 
 /* ------------------------------------------------------------ images */

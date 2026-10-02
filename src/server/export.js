@@ -71,7 +71,7 @@ export async function exportPptxFile(deckPath, { out, launch = launchChromium } 
   const { templates, errors: templateErrors } = loadTemplates(deckDir);
   const { themes, errors: themeErrors } = loadThemes(deckDir);
   const outPath = out ? path.resolve(out) : pptxPathFor(absolute);
-  const built = buildDeckObject(deck, { deckDir, sourceDir: deckDir, outPath: path.join(deckDir, "deck.html"), runtime: "inline", templates, themes, write: false });
+  const built = buildDeckObject(deck, { deckDir, sourceDir: deckDir, outPath: path.join(deckDir, "deck.html"), runtime: "inline", templates, themes, write: false, offlineCsp: false });
   const loadErrors = [...templateErrors, ...themeErrors];
   if (built.issues.some((i) => i.level === "error")) return { outPath: null, slides: 0, warnings: [], issues: built.issues, deck, loadErrors };
   const bundle = path.join(DIST_DIR, "deckforge.export.js");

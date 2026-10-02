@@ -42,9 +42,12 @@ an AI edits typed slides through validated tools, and you can review and undo ev
 - **A source you can audit.** Each slide in `deck.yaml` picks a template and fills its typed slots. Changes are readable
   diffs, and the text is checked against each slot's limits.
 - **A live editor.** Edit text in place, use a typed inspector, add images and overlays, and undo any change. It ships with
-  4 themes and 20 templates, from one-idea slides to diagrams, and you can add your own.
+  4 themes and 32 templates, from one-idea slides to diagrams, data-driven charts and technical reviews, and you can add
+  your own.
 - **One static file, or PowerPoint.** Speaker notes, a presenter window and print to PDF, with no network requests by
   default. Or export an editable `.pptx` with native text boxes, shapes, pictures and your speaker notes.
+- **Offline technical decks.** Architecture reviews, postmortems, assessments and decision records: charts computed from the figures,
+  per-slide sources, `--check-offline` and `--strip-notes` for confidential sharing, and `deckforge diff` for pull request reviews.
 
 ## Install
 
@@ -63,7 +66,8 @@ deckforge build my-talk --runtime inline                    # one self-contained
 deckforge export my-talk                                    # an editable deck.pptx
 ```
 
-To start from a complete deck, run `deckforge new my-talk --example aurora`. The
+To start from a complete deck, run `deckforge new my-talk --example aurora`, or a technical starter:
+`--example architecture-review`, `postmortem`, `assessment` or `decision-record`. The
 [`agent-native` example](examples/agent-native) was written from a brief by the Copilot skill and ships with its brief,
 storyline plan and validation report.
 
@@ -78,6 +82,7 @@ storyline plan and validation report.
 | [Editor](https://deckforge.vuptime.io/guide/editor) · [Copilot](https://deckforge.vuptime.io/guide/copilot) | Edit slides visually or by asking Copilot |
 | [Agent model](https://deckforge.vuptime.io/guide/agent-model) | The deck tools, scope and undo rules, and what the agent can never do |
 | [Present and share](https://deckforge.vuptime.io/guide/presenting) | Viewer, print to PDF, PowerPoint export, runtime modes |
+| [Technical decks](https://deckforge.vuptime.io/guide/technical-decks) · [Share offline](https://deckforge.vuptime.io/guide/offline) · [Git and CI](https://deckforge.vuptime.io/guide/git-ci) | Charts from data, starters, confidential one-file sharing, reviews in pull requests |
 | [Copilot skill](https://deckforge.vuptime.io/guide/copilot-skill) | Let the Copilot CLI build a deck from a brief |
 | [Reference](https://deckforge.vuptime.io/reference/cli) | CLI, `deck.yaml`, theme and template files, security model |
 
