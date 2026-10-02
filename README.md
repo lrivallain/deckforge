@@ -14,6 +14,8 @@ generates a static `deck.html`:
   runtime modes.
 - **Editor** (`deckforge edit`): a slide rail, a live preview with inline text editing, a typed slot
   inspector, a theme switcher, autosave and undo/redo.
+- **Images and free elements**: `image` slots and templates, drag-and-drop/paste uploads, and a per-slide
+  overlay layer (images, text, callouts, arrows, shapes) you can move, resize and align on the slide.
 - **Copilot**: a chat drawer scoped to *this slide* or the *whole deck*. Copilot can only call deck tools, and
   each turn is one undo step.
 - **Template editor**: front-matter, HTML and CSS editing with a live preview, plus validation (unknown
@@ -96,7 +98,17 @@ slides:
       title: <span class="old">From X.</span><span class="blue">To Y.</span>
       audiences:
         - { icon: pen, title: Creators, text: Prepare the work }
+  - id: photo
+    template: image-text
+    data:
+      image: { src: assets/3f2a9c1b04de.jpg, alt: Review board with three printed drafts, fit: cover, focus: 50% 30% }
+      title: What reviewers see
+    overlays:                 # optional free layer, % of the 1280×720 slide
+      - { id: arrow-1, kind: arrow, x: 30, y: 20, w: 15, h: 6.67, z: 1, rotate: 25, data: { color: accent } }
 ```
+
+Images are files in the deck's `assets/` folder (added by the editor) or `https://` URLs. Overlays
+are free elements drawn above the template. See [docs/schema.md](docs/schema.md) for every field.
 
 Two optional per-slide fields are managed by the editor:
 
@@ -159,7 +171,7 @@ The lookup order is the same as for themes: `templates/` in the deck folder, the
 name: team-grid                 # must match the file name
 label: Team grid
 description: Up to three cards under a headline.
-category: content               # structure | diagram | content (template picker groups)
+category: content               # structure | diagram | content | media (template picker groups)
 order: 10                       # optional sort order in the picker
 class: map-slide                # optional extra classes on the <section>
 slots:
@@ -200,6 +212,7 @@ slots:
 | `icon` | icon name | One of the built-in outline icons, such as `pen review book user users shield lock cloud server database code gear chart target flag idea rocket link search clock calendar mail chat globe layers box bolt check alert arrow star heart home file folder eye sparkles puzzle flow agent network money building` |
 | `link` | `{label, href}` | Rendered as a safe external link |
 | `boolean` | true/false | Use it in `{{#if}}` blocks |
+| `image` | `{src, alt, fit, focus}` | `src` is `assets/<file>` or `https://…`; `alt` is required (warned when empty); `fit: cover\|contain`; `focus: "x% y%"` (kept visible when cropping). Rendered as `<img loading="lazy" decoding="async">`; empty renders nothing, so wrap optional ones in `{{#if}}`. The base kit's `.media` class gives a framed box the image fills |
 
 **Syntax**
 
@@ -213,8 +226,10 @@ slots:
 
 The viewer CSS provides a base kit with the classes `header eyebrow subtitle outcome foot pill card
 icon arrow`, `h1 .old`, `.blue/.primary` and `.amber/.accent`. Built-in templates:
-`title`, `section`, `concept-map`, `implementation-map`, `lifecycle`, `zoom`
-(problem → response), `bullets`, `two-column`, `quote` and `resources`.
+`title` (optional `visual` picture instead of the motif), `section`, `concept-map`, `implementation-map`, `lifecycle`, `zoom`
+(problem → response), `bullets`, `two-column` (optional `leftMedia`/`rightMedia`), `quote`, `resources`,
+`image` (framed with a caption, or full-bleed with a text panel) and `image-text` (picture + headline +
+points; `imageRight` switches the side). Empty optional images keep the original layouts pixel for pixel.
 
 ## Runtime modes and CDN
 
@@ -227,6 +242,11 @@ icon arrow`, `h1 .old`, `.blue/.primary` and `.amber/.accent`. Built-in template
 | `cdn` | `https://cdn.jsdelivr.net/gh/lrivallain/deckforge@v<version>/dist/deckforge.viewer.{js,css}` | jsDelivr |
 
 Theme and template CSS are always inlined, so `cdn` decks fetch only the two runtime files.
+
+Images follow the mode: `local` copies the used `assets/` files next to `deck.html` when you build
+with `--out` elsewhere, `inline` embeds them as `data:` URIs, and `cdn` keeps the relative paths.
+`deckforge build` lists assets that no slide uses (it never deletes them) and warns about missing
+files, empty alt texts and `https://` images (each viewer fetches them).
 The CDN URLs only resolve for tagged releases (`v<version>`).
 
 ## Viewer
@@ -245,7 +265,10 @@ The viewer also supports these:
 
 - **Hash links:** `#3` and `#slide-<id>` open a specific slide.
 - **Reduced motion:** with `prefers-reduced-motion`, slides show their final state immediately.
-- **Print / PDF:** printing outputs one 13.333×7.5 in page per slide, without the controls.
+- **Print / PDF:** printing outputs one 13.333×7.5 in page per slide, without the controls. Images are
+  lazy in the markup, but the runtime loads the neighbouring slides' images on navigation and every
+  image after the page has loaded and before printing.
+- **Overlays** reveal after the template elements, or at their `order` step.
 
 ## Editor
 
@@ -258,6 +281,26 @@ The viewer also supports these:
   changes are announced the same way.
 - **Top bar.** Undo/redo (⌘/Ctrl+Z, ⇧⌘Z), theme switcher, **Templates** (template editor),
   **Deck** (metadata, brief, runtime), **Present** (opens the generated viewer) and **Copilot** (⌘/Ctrl+K).
+- **Images.** Drop or paste an image on the slide, click an empty image frame, or use the inspector's
+  image control (choose a file, reuse one from the deck, or type an `https://` address). PNG, JPEG,
+  WebP, GIF and SVG up to 10 MB. The control shows a thumbnail: click it to set the focal point. It also
+  has a fill/fit switch and an alt text field with a counter that warns while it is empty.
+  Dropping on an image frame replaces that picture; dropping elsewhere fills an empty required image
+  slot, or adds an image overlay.
+- **Insert** (above the slide) adds an image, text, callout, arrow or shape overlay. Click an overlay to
+  select it (Shift+click adds to the selection). Then:
+  - drag it, resize it with the 8 handles (Shift keeps the proportions) or rotate it with the round
+    handle (Shift: 15° steps);
+  - it snaps to an 8 px grid and to the edges and centres of the template's elements, the slide
+    margins and other overlays, with guides (hold Alt to move freely);
+  - arrow keys nudge 1 px, Shift+arrow 10 px; ⌘/Ctrl+D duplicates, Delete removes, ⌘/Ctrl+] and [
+    bring forward and send backward;
+  - the inspector edits position, size, rotation, reveal step and the kind's theme tokens, and aligns or
+    distributes several overlays.
+  Every gesture is one undo step. Overlays leaving the slide or covering the template's text are flagged.
+  Template slots keep their layout: there are no per-element offsets, so paired slides stay aligned.
+- **Reorder items.** Hover a card or list item on the slide and drag its grip, or drag the handle of a
+  row in the inspector. Each drop is one undo step.
 - Every change autosaves `deck.yaml` and rebuilds `deck.html`.
 
 ### Copilot assistant
@@ -269,8 +312,11 @@ signed in, the drawer shows how to sign in.
 - **Scope.** *This slide* limits every change to the selected slide. *Whole deck* allows
   adding, removing, reordering and theming slides.
 - **Tools.** Copilot can only use `get_deck`, `list_templates`, `list_themes`, `update_slide`,
-  `add_slide`, `remove_slide`, `move_slide`, `set_hidden`, `set_template`, `set_theme` and
-  `update_meta`. It has no shell, file or web tools. Every other permission request is refused.
+  `add_slide`, `remove_slide`, `move_slide`, `set_hidden`, `set_template`, `set_theme`,
+  `update_meta`, `list_assets`, `set_image`, `add_overlay`, `update_overlay` and `remove_overlay`. It has no
+  shell, file or web tools. Every other permission request is refused.
+- **Images.** Copilot can only place images that are already in `assets/` (no downloads and no
+  `https://` sources). It writes alt texts and says when one is only a suggestion to check.
 - **Grounding.** The system prompt contains the design rules of the style (one takeaway per slide,
   short headlines, no invented facts…), the template catalogue and `meta.brief`.
 - **Undo.** Changes apply directly, and slides Copilot changed are highlighted in the rail. A turn is a single
@@ -280,11 +326,18 @@ signed in, the drawer shows how to sign in.
 ### Security model
 
 - The server binds `127.0.0.1` with a random port and a per-run token. The token is exchanged for an
-  `HttpOnly; SameSite=Strict` cookie.
+  `HttpOnly; SameSite=Strict` cookie named after the port (`df_token_<port>`), so several editors can run
+  side by side.
 - The server checks the Host header against DNS rebinding and the Origin header on writes. It requires JSON request bodies and sends
   a strict Content-Security-Policy for the editor.
-- Writes happen only in the deck folder (`deck.yaml`, `deck.html`, `deckforge/`, `templates/`) and in
+- Writes happen only in the deck folder (`deck.yaml`, `deck.html`, `deckforge/`, `templates/`, `assets/`) and in
   `~/.config/deckforge/templates`. Dot-files and paths outside the deck folder are never served.
+- Uploads (`POST /api/assets`) need the token, pass the Origin check and are limited to 10 MB. The file
+  type comes from its magic bytes, never from its name or Content-Type. SVG files with scripts, event
+  handlers, `javascript:` URLs, `foreignObject` or entity declarations are refused. Files are stored as
+  `assets/<sha256-12>.<ext>`. Assets are served with `X-Content-Type-Options: nosniff`, and SVG with a
+  `sandbox` Content-Security-Policy. User images are always `<img>` elements, never inline SVG. The server
+  never fetches remote URLs.
 - Slot text is HTML-escaped and rich text is sanitized with an allow-list. Theme values are validated.
 - deckforge sends no telemetry.
 
@@ -311,7 +364,9 @@ CI checks that they are up to date. The e2e tests mock the Copilot SDK with
 
 - PowerPoint export is out of scope. Use your existing HTML→PPTX workflow on `deck.html`.
 - The editor does not preserve YAML comments in `deck.yaml`.
-- There is no image slot type yet. Templates can still reference images in the deck folder.
+- The "overlay covers template text" check needs a laid-out page, so the editor reports it but
+  `deckforge build` does not. The build checks bounds, alt texts and missing files.
+- Images are not resized or compressed. Unused files in `assets/` are reported, never deleted.
 - Fonts are not bundled. The `build` theme falls back to system fonts when its fonts are not installed.
 
 ## License
