@@ -4,6 +4,7 @@ import { h, icon, toast } from "./dom.js";
 import { api, connectEvents } from "./api.js";
 import { applySnapshot, loadViewerCss, notify, select, selectedSlide, state, subscribe, markChanged } from "./state.js";
 import { createRail } from "./rail.js";
+import { createPanelResizers } from "./panels.js";
 import { createStage } from "./stage.js";
 import { createInspector } from "./inspector.js";
 import { createChat } from "./chat.js";
@@ -97,6 +98,7 @@ async function main() {
 
   app.removeAttribute("aria-busy");
   app.replaceChildren(topbar.root, h("main", { class: "workspace" }, rail.root, stage.root, inspector.root, chat.root));
+  createPanelResizers({ rail: rail.root, inspector: inspector.root, chat: chat.root });
 
   subscribe((info) => {
     topbar.update(info);

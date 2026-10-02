@@ -17,6 +17,7 @@ import { OpError } from "../core/ops.js";
 import { editorPage } from "./editor-page.js";
 import { AssetError, listAssets, MAX_ASSET_BYTES, saveAsset } from "./assets.js";
 import { escapeHtml } from "../core/html.js";
+import { generateToken } from "./token.js";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -192,7 +193,7 @@ export async function startServer({
   mode = "edit",
   port = 0,
   host = "127.0.0.1",
-  token = crypto.randomBytes(18).toString("base64url"),
+  token = generateToken(),
   runtime,
   agentFactory,
   log = (msg) => console.error(`[deckforge] ${msg}`),
@@ -337,8 +338,11 @@ export async function startServer({
         if (!safeEqual(url.searchParams.get("token"), token)) return send(res, 401, "Invalid token");
         url.searchParams.delete("token");
         const location = url.pathname + (url.search || "") + (url.hash || "");
+        // Lax, not Strict: hosts such as the GitHub Copilot app's webview open the
+        // URL from another site, and a Strict cookie would be dropped on this
+        // redirect. Writes stay guarded by the Origin check and JSON-only bodies.
         res.writeHead(302, {
-          "Set-Cookie": `${cookieName()}=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/`,
+          "Set-Cookie": `${cookieName()}=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/`,
           Location: location,
           "Cache-Control": "no-store",
         });

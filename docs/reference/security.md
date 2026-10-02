@@ -4,8 +4,12 @@ The editor is a local web server that can write files, so it is locked down by d
 To report a vulnerability, see [SECURITY.md](https://github.com/lrivallain/deckforge/blob/master/SECURITY.md).
 
 - The server binds `127.0.0.1` with a random port and a per-run token. The token is exchanged for an
-  `HttpOnly; SameSite=Strict` cookie named after the port (`df_token_<port>`), so several editors can run
-  side by side.
+  `HttpOnly; SameSite=Lax` cookie named after the port (`df_token_<port>`), so several editors can run
+  side by side. The cookie is `Lax`, not `Strict`, because some hosts (the GitHub Copilot app's built-in
+  browser, for example) open the URL from another site: browsers drop a `Strict` cookie on that first
+  redirect and the editor answers 401. `Lax` only adds the cookie to top-level `GET` navigations, which
+  don't change anything. Writes still need a same-origin (or absent) Origin header and a JSON body, so a
+  cross-site form or `fetch` can't use the cookie.
 - The server checks the Host header against DNS rebinding and the Origin header on writes. It requires JSON request bodies and sends
   a strict Content-Security-Policy for the editor.
 - Writes happen only in the deck folder (`deck.yaml`, `deck.html`, `deckforge/`, `templates/`, `assets/`) and in

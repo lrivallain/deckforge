@@ -5,6 +5,18 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Editor: drag an edge to resize the slide rail, the inspector or the Copilot panel. You can also use the keyboard, and double-click restores the default width. The widths persist, and rail thumbnails scale with the rail.
+- Copilot: continue the editor's conversation in Copilot CLI or the GitHub Copilot app. The drawer shows the session ID, and **Continue in Copilot** releases the session and gives a `copilot --resume` command or opens `ghapp://sessions/<id>`. The editor resumes its last conversation for each deck.
+- `deckforge mcp [<deck>]`: a stdio MCP server with the deck tools. With a running `deckforge edit`, its changes appear live and can be undone. Without a deck it uses the `deck.yaml` of the Copilot session's folder. `deckforge mcp --install`, or **Add the deck tools to Copilot** in the editor, registers it in `~/.copilot/mcp-config.json`.
+
+### Fixed
+
+- Editor: the page no longer scrolls past the app, which used to push the toolbar out of view.
+- Editor: the URL printed by `deckforge edit` now opens from hosts that start navigations on another site, such as the GitHub Copilot app's built-in browser. The token cookie is `SameSite=Lax` instead of `Strict`.
+- `npm run dev` no longer fails at random with "Option '--token' argument is ambiguous": tokens never start with `-`, and the token is passed as `--token=<t>`.
+
 ## [0.1.0]
 
 First public version. Add the release date to this heading when you tag it.
