@@ -38,7 +38,7 @@ function makeDeck(name, { example = "starter", edit } = {}) {
 
 async function startEditor(dir) {
   const token = "docs";
-  const child = spawn(process.execPath, [CLI, "edit", dir, "--port", "0", "--token", token, "--no-open"], { env, stdio: ["ignore", "pipe", "pipe"] });
+  const child = spawn(process.execPath, [CLI, "edit", dir, "--port", "0", `--token=${token}`, "--no-open"], { env, stdio: ["ignore", "pipe", "pipe"] });
   children.add(child);
   let output = "";
   const origin = await new Promise((resolve, reject) => {
