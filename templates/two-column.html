@@ -12,10 +12,12 @@ slots:
   leftTitle: { type: text, max: 40, sample: Drafts move by email }
   leftText: { type: richtext, max: 120, sample: Reviewers receive attachments and reply in separate threads. }
   leftPoints: { type: list, max: 4, maxLength: 60, sample: [Versions diverge, Decisions are implicit, Sources get lost] }
+  leftMedia: { type: image, description: Optional picture at the bottom of the left column }
   rightLabel: { type: text, max: 24, sample: Next quarter }
   rightTitle: { type: text, max: 40, sample: One shared review space }
   rightText: { type: richtext, max: 120, sample: Everyone comments on the same version with its evidence attached. }
   rightPoints: { type: list, max: 4, maxLength: 60, sample: [One current version, Named decision owner, Linked sources] }
+  rightMedia: { type: image, description: Optional picture at the bottom of the right column }
   highlightRight: { type: boolean, sample: true, description: Highlight the right column as the recommendation }
   takeawayLabel: { type: text, max: 20, sample: The takeaway }
   takeaway: { type: text, max: 90, sample: "" }
@@ -29,13 +31,15 @@ slots:
     {{#if leftLabel}}<span class="pill">{{leftLabel}}</span>{{/if}}
     <h2>{{leftTitle}}</h2>
     {{#if leftText}}<p class="text">{{leftText}}</p>{{/if}}
-    {{#if leftPoints}}<ul>{{#each leftPoints}}<li>{{this}}</li>{{/each}}</ul>{{/if}}
+    {{#if leftPoints}}<ul>{{#each leftPoints}}<li>{{this}}</li>{{/each}}</ul>{{/if}}{{#if leftMedia}}
+    <div class="media column-media">{{leftMedia}}</div>{{/if}}
   </article>
   <article class="column{{#if highlightRight}} chosen{{/if}} reveal">
     {{#if rightLabel}}<span class="pill">{{rightLabel}}</span>{{/if}}
     <h2>{{rightTitle}}</h2>
     {{#if rightText}}<p class="text">{{rightText}}</p>{{/if}}
-    {{#if rightPoints}}<ul>{{#each rightPoints}}<li>{{this}}</li>{{/each}}</ul>{{/if}}
+    {{#if rightPoints}}<ul>{{#each rightPoints}}<li>{{this}}</li>{{/each}}</ul>{{/if}}{{#if rightMedia}}
+    <div class="media column-media">{{rightMedia}}</div>{{/if}}
   </article>
 </div>
 {{#if takeaway}}<p class="outcome reveal"><strong>{{takeawayLabel}}</strong><span>{{takeaway}}</span></p>{{/if}}
@@ -57,4 +61,5 @@ slots:
   border-radius: 50%; border: 2px solid var(--df-primary);
 }
 .column.chosen li::before { background: var(--df-primary); }
+.column-media { flex: 1 1 0; min-height: 7cqw; margin-top: auto; }
 </style>

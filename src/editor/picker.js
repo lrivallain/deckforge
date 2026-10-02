@@ -4,7 +4,7 @@ import { h, icon, writeFrame } from "./dom.js";
 import { currentTheme, slideDocument, state } from "./state.js";
 import { sampleData } from "../core/template.js";
 
-const CATEGORY_LABELS = { structure: "Structure", diagram: "Diagrams", content: "Content" };
+const CATEGORY_LABELS = { structure: "Structure", diagram: "Diagrams", content: "Content", media: "Images" };
 
 export function pickTemplate({ title = "Choose a template", current = null, confirmLabel = "Use template" } = {}) {
   return new Promise((resolve) => {
@@ -29,7 +29,7 @@ export function pickTemplate({ title = "Choose a template", current = null, conf
       (groups[key] ||= []).push(template);
     }
     const deck = { meta: { ...state.deck.meta }, slides: [] };
-    for (const key of ["structure", "diagram", "content", ...Object.keys(groups)]) {
+    for (const key of ["structure", "diagram", "content", "media", ...Object.keys(groups)]) {
       const list = groups[key];
       if (!list) continue;
       delete groups[key];
