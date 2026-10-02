@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 
 export default [
-  { ignores: ["dist/**", "node_modules/**", "examples/**/deckforge/**", "test-results/**", "playwright-report/**", ".demo/**"] },
+  { ignores: ["dist/**", "node_modules/**", "examples/**/deckforge/**", "test-results/**", "playwright-report/**", ".demo/**", "skills/*/scripts/layout-check.js"] },
   js.configs.recommended,
   {
     languageOptions: {

@@ -25,7 +25,7 @@ Content rules:
 - Speaker notes: 2–4 short sentences of what to say, plus sources for factual claims.
 </design_rules>`;
 
-function describeSlot(name, slot) {
+export function describeSlot(name, slot) {
   const bits = [slot.type];
   if (slot.max) bits.push(`max ${slot.max}`);
   if (slot.required) bits.push("required");

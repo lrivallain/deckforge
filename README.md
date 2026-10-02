@@ -60,9 +60,11 @@ To start from the full specimen deck, run `deckforge new my-talk --example`. It 
 | Command | What it does |
 |---|---|
 | `deckforge new <dir> [--title T] [--theme build] [--example] [--force]` | Create a deck folder with `deck.yaml` and build it |
-| `deckforge build <deck.yaml\|dir> [--runtime local\|cdn\|inline] [--out file]` | Render `deck.yaml` to `deck.html`. Prints validation issues; exits with code 2 on errors |
+| `deckforge build <deck.yaml\|dir> [--runtime local\|cdn\|inline] [--out file] [--json]` | Render `deck.yaml` to `deck.html`. Prints validation issues; exits with code 2 on errors. `--json` prints a machine-readable report (`ok`, `outPath`, `issues`, `loadErrors`, `assets`) |
+| `deckforge templates [deck.yaml\|dir] [--json]` | List the templates a deck can use, with their slots, plus themes and icons. Deck-local and user templates are included |
 | `deckforge edit <deck.yaml\|dir> [--port 0] [--token T] [--runtime …] [--no-open]` | Start the local editor |
 | `deckforge serve <deck.yaml\|dir> [--port 0] [--no-open]` | Serve the deck read-only. Rebuilds and live-reloads on change |
+| `deckforge skill install-copilot [--dest dir] [--force] [--replace-build-presentation]` | Install the [GitHub Copilot skill](#github-copilot-skill) |
 
 `edit` and `serve` bind to `127.0.0.1` only. `edit` prints a URL with a per-run
 token, for example `http://127.0.0.1:53712/?token=…`. That URL is the only way into the editor,
@@ -340,6 +342,29 @@ signed in, the drawer shows how to sign in.
   never fetches remote URLs.
 - Slot text is HTML-escaped and rich text is sanitized with an allow-list. Theme values are validated.
 - deckforge sends no telemetry.
+
+## GitHub Copilot skill
+
+deckforge ships a skill that teaches GitHub Copilot (the CLI and the GitHub Copilot app) to build decks
+with deckforge. The skill lives in [`skills/deckforge`](skills/deckforge). Copilot plans a storyline from a brief
+and writes `deck.yaml` against the live catalogue (`deckforge templates --json`). It then iterates on
+`deckforge build --json` until the deck is clean and measures every slide at 1280×720 in the app's browser canvas
+(overflow, clipped text, overlays covering text). Finally it hands the deck over to `deckforge edit`.
+On request, it rebuilds the approved deck as editable PowerPoint.
+
+```bash
+deckforge skill install-copilot          # copies the skill to ~/.copilot/skills/deckforge
+```
+
+- The destination is `$COPILOT_HOME/skills` when `COPILOT_HOME` is set. `--dest <dir>` installs it elsewhere,
+  for example a repository's `.github/skills`.
+- Re-running the command updates the copy it installed. It refuses to overwrite a folder it did not create
+  unless you add `--force`.
+- The skill replaces the older `build-presentation` skill. The command warns when that skill is installed,
+  and `--replace-build-presentation` removes it.
+- Start a new Copilot session to load the skill.
+
+The skill's contents are described in [skills/deckforge/README.md](skills/deckforge/README.md).
 
 ## Development
 

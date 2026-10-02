@@ -83,6 +83,34 @@ export function loadThemes(deckDir) {
   return { themes, errors };
 }
 
+/**
+ * Everything an author (or an agent) needs to write deck.yaml for a deck folder:
+ * the resolved templates with their slot schemas, themes and icon names.
+ */
+export function describeCatalog(deckDir) {
+  const { templates, errors: templateErrors } = loadTemplates(deckDir);
+  const { themes, errors: themeErrors } = loadThemes(deckDir);
+  const byOrder = (a, b) => (a.category === b.category ? a.order - b.order : a.category.localeCompare(b.category)) || a.name.localeCompare(b.name);
+  return {
+    templates: Object.values(templates)
+      .sort(byOrder)
+      .map((t) => ({
+        name: t.name,
+        label: t.label,
+        description: t.description.replace(/\s+/g, " ").trim(),
+        category: t.category,
+        scope: t.scope,
+        path: t.path,
+        slots: t.slots,
+        ...(t.issues?.length ? { issues: t.issues } : {}),
+      })),
+    themes: Object.values(themes)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((t) => ({ name: t.name, label: t.label, description: t.description, scope: t.scope, path: t.path })),
+    loadErrors: [...templateErrors, ...themeErrors].map(({ path: p, message }) => ({ path: p, message })),
+  };
+}
+
 /** Resolve the directory a template should be saved into for a scope. */
 export function templateDirFor(scope, deckDir) {
   if (scope === "deck") return path.join(deckDir, "templates");
