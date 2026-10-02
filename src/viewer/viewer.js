@@ -24,12 +24,15 @@
   let notesPanel = null;
 
   // Stagger entrance delays in reading order unless the author set --delay.
+  // Overlays come after the template elements, or at their explicit step
+  // (data-df-order: 0 = with the first template element).
   const stagger = parseFloat(getComputedStyle(root).getPropertyValue("--df-motion-stagger")) || 0.15;
   for (const slide of slides) {
     let step = 0;
     for (const el of slide.querySelectorAll(".reveal")) {
-      if (!el.style.getPropertyValue("--delay")) el.style.setProperty("--delay", `${(step * stagger).toFixed(2)}s`);
-      step++;
+      const order = el.getAttribute("data-df-order");
+      const at = order !== null && /^\d+$/.test(order) ? Number(order) : step++;
+      if (!el.style.getPropertyValue("--delay")) el.style.setProperty("--delay", `${(at * stagger).toFixed(2)}s`);
     }
   }
 
@@ -65,8 +68,29 @@
     notesPanel.innerHTML = html || '<p class="empty">No speaker notes for this slide.</p>';
   }
 
+  // Images are lazy in the markup (fast first slide). Hidden slides never
+  // load lazy images, so print/PDF and the next slide would show blanks:
+  // load neighbours eagerly, then everything once the page has loaded.
+  function loadImages(slide) {
+    if (!slide) return;
+    for (const img of slide.querySelectorAll('img[loading="lazy"]')) img.loading = "eager";
+  }
+  function loadAllImages() {
+    slides.forEach(loadImages);
+  }
+  if (document.readyState === "complete") setTimeout(loadAllImages, 200);
+  else addEventListener("load", () => setTimeout(loadAllImages, 200));
+  addEventListener("beforeprint", loadAllImages);
+  if (window.matchMedia) {
+    const print = window.matchMedia("print");
+    if (print.addEventListener) print.addEventListener("change", (e) => e.matches && loadAllImages());
+  }
+
   function show(index) {
     current = Math.max(0, Math.min(slides.length - 1, index));
+    loadImages(slides[current]);
+    loadImages(slides[current + 1]);
+    loadImages(slides[current - 1]);
     slides.forEach((slide, position) => {
       slide.hidden = position !== current;
       slide.classList.remove("entered");

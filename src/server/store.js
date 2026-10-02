@@ -97,6 +97,8 @@ export class DeckStore extends EventEmitter {
     }
     const before = this.deck;
     const { deck, changed, result } = applyOp(before, name, args, this.ctx);
+    // A change that changes nothing (e.g. a re-sent field) must not add an undo step.
+    if (JSON.stringify(deck) === JSON.stringify(before)) return result;
     // Ops that describe themselves (e.g. "Slide 1: Concept map → Title") name the undo entry.
     label = result?.label || label || name;
     this.deck = deck;

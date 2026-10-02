@@ -139,11 +139,38 @@ describe("HTTP server", () => {
     const res = await req(`/?token=${app.token}`);
     expect(res.status).toBe(302);
     const cookie = res.headers.get("set-cookie");
-    expect(cookie).toMatch(/^df_token=.+; HttpOnly; SameSite=Strict; Path=\//);
+    expect(cookie).toMatch(new RegExp(`^df_token_${app.port}=.+; HttpOnly; SameSite=Strict; Path=/`));
     const page = await req("/", { headers: { cookie: cookie.split(";")[0] } });
     expect(page.status).toBe(200);
     expect(page.headers.get("content-security-policy")).toContain("script-src 'self'");
     expect(await page.text()).toContain("/assets/deckforge.editor.js");
+  });
+
+  it("keeps editors on different ports signed in with one shared cookie jar", async () => {
+    // Browsers share 127.0.0.1 cookies across ports: each editor needs its own cookie name.
+    const a = await start({ token: "token-a" });
+    const second = await startServer({ deckPath: makeDeck(), mode: "edit", log: () => {}, token: "token-b" });
+    try {
+      const jar = new Map();
+      const signIn = async (server) => {
+        const res = await fetch(`${server.origin}/?token=${server.token}`, { redirect: "manual" });
+        const [pair] = res.headers.get("set-cookie").split(";");
+        const index = pair.indexOf("=");
+        jar.set(pair.slice(0, index), pair.slice(index + 1));
+      };
+      const cookie = () => [...jar].map(([k, v]) => `${k}=${v}`).join("; ");
+      const state = (server) => fetch(`${server.origin}/api/state`, { headers: { cookie: cookie() } });
+      await signIn(a);
+      await signIn(second);
+      expect(jar.size).toBe(2);
+      expect((await state(a)).status).toBe(200);
+      expect((await state(second)).status).toBe(200);
+      // Only the port's own cookie counts: another editor's token is refused.
+      const foreign = await fetch(`${a.origin}/api/state`, { headers: { cookie: `df_token_${a.port}=token-b; df_token=token-a` } });
+      expect(foreign.status).toBe(401);
+    } finally {
+      await second.close();
+    }
   });
 
   it("rejects unexpected Host headers and cross-origin writes", async () => {

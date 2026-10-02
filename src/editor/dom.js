@@ -53,6 +53,18 @@ const ICON_PATHS = {
   chevron: "M9 6l6 6-6 6",
   palette: "M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1-.8-1.3-.8-2.2 0-.9.7-1.3 1.6-1.3H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3zM7.5 12h.01M9.5 8h.01M14.5 8h.01",
   layout: "M4 4h16v16H4zM4 10h16M10 10v10",
+  image: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01",
+  upload: "M12 16V4M7 9l5-5 5 5M5 20h14",
+  alignLeft: "M4 4v16M8 7h10v4H8zM8 14h6v4H8z",
+  alignCenter: "M12 4v16M6 7h12v4H6zM8 14h8v4H8z",
+  alignRight: "M20 4v16M6 7h10v4H6zM10 14h6v4h-6z",
+  alignTop: "M4 4h16M7 8h4v10H7zM14 8h4v6h-4z",
+  alignMiddle: "M4 12h16M7 6h4v12H7zM14 8h4v8h-4z",
+  alignBottom: "M4 20h16M7 6h4v10H7zM14 10h4v6h-4z",
+  distributeH: "M4 4v16M20 4v16M10 8h4v8h-4z",
+  distributeV: "M4 4h16M4 20h16M8 10h8v4H8z",
+  forward: "M9 9h11v11H9zM4 15V4h11",
+  backward: "M4 4h11v11H4zM9 20h11V9",
 };
 
 export function icon(name, size = 18) {
@@ -136,11 +148,28 @@ export function writeFrame(frame, html) {
   doc.open();
   doc.write(html);
   doc.close();
+  // document.open() erases the document's event listeners but keeps the same
+  // Document object: listeners must be re-attached per write (see wiredFor).
+  frame._generation = (frame._generation || 0) + 1;
   frame._doc = frame.contentDocument;
   frame._head = head;
   frame._body = body;
   frame.dataset.ready = "1";
   frame.dispatchEvent(new CustomEvent("frame-updated"));
+  return true;
+}
+
+/**
+ * True the first time it is called for `key` since the frame's document was
+ * (re)written: use it to attach document-level listeners exactly once.
+ */
+export function wiredFor(frame, key) {
+  const doc = frame.contentDocument;
+  if (!doc) return false;
+  const marks = (doc.__dfWired ||= {});
+  const generation = `${frame._generation || 0}`;
+  if (marks[key] === generation) return false;
+  marks[key] = generation;
   return true;
 }
 

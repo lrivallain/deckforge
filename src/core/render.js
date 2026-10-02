@@ -3,6 +3,7 @@
 import { escapeAttr, escapeHtml, textToHtml } from "./html.js";
 import { renderTemplate } from "./template.js";
 import { publishedData, slideTitle } from "./deck.js";
+import { renderOverlays } from "./overlay.js";
 
 export const VERSION = "0.1.0";
 export const CDN_BASE = "https://cdn.jsdelivr.net/gh/lrivallain/deckforge";
@@ -27,12 +28,13 @@ function missingTemplate(name) {
 }
 
 /** Render one slide <section>. */
-export function renderSlide(deck, slide, { index, total, templates, edit = false, includePlaceholders = false }) {
+export function renderSlide(deck, slide, { index, total, templates, edit = false, includePlaceholders = false, assetUrl }) {
   const template = templates[slide.template] || missingTemplate(slide.template);
   const titleId = `${slide.id}-title`;
   const title = slideTitle(slide, templates[slide.template]);
   const ctx = {
     edit,
+    assetUrl,
     placeholders: new Set(includePlaceholders ? slide.placeholders || [] : []),
     slide: {
       id: slide.id,
@@ -61,11 +63,12 @@ export function renderSlide(deck, slide, { index, total, templates, edit = false
   }
   const classes = ["slide", `df-t-${template.name}`, ...template.classes].join(" ");
   const labelled = inner.includes(`id="${titleId}"`) ? `aria-labelledby="${escapeAttr(titleId)}"` : `aria-label="${escapeAttr(title)}"`;
+  const overlays = renderOverlays(slide, { edit, assetUrl });
   const notes = slide.notes ? `\n  <aside class="slide-notes" hidden aria-label="Speaker notes">${slide.notes.split(/\n{2,}/).map((p) => `<p>${textToHtml(p.trim())}</p>`).join("")}</aside>` : "";
   return `<section class="${escapeAttr(classes)}" id="slide-${escapeAttr(slide.id)}" data-slide-id="${escapeAttr(slide.id)}" data-template="${escapeAttr(slide.template)}" data-title="${escapeAttr(title)}" ${labelled}>
   <div class="slide-inner">
 ${inner.trim()}
-  </div>${notes}
+  </div>${overlays ? `\n  ${overlays}` : ""}${notes}
 </section>`;
 }
 
@@ -109,12 +112,13 @@ function safeInlineStyle(css) {
 /**
  * Render a complete static deck.html.
  * @param {object} deck normalized deck
- * @param {object} opts { templates, theme, runtime: local|cdn|inline, assets: {css, js}, assetBase, version }
+ * @param {object} opts { templates, theme, runtime: local|cdn|inline, assets: {css, js}, assetBase, version, assetUrl }
+ *   assetUrl(src) maps "assets/…" image paths (e.g. to data URIs for the inline runtime).
  */
 export function renderDeck(deck, opts) {
-  const { templates, theme, runtime = "local", assets = {}, version = VERSION } = opts;
+  const { templates, theme, runtime = "local", assets = {}, version = VERSION, assetUrl } = opts;
   const slides = visibleSlides(deck);
-  const sections = slides.map((slide, index) => renderSlide(deck, slide, { index, total: slides.length, templates })).join("\n");
+  const sections = slides.map((slide, index) => renderSlide(deck, slide, { index, total: slides.length, templates, assetUrl })).join("\n");
   let cssTag;
   let jsTag;
   if (runtime === "inline") {
@@ -157,7 +161,7 @@ ${sections}
  * Render a standalone document showing one slide at its 1280×720 reference
  * size (used by the editor preview, thumbnails and the template editor).
  */
-export function renderSlideDocument(deck, slide, { templates, theme, viewerCssHref, viewerCss, edit = false, index = 0, total = 1, extraHead = "" }) {
+export function renderSlideDocument(deck, slide, { templates, theme, viewerCssHref, viewerCss, edit = false, index = 0, total = 1, extraHead = "", assetBase = "" }) {
   const template = templates[slide.template];
   return `<!doctype html>
 <html lang="${escapeAttr(deck.meta.lang)}" class="df-frame${edit ? " df-edit" : ""}">
@@ -169,7 +173,7 @@ export function renderSlideDocument(deck, slide, { templates, theme, viewerCssHr
   ${extraHead}
 </head>
 <body>
-${renderSlide(deck, slide, { index, total, templates, edit, includePlaceholders: true })}
+${renderSlide(deck, slide, { index, total, templates, edit, includePlaceholders: true, assetUrl: (src) => assetBase + src })}
 </body>
 </html>`;
 }

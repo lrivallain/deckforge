@@ -11,6 +11,7 @@ import { DIST_DIR } from "./registry.js";
 import { DeckStore } from "./store.js";
 import { AgentController } from "./agent.js";
 import { editorPage } from "./editor-page.js";
+import { AssetError, listAssets, MAX_ASSET_BYTES, saveAsset } from "./assets.js";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -35,12 +36,17 @@ const MIME = {
 };
 const ASSETS = new Set(["deckforge.viewer.js", "deckforge.viewer.css", "deckforge.editor.js", "deckforge.editor.css"]);
 const MAX_BODY = 2 * 1024 * 1024;
+// Raw image bytes, or base64 inside JSON (4/3 larger plus the data: prefix).
+const MAX_ASSET_JSON = Math.ceil((MAX_ASSET_BYTES * 4) / 3) + 4096;
+// Uploaded SVG is only meant for <img>; opened directly it must stay inert.
+const SVG_CSP = "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:";
 
 const EDITOR_CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // https: lets previews show images whose src the user typed as a URL.
+  "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "connect-src 'self'",
   "frame-src 'self' about: blob: data:",
@@ -90,29 +96,52 @@ function send(res, status, body, headers = {}) {
   res.end(payload);
 }
 
-function readBody(req) {
+function readRaw(req, limit = MAX_BODY) {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks = [];
+    let failed = false;
     req.on("data", (chunk) => {
+      if (failed) return;
       size += chunk.length;
-      if (size > MAX_BODY) {
+      if (size > limit) {
+        failed = true;
         reject(Object.assign(new Error("Request body too large"), { status: 413 }));
-        req.destroy();
+        // Drain the rest so the 413 response can still be delivered.
+        req.resume();
         return;
       }
       chunks.push(chunk);
     });
     req.on("end", () => {
-      if (!chunks.length) return resolve({});
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-      } catch {
-        reject(Object.assign(new Error("Invalid JSON body"), { status: 400 }));
-      }
+      if (!failed) resolve(Buffer.concat(chunks));
     });
     req.on("error", reject);
   });
+}
+
+async function readBody(req, limit = MAX_BODY) {
+  const raw = await readRaw(req, limit);
+  if (!raw.length) return {};
+  try {
+    return JSON.parse(raw.toString("utf8"));
+  } catch {
+    throw Object.assign(new Error("Invalid JSON body"), { status: 400 });
+  }
+}
+
+/** Image bytes from an upload: raw body (image/*, octet-stream) or JSON {data: base64 | data URL}. */
+async function readUpload(req) {
+  const type = String(req.headers["content-type"] || "").split(";")[0].trim().toLowerCase();
+  if (type === "application/json") {
+    const body = await readBody(req, MAX_ASSET_JSON);
+    const data = String(body?.data ?? "");
+    const base64 = data.startsWith("data:") ? /^data:[\w/+.-]*;base64,(.*)$/s.exec(data)?.[1] : data;
+    if (!base64 || !/^[A-Za-z0-9+/=\s]+$/.test(base64)) throw new AssetError("Expected base64 image data in \"data\"");
+    return Buffer.from(base64, "base64");
+  }
+  if (type.startsWith("image/") || type === "application/octet-stream") return readRaw(req, MAX_ASSET_BYTES);
+  throw new AssetError("Upload an image (raw image/* body or JSON {data})", 415);
 }
 
 function parseCookies(header = "") {
@@ -174,16 +203,19 @@ export async function startServer({
   store.on("warning", (info) => broadcast("warning", info));
   agent?.on("event", (event) => broadcast("agent", event));
 
+  // Cookies are shared by every port of 127.0.0.1: name the token per port so
+  // several editors can run side by side without overwriting each other.
+  const cookieName = () => `df_token_${actualPort}`;
   const allowedHosts = () => new Set([`127.0.0.1:${actualPort}`, `localhost:${actualPort}`, `[::1]:${actualPort}`]);
 
   function authorized(req) {
     if (!requireAuth) return true;
     const header = req.headers["x-deckforge-token"];
     if (header && safeEqual(header, token)) return true;
-    return safeEqual(parseCookies(req.headers.cookie).df_token, token);
+    return safeEqual(parseCookies(req.headers.cookie)[cookieName()], token);
   }
 
-  function serveFile(res, file, { deckPage = false } = {}) {
+  function serveFile(res, file, { deckPage = false, deckAsset = false } = {}) {
     let stat;
     try {
       stat = fs.statSync(file);
@@ -191,9 +223,12 @@ export async function startServer({
       return send(res, 404, "Not found");
     }
     if (stat.isDirectory()) return send(res, 404, "Not found");
-    const type = MIME[path.extname(file).toLowerCase()] || "application/octet-stream";
+    const ext = path.extname(file).toLowerCase();
+    const type = MIME[ext] || "application/octet-stream";
     let body = fs.readFileSync(file);
     const headers = { "Content-Type": type };
+    if (ext === ".svg") headers["Content-Security-Policy"] = SVG_CSP;
+    if (deckAsset) headers["Cache-Control"] = "private, max-age=3600";
     if (deckPage && type.startsWith("text/html")) {
       const protectedPage = protectDeckHtml(body.toString("utf8"), crypto.randomBytes(16).toString("base64"));
       body = protectedPage.html;
@@ -220,8 +255,14 @@ export async function startServer({
     if (req.method !== "GET") {
       const origin = req.headers.origin;
       if (origin && !allowedHosts().has(origin.replace(/^https?:\/\//, ""))) return send(res, 403, { error: "Cross-origin request refused" });
+      if (req.method === "POST" && route === "/assets") {
+        if (store.group) return send(res, 409, { error: "Copilot is applying changes. Wait for it to finish, then add the image again." });
+        const buf = await readUpload(req);
+        return send(res, 201, { ok: true, ...saveAsset(store.deckDir, buf) });
+      }
       if (!String(req.headers["content-type"] || "").startsWith("application/json")) return send(res, 415, { error: "Use application/json" });
     }
+    if (req.method === "GET" && route === "/assets") return send(res, 200, { assets: listAssets(store.deckDir) });
     const body = req.method === "GET" ? {} : await readBody(req);
     if (req.method === "POST" && route === "/op") {
       const result = store.apply(body.name, body.args, { source: "user", label: body.label, coalesce: body.coalesce });
@@ -254,7 +295,7 @@ export async function startServer({
         url.searchParams.delete("token");
         const location = url.pathname + (url.search || "") + (url.hash || "");
         res.writeHead(302, {
-          "Set-Cookie": `df_token=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/`,
+          "Set-Cookie": `${cookieName()}=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/`,
           Location: location,
           "Cache-Control": "no-store",
         });
@@ -280,11 +321,12 @@ export async function startServer({
       if (url.pathname.startsWith("/deck/")) {
         const file = resolveInside(store.deckDir, url.pathname.slice("/deck/".length));
         if (!file) return send(res, 404, "Not found");
-        return serveFile(res, file, { deckPage: file === store.outPath });
+        const deckAsset = path.dirname(file) === path.join(store.deckDir, "assets");
+        return serveFile(res, file, { deckPage: file === store.outPath, deckAsset });
       }
       return send(res, 404, "Not found");
     } catch (err) {
-      const status = err.status || (err.name === "OpError" || err.name === "TemplateError" || err.name === "DeckError" ? 400 : 500);
+      const status = err.status || (["OpError", "TemplateError", "DeckError", "AssetError"].includes(err.name) ? 400 : 500);
       if (status === 500) log(err.stack || err.message);
       if (!res.headersSent) send(res, status, { error: err.message, details: err.details });
     }
@@ -301,7 +343,11 @@ export async function startServer({
     clients.clear();
     store.close();
     await agent?.dispose();
-    await new Promise((resolve) => server.close(resolve));
+    await new Promise((resolve) => {
+      server.close(resolve);
+      // Do not wait for browsers' keep-alive or in-flight image requests.
+      server.closeAllConnections?.();
+    });
   };
   return {
     server,

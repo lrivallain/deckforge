@@ -1,0 +1,52 @@
+---
+name: image-text
+label: Image and text
+description: A picture next to a headline, a short paragraph and up to four points. Switch the side of the picture to vary consecutive slides.
+category: media
+order: 2
+slots:
+  image: { type: image, required: true, description: Picture shown beside the text }
+  imageRight: { type: boolean, sample: false, description: Show the picture on the right }
+  caption: { type: text, max: 80, sample: "" }
+  eyebrow: { type: text, max: 40, sample: In practice }
+  title: { type: richtext, max: 60, required: true, sample: 'One picture, <span class="blue">three observations</span>' }
+  text: { type: richtext, max: 160, sample: "Say what the picture proves before listing what to notice." }
+  points:
+    type: list
+    of: richtext
+    max: 4
+    maxLength: 80
+    sample:
+      - The <strong>owner</strong> is visible on every draft.
+      - Comments sit <strong>next to the evidence</strong>.
+      - One version is marked <strong>current</strong>.
+---
+<div class="split{{#if imageRight}} flip{{/if}}">
+  <figure class="split-media reveal">
+    <div class="media">{{image}}</div>
+    {{#if caption}}<figcaption class="media-caption">{{caption}}</figcaption>{{/if}}
+  </figure>
+  <div class="split-text">
+    <header class="reveal">{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></header>
+    {{#if text}}<p class="lead reveal">{{text}}</p>{{/if}}
+    {{#if points}}<ul class="split-points">{{#each points}}<li class="reveal">{{this}}</li>{{/each}}</ul>{{/if}}
+  </div>
+</div>
+{{> foot}}
+
+<style scoped>
+.split { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 46fr) minmax(0, 54fr); gap: 3.2cqw; }
+.split.flip { grid-template-columns: minmax(0, 54fr) minmax(0, 46fr); }
+.split.flip .split-media { order: 2; }
+.split-media { min-height: 0; display: flex; flex-direction: column; gap: .8cqw; }
+.split-media .media { flex: 1; }
+.split-text { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.6cqw; }
+.lead { font-size: 2cqw; line-height: 1.4; color: var(--df-muted); }
+.split-points { margin: 0; padding: 0; list-style: none; display: grid; gap: .9cqw; }
+.split-points li { position: relative; padding-left: 2cqw; font-size: 1.85cqw; line-height: 1.35; }
+.split-points li::before {
+  content: ""; position: absolute; left: 0; top: .5em; width: .85cqw; height: .85cqw;
+  border-radius: 50%; background: var(--df-primary);
+}
+.split-points strong { font-weight: 600; }
+</style>

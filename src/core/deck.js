@@ -3,6 +3,8 @@
 import YAML from "yaml";
 import { checkSlotLimits } from "./template.js";
 import { stripTags } from "./html.js";
+import { imageIssues } from "./image.js";
+import { normalizeOverlays, OverlayError, overlayIssues, stringifyOverlay } from "./overlay.js";
 
 export const RUNTIME_MODES = ["local", "cdn", "inline"];
 const ID_RE = /^[A-Za-z][\w-]{0,63}$/;
@@ -37,6 +39,7 @@ export function stringifyDeck(deck) {
       out.data = slide.data || {};
       if (slide.placeholders?.length) out.placeholders = slide.placeholders;
       if (slide.stash && Object.keys(slide.stash).length) out.stash = slide.stash;
+      if (slide.overlays?.length) out.overlays = slide.overlays.map(stringifyOverlay);
       if (slide.notes) out.notes = slide.notes;
       return out;
     }),
@@ -88,6 +91,13 @@ export function normalizeSlide(raw, existingIds = []) {
   }
   // Content of slots the current template does not use (kept across template switches).
   if (raw.stash && typeof raw.stash === "object" && !Array.isArray(raw.stash) && Object.keys(raw.stash).length) slide.stash = raw.stash;
+  try {
+    const overlays = normalizeOverlays(raw.overlays);
+    if (overlays.length) slide.overlays = overlays;
+  } catch (err) {
+    if (err instanceof OverlayError) throw new DeckError(`Slide ${id}: ${err.message}`);
+    throw err;
+  }
   return slide;
 }
 
@@ -139,6 +149,18 @@ export function slideTitle(slide, template) {
   return template?.label || slide.template;
 }
 
+function slotImageIssues(slots, data, prefix) {
+  const issues = [];
+  for (const [key, slot] of Object.entries(slots || {})) {
+    const path = `${prefix}${key}`;
+    if (slot.type === "image") issues.push(...imageIssues(data?.[key], `"${path}"`).map((i) => ({ ...i, slot: path })));
+    else if (slot.type === "cards" && Array.isArray(data?.[key])) {
+      data[key].forEach((item, i) => issues.push(...slotImageIssues(slot.fields, item, `${path}.${i}.`)));
+    }
+  }
+  return issues;
+}
+
 /** Validate a normalized deck against the available templates/themes. */
 export function validateDeck(deck, { templates = {}, themes = {} } = {}) {
   const issues = [];
@@ -156,6 +178,8 @@ export function validateDeck(deck, { templates = {}, themes = {} } = {}) {
     }
     const placeholders = new Set(slide.placeholders || []);
     for (const issue of checkSlotLimits(template, publishedData(slide))) issues.push({ ...issue, slide: slide.id });
+    for (const issue of slotImageIssues(template.slots, publishedData(slide), "")) issues.push({ ...issue, slide: slide.id });
+    for (const issue of overlayIssues(slide)) issues.push({ ...issue, slide: slide.id });
     for (const key of placeholders) {
       if (template.slots[key]?.required) issues.push({ level: "warning", slide: slide.id, slot: key, message: `"${key}" still shows sample text (not published)` });
     }

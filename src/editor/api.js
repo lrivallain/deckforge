@@ -23,7 +23,25 @@ async function request(method, url, body) {
   return data;
 }
 
+async function upload(file) {
+  const res = await fetch("/api/assets", {
+    method: "POST",
+    headers: { "Content-Type": file.type && file.type.startsWith("image/") ? file.type : "application/octet-stream" },
+    body: file,
+    credentials: "same-origin",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || `${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
 export const api = {
+  upload,
+  assets: () => request("GET", "/api/assets"),
   state: () => request("GET", "/api/state"),
   op: (name, args, opts = {}) => request("POST", "/api/op", { name, args, ...opts }),
   undo: () => request("POST", "/api/undo", {}),

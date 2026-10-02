@@ -1,0 +1,102 @@
+# deck.yaml reference: images and overlays
+
+This page details the image values and the per-slide overlay layer. The rest of the
+`deck.yaml` format is described in the [README](../README.md#deckyaml).
+
+## Image values
+
+`image` slots (and image overlays) hold one mapping:
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `src` | string | required | `assets/<name>.<png\|jpg\|jpeg\|webp\|gif\|svg>` (a file in the deck's `assets/` folder, no sub-folders, no `..`) or an `https://` URL. Other schemes (`http:`, `data:`, `javascript:`, `//host`) are not rendered. |
+| `alt` | string | `""` | Alternative text. Empty alt texts are reported as warnings. |
+| `fit` | `cover` \| `contain` | `cover` | `cover` fills the frame and crops; `contain` shows the whole picture. |
+| `focus` | `"x% y%"` | `"50% 50%"` | `object-position`: the point kept visible when cropping. Values are clamped to 0–100 %. |
+
+A bare string (`image: assets/1a2b3c4d5e6f.png`) is accepted as `{src}`.
+
+Rendering: `<img class="df-img" src alt loading="lazy" decoding="async" style="object-fit: …; object-position: …">`.
+User images are never inlined as SVG markup.
+
+Validation (`deckforge build`, the inspector):
+
+- warning: no alt text;
+- warning: `https://` source (each viewer downloads it);
+- error: unsupported source;
+- warning: the file is missing from `assets/`;
+- info: a file in `assets/` is not used by any slide.
+
+### Files in `assets/`
+
+The editor uploads images with `POST /api/assets` (raw `image/*` body, or JSON `{"data": "<base64 or data: URL>"}`,
+10 MB maximum). The type is detected from the file's magic bytes:
+
+| Type | Signature |
+|---|---|
+| PNG | `89 50 4E 47 0D 0A 1A 0A` |
+| JPEG | `FF D8 FF` |
+| GIF | `GIF87a` / `GIF89a` |
+| WebP | `RIFF····WEBP` |
+| SVG | UTF-8 text starting (after an optional XML declaration, comments or doctype) with `<svg`, ending with `</svg>`, and without `<script>`, `on*=` handlers, `javascript:`, `<foreignObject>`, `<!ENTITY>` or embedded documents |
+
+Files are stored as `assets/<first 12 hex chars of the SHA-256>.<ext>`, so uploading the same file twice
+reuses it. `GET /api/assets` lists them.
+
+## Overlays
+
+`overlays` is an optional list on each slide. Overlays are drawn in `<div class="df-overlay">`, an absolutely
+positioned layer above the template, inside the slide's `<section>`.
+
+```yaml
+overlays:
+  - id: callout-1          # unique on the slide; generated when missing
+    kind: callout          # image | text | callout | arrow | shape
+    x: 60                  # left edge, % of the slide width (1280 px)
+    y: 70                  # top edge, % of the slide height (720 px)
+    w: 25                  # width, % of 1280
+    h: 12.22               # height, % of 720
+    z: 2                   # stacking order among overlays (higher is in front)
+    rotate: -4             # optional, degrees
+    order: 1               # optional reveal step (0 = with the first template element)
+    data: { text: "<strong>Look here</strong>", tone: accent }
+```
+
+- Geometry is stored with two decimals. 8 px is 0.625 % horizontally and 1.11 % vertically.
+- Without `order`, overlays reveal after the template's elements, in z order. With `order: n` they
+  appear with the template's n-th reveal step.
+- Overlays use theme tokens only: no raw colors, fonts or sizes.
+
+### Kinds and their `data`
+
+| Kind | Fields (default first) | Rendering |
+|---|---|---|
+| `image` | `src`, `alt`, `fit`, `focus` (see above) | `<img>` filling the box |
+| `text` | `text` (rich text), `style: body \| heading \| title \| caption \| label`, `align: left \| center \| right`, `color: ink \| muted \| primary \| accent` | theme heading, body or mono fonts |
+| `callout` | `text` (rich text), `tone: primary \| accent \| neutral`, `align` | soft box in the tone's colors |
+| `arrow` | `color: primary \| accent \| ink \| muted`, `head: end \| start \| both \| none`, `weight: regular \| thin \| bold`, `line: solid \| dashed` | horizontal arrow across the box; use `rotate` to aim it. Decorative (`aria-hidden`) |
+| `shape` | `shape: rounded \| rect \| ellipse \| pill`, `fill: primary \| accent \| neutral \| paper \| none`, `stroke: primary \| accent \| line \| dashed \| none` | frame or highlight. Decorative (`aria-hidden`) |
+
+Unknown fields and values outside these lists are dropped when the deck is loaded.
+
+### Validation
+
+- warning: an overlay extends beyond the slide;
+- warning: an image overlay has no image or no alt text; a text or callout overlay is empty;
+- warning (editor only, measured on the laid-out slide): an overlay covers the template's text.
+
+### Operations
+
+The editor and Copilot change overlays through the same operations, each one undo step:
+
+| Operation | Arguments |
+|---|---|
+| `add_overlay` | `{id, overlay}` or `{id, overlays: [...]}`; `z` defaults to the top |
+| `update_overlay` | `{id, overlayId, props}` or `{id, updates: [{overlayId, props}]}`; `props` may set `x y w h z rotate order` (`null` clears `order`) and merges `data` |
+| `remove_overlay` | `{id, overlayId}` or `{id, overlayIds}` |
+| `move_item` | `{id, path, from, to}`: reorder an item of a list or cards slot (`path` may be nested, e.g. `columns.0.points`) |
+| `set_image` | `{id, path, alt, fit?, focus?, slot?}`: put `assets/…` into an image slot (default: the first one) |
+
+Copilot's tools have the same names; `add_overlay` and `update_overlay` take the overlay fields at the top
+level (`{id, kind, x, y, w, h, data}`, `{id, overlayId, x, …}`). In a slide-scoped request, only that
+slide's overlays can change, and images must already be in `assets/`.

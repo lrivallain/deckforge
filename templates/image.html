@@ -1,0 +1,42 @@
+---
+name: image
+label: Image
+description: One picture that carries the point. Framed with a headline and a caption, or full-bleed with the text on a small panel.
+category: media
+order: 1
+slots:
+  image: { type: image, required: true, description: "PNG, JPEG, WebP, GIF or SVG. Write an alt text that says what the picture shows." }
+  fullBleed: { type: boolean, sample: false, description: Fill the whole slide with the picture }
+  eyebrow: { type: text, max: 40, sample: Field view }
+  title: { type: richtext, max: 60, sample: 'What reviewers <span class="blue">actually see</span>' }
+  caption: { type: text, max: 120, sample: "Caption: what to look at, and where the picture comes from." }
+---
+{{#if fullBleed}}
+<figure class="media bleed">{{image}}</figure>
+{{#if title}}<div class="bleed-text reveal">
+  {{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}
+  <h1 id="{{slide.titleId}}">{{title}}</h1>
+  {{#if caption}}<p class="media-caption">{{caption}}</p>{{/if}}
+</div>{{else}}{{#if caption}}<p class="bleed-text media-caption reveal">{{caption}}</p>{{/if}}{{/if}}
+{{else}}
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}{{#if title}}<h1 id="{{slide.titleId}}">{{title}}</h1>{{/if}}</div>
+</header>
+<figure class="framed reveal">
+  <div class="media">{{image}}</div>
+  {{#if caption}}<figcaption class="media-caption">{{caption}}</figcaption>{{/if}}
+</figure>
+{{> foot}}
+{{/if}}
+
+<style scoped>
+.framed { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .8cqw; }
+.framed .media { flex: 1; }
+.bleed { position: absolute; inset: 0; border: 0; border-radius: 0; }
+.bleed-text {
+  position: absolute; left: 4cqw; bottom: 3cqw; max-width: 58cqw; display: flex; flex-direction: column; gap: .6cqw;
+  padding: 1.6cqw 2cqw; background: var(--df-paper); border: 1px solid var(--df-line); border-radius: var(--df-radius-panel);
+  box-shadow: 0 1cqw 3cqw rgb(15 23 42 / .16);
+}
+.bleed-text h1 { font-size: 3cqw; }
+</style>

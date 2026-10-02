@@ -70,6 +70,64 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
 .foot .num { color: var(--df-primary); white-space: nowrap; }
 .df-missing { margin: auto; text-align: center; display: grid; gap: 1cqw; color: var(--df-muted); }
 
+/* ------------------------------------------------------------ images */
+.df-img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; }
+.media {
+  position: relative; overflow: hidden; min-height: 0; margin: 0;
+  background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-frame);
+}
+.media > .df-img, .media > .df-img-empty { position: absolute; inset: 0; }
+.media-caption { font: 400 1.2cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .04em; }
+
+/* ------------------------------------------------------------ overlay layer */
+.df-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.df-ov { position: absolute; box-sizing: border-box; pointer-events: auto; min-width: 0; min-height: 0; }
+.df-ov-image { overflow: hidden; border-radius: var(--df-radius-small); }
+.df-ov-text { display: flex; flex-direction: column; justify-content: center; overflow: hidden; color: var(--df-ink); }
+.df-text-body { font: 400 1.8cqw / 1.4 var(--df-font-body); }
+.df-text-heading { font: 600 2.4cqw / 1.2 var(--df-font-heading); }
+.df-text-title { font: 800 3.4cqw / 1.1 var(--df-font-heading); letter-spacing: -.02em; }
+.df-text-caption { font: 400 1.35cqw / 1.4 var(--df-font-body); color: var(--df-muted); }
+.df-text-label { font: 400 1.25cqw / 1.4 var(--df-font-mono); letter-spacing: .13em; text-transform: uppercase; }
+.df-align-left { text-align: left; }
+.df-align-center { text-align: center; }
+.df-align-right { text-align: right; }
+.df-color-ink { color: var(--df-ink); }
+.df-color-muted { color: var(--df-muted); }
+.df-color-primary { color: var(--df-primary); }
+.df-color-accent { color: var(--df-accent-text, var(--df-accent)); }
+.df-ov-callout {
+  display: flex; flex-direction: column; justify-content: center; overflow: hidden; padding: .9cqw 1.3cqw;
+  font: 400 1.65cqw / 1.35 var(--df-font-body); color: var(--df-ink);
+  border: 1px solid var(--df-primary-line); background: var(--df-primary-soft); border-radius: var(--df-radius-card);
+}
+.df-ov-callout.df-tone-accent { border-color: var(--df-accent-line); background: var(--df-accent-soft); }
+.df-ov-callout.df-tone-neutral { border-color: var(--df-line); background: var(--df-node); }
+/* Arrows point right across the box; rotate the overlay to aim them. */
+.df-ov-arrow { --df-stroke: .3cqw; }
+.df-ov-arrow.df-weight-thin { --df-stroke: .18cqw; }
+.df-ov-arrow.df-weight-bold { --df-stroke: .5cqw; }
+.df-ov-arrow.df-color-accent { color: var(--df-accent); }
+.df-ah-shaft { position: absolute; left: 0; right: 0; top: 50%; border-top: var(--df-stroke) solid currentColor; transform: translateY(-50%); }
+.df-line-dashed .df-ah-shaft { border-top-style: dashed; }
+.df-ah { position: absolute; top: 50%; width: calc(var(--df-stroke) * 4 + .5cqw); height: calc(var(--df-stroke) * 3.4 + .5cqw); background: currentColor; transform: translateY(-50%); }
+.df-ah-end { right: 0; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.df-ah-start { left: 0; clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+.df-ov-arrow:has(.df-ah-end) .df-ah-shaft { right: calc(var(--df-stroke) * 2); }
+.df-ov-arrow:has(.df-ah-start) .df-ah-shaft { left: calc(var(--df-stroke) * 2); }
+.df-ov-shape { border: 2px solid transparent; border-radius: var(--df-radius-card); }
+.df-shape-rect { border-radius: 0; }
+.df-shape-ellipse { border-radius: 50%; }
+.df-shape-pill { border-radius: var(--df-radius-pill); }
+.df-fill-primary { background: var(--df-primary-soft); }
+.df-fill-accent { background: var(--df-accent-soft); }
+.df-fill-neutral { background: var(--df-node); }
+.df-fill-paper { background: var(--df-paper); }
+.df-stroke-primary { border-color: var(--df-primary); }
+.df-stroke-accent { border-color: var(--df-accent); }
+.df-stroke-line { border-color: var(--df-line); }
+.df-stroke-dashed { border-color: var(--df-dashed); border-style: dashed; }
+
 /* ------------------------------------------------------------ presenting */
 .presenting .stage { height: calc(100dvh - 64px); display: flex; align-items: center; justify-content: center; }
 .presenting .slide { width: min(100%, calc((100dvh - 104px) * 16 / 9)); flex: none; margin: 0; }
@@ -145,5 +203,17 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
 .df-edit .df-slot:focus { outline: none; box-shadow: 0 0 0 2px var(--df-primary); background: color-mix(in srgb, var(--df-primary-soft) 55%, transparent); }
 .df-edit .df-slot:empty::before { content: "\2026"; color: var(--df-muted); opacity: .6; }
 .df-edit .df-slot.df-selected { box-shadow: 0 0 0 2px var(--df-accent); }
+.df-edit .df-img-empty {
+  display: grid; place-items: center; min-height: 6cqw; width: 100%; height: 100%; padding: 1cqw; text-align: center;
+  font: 400 1.2cqw / 1.4 var(--df-font-mono); color: var(--df-muted); background: var(--df-node);
+  border: 1.5px dashed var(--df-dashed); border-radius: inherit; cursor: pointer;
+}
+.df-edit .df-img-empty.df-drop, .df-edit [data-df-image].df-drop { outline: 3px solid var(--df-primary); outline-offset: -3px; }
+.df-edit .df-ov { cursor: move; -webkit-user-select: none; user-select: none; }
+.df-edit .df-ov:hover { outline: 1.5px dashed color-mix(in srgb, var(--df-primary) 55%, transparent); outline-offset: 1px; }
+.df-edit .df-gesture, .df-edit .df-gesture * { -webkit-user-select: none !important; user-select: none !important; }
+.df-edit .df-reorderable:hover { outline: 1px dashed color-mix(in srgb, var(--df-primary) 35%, transparent); outline-offset: 2px; }
+.df-edit .df-ov-empty { display: grid; place-items: center; width: 100%; height: 100%; font: 400 1.2cqw var(--df-font-mono); color: var(--df-muted); border: 1.5px dashed var(--df-dashed); }
+.df-edit .df-reorderable.df-dragging { opacity: .45; }
 /* Template sample text: shown while editing, never published. */
 .df-edit .df-slot[data-df-placeholder] { opacity: .5; font-style: italic; outline: 1px dashed color-mix(in srgb, var(--df-muted) 60%, transparent); outline-offset: 2px; }

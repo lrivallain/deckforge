@@ -29,6 +29,10 @@ Runtime modes (how deck.html loads the viewer)
   cdn     reference https://cdn.jsdelivr.net/gh/lrivallain/deckforge@v${VERSION}/dist/
   inline  embed everything into one self-contained file
 
+Images live in <deck>/assets/ (added from the editor). local copies the used
+ones next to --out, inline embeds them as data URIs, cdn keeps relative paths.
+\`build\` lists assets that no slide references (they are never deleted).
+
 Templates/themes lookup: <deck>/templates|themes → ${path.join(configDir(), "templates|themes")} → built-ins
 `;
 
@@ -57,7 +61,7 @@ function openBrowser(url) {
 
 function printIssues(issues = [], loadErrors = []) {
   for (const e of loadErrors) console.error(`  ! ${e.path}: ${e.message}`);
-  for (const i of issues) console.error(`  ${i.level === "error" ? "✗" : "!"} ${i.slide ? `[${i.slide}] ` : ""}${i.message}`);
+  for (const i of issues) console.error(`  ${i.level === "error" ? "✗" : i.level === "info" ? "·" : "!"} ${i.slide ? `[${i.slide}] ` : ""}${i.message}`);
 }
 
 const { values, positionals } = parseArgs({

@@ -7,6 +7,9 @@ import { pickTemplate } from "./picker.js";
 import { ICON_NAMES, renderIcon } from "../core/icons.js";
 import { checkSlotLimits } from "../core/template.js";
 import { stripTags } from "../core/html.js";
+import { imageControl } from "./image-control.js";
+import { layersSection, overlayPanel } from "./inspector-overlays.js";
+import { makeSortable } from "./reorder.js";
 
 function humanize(name) {
   return name.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[-_]/g, " ").replace(/^./, (c) => c.toUpperCase());
@@ -34,8 +37,11 @@ export function createInspector({ onFieldFocus }) {
   }
 
   function structureKey(slide) {
-    const shape = (value) => (Array.isArray(value) ? `[${value.map(shape).join(",")}]` : value && typeof value === "object" ? `{${Object.keys(value).map((k) => `${k}:${shape(value[k])}`).join(",")}}` : "");
-    return `${slide.id}|${slide.template}|${shape(slide.data)}|${(slide.placeholders || []).join(",")}|${Object.keys(slide.stash || {}).join(",")}|${state.registryVersion}`;
+    // Image values are shown as thumbnails: their source/fit/focus are structure; alt text is not.
+    const shape = (value) => (Array.isArray(value) ? `[${value.map(shape).join(",")}]` : value && typeof value === "object" ? `{${Object.keys(value).map((k) => `${k}:${["src", "fit", "focus"].includes(k) ? value[k] : shape(value[k])}`).join(",")}}` : "");
+    const overlays = (slide.overlays || []).map((o) => `${o.id}:${o.kind}:${o.z}:${o.order ?? ""}:${Object.entries(o.data || {}).filter(([k]) => k !== "text" && k !== "alt").map(([k, v]) => `${k}=${v}`).join(";")}`).join(",");
+    const warnings = JSON.stringify(state.overlayWarnings.get(slide.id) || []);
+    return `${slide.id}|${slide.template}|${shape(slide.data)}|${(slide.placeholders || []).join(",")}|${Object.keys(slide.stash || {}).join(",")}|${state.registryVersion}|${overlays}|${state.overlaySelection.join(",")}|${warnings}`;
   }
 
   // ------------------------------------------------------------ field builders
@@ -157,6 +163,32 @@ export function createInspector({ onFieldFocus }) {
     );
   }
 
+  function dragHandle(label) {
+    return h("button", { type: "button", class: "icon-btn drag-handle", title: "Drag to reorder", "aria-label": `Drag to reorder: ${label}`, tabindex: "-1" }, icon("grip", 14));
+  }
+
+  function moveItem(slideId, path, from, to) {
+    op("move_item", { id: slideId, path, from, to }, { label: "Reorder items" }).catch(() => {});
+  }
+
+  function imageSlotControl(slot, value, path, slideId) {
+    return imageControl({
+      value,
+      label: humanize(path.split(".").pop()),
+      path,
+      required: slot.required,
+      description: slot.description,
+      onChange: (patch, opts = {}) => {
+        const current = selectedSlide()?.data && path.split(".").reduce((node, key) => (node == null ? undefined : node[key]), selectedSlide().data);
+        // Patch individual fields of an existing image object; otherwise write the whole value.
+        const set = !patch || opts.replace || !current || typeof current !== "object"
+          ? { [path]: patch ? { alt: "", fit: "cover", focus: "50% 50%", ...(typeof current === "object" ? current : {}), ...patch } : "" }
+          : Object.fromEntries(Object.entries(patch).map(([k, v]) => [`${path}.${k}`, v]));
+        return opQuiet("update_slide", { id: slideId, set }, { label: !patch ? "Remove image" : opts.replace ? "Replace image" : "Edit image", coalesce: opts.coalesce ? `${slideId}:${opts.coalesce}` : undefined });
+      },
+    });
+  }
+
   function listControl(slot, value, path, slideId) {
     const list = Array.isArray(value) ? value : [];
     const commit = (next) => op("update_slide", { id: slideId, set: { [path]: next } }, { label: "Edit list" }).catch(() => {});
@@ -166,12 +198,14 @@ export function createInspector({ onFieldFocus }) {
       input.addEventListener("input", () => sendLater(slideId, `${path}.${index}`, input.value));
       input.addEventListener("focus", () => onFieldFocus?.(`${path}.${index}`));
       setters.set(`${path}.${index}`, (v) => { if (document.activeElement !== input) input.value = v ?? ""; });
-      return h("li", { class: "list-row" }, input, itemTools(list, index, commit));
+      return h("li", { class: "list-row" }, dragHandle(`${humanize(path)} item ${index + 1}`), input, itemTools(list, index, commit));
     });
     const full = slot.max && list.length >= slot.max;
+    const ol = h("ol", { class: "list-rows" }, rows);
+    makeSortable(ol, (from, to) => moveItem(slideId, path, from, to));
     return h("div", { class: "field field-group", dataset: { path } },
       h("div", { class: "field-label" }, h("span", { class: "label" }, humanize(path.split(".").pop())), slot.max ? h("span", { class: `counter${list.length > slot.max ? " over" : ""}` }, `${list.length}/${slot.max}`) : null),
-      h("ol", { class: "list-rows" }, rows),
+      ol,
       h("button", { type: "button", class: "btn btn-ghost btn-sm", disabled: full, onClick: () => commit([...list, ""]) }, icon("plus", 14), "Add item"),
       slot.description ? h("p", { class: "field-hint" }, slot.description) : null,
     );
@@ -184,15 +218,17 @@ export function createInspector({ onFieldFocus }) {
       const fields = Object.entries(slot.fields || {}).map(([key, fieldSlot]) => control(fieldSlot, item?.[key], `${path}.${index}.${key}`, slideId));
       const summary = stripTags(String(item?.title ?? item?.label ?? "")) || `Item ${index + 1}`;
       return h("li", { class: "card-item" },
-        h("div", { class: "card-head" }, h("span", { class: "card-index" }, String(index + 1).padStart(2, "0")), h("span", { class: "card-title" }, summary), itemTools(list, index, commit)),
+        h("div", { class: "card-head" }, dragHandle(`${summary}`), h("span", { class: "card-index" }, String(index + 1).padStart(2, "0")), h("span", { class: "card-title" }, summary), itemTools(list, index, commit)),
         h("div", { class: "card-fields" }, fields),
       );
     });
     const blank = Object.fromEntries(Object.entries(slot.fields || {}).map(([k, f]) => [k, f.type === "boolean" ? false : f.type === "list" || f.type === "cards" ? [] : ""]));
     const full = slot.max && list.length >= slot.max;
+    const ol = h("ol", { class: "card-list" }, cards);
+    makeSortable(ol, (from, to) => moveItem(slideId, path, from, to));
     return h("div", { class: "field field-group", dataset: { path } },
       h("div", { class: "field-label" }, h("span", { class: "label" }, humanize(path.split(".").pop())), slot.max ? h("span", { class: `counter${list.length > slot.max ? " over" : ""}` }, `${list.length}/${slot.max}`) : null),
-      h("ol", { class: "card-list" }, cards),
+      ol,
       h("button", { type: "button", class: "btn btn-ghost btn-sm", disabled: full, onClick: () => commit([...list, blank]) }, icon("plus", 14), "Add item"),
       slot.description ? h("p", { class: "field-hint" }, slot.description) : null,
     );
@@ -206,6 +242,7 @@ export function createInspector({ onFieldFocus }) {
       case "link": return linkControl(slot, value, path, slideId);
       case "list": return listControl(slot, value, path, slideId);
       case "cards": return cardsControl(slot, value, path, slideId);
+      case "image": return imageSlotControl(slot, value, path, slideId);
       default: return textControl(slot, value, path, slideId);
     }
   }
@@ -230,6 +267,8 @@ export function createInspector({ onFieldFocus }) {
       return;
     }
     const template = state.templates[slide.template];
+    const overlayProps = overlayPanel(slide, setters);
+    if (overlayProps) body.append(overlayProps);
     body.append(section("Template",
       h("div", { class: "template-current" },
         h("div", {}, h("strong", {}, template?.label || slide.template), h("p", { class: "muted small" }, template?.description || "This template is missing.")),
@@ -258,6 +297,9 @@ export function createInspector({ onFieldFocus }) {
         label?.append(h("span", { class: "badge badge-sample", title: "Template sample text, not published" }, "Sample"));
       }
     }
+    if (slide.overlays?.length) {
+      body.append(section("Overlays", layersSection(slide), h("p", { class: "muted small" }, "Free elements above the template. Use Insert above the slide to add more.")));
+    }
     const notesId = nextId();
     const notes = h("textarea", { id: notesId, class: "input notes-input", rows: 5, value: slide.notes || "", placeholder: "What to say on this slide; sources for factual claims.", dataset: { path: "@notes" } });
     notes.addEventListener("input", debounce(() => opQuiet("update_slide", { id: slide.id, notes: notes.value }, { coalesce: `${slide.id}:@notes`, label: "Edit notes" }), 400));
@@ -284,7 +326,10 @@ export function createInspector({ onFieldFocus }) {
     const get = (path) => path.split(".").reduce((node, key) => (node == null ? undefined : node[key]), slide.data);
     for (const [path, set] of setters) {
       if (path === "@notes") set(slide.notes);
-      else set(get(path));
+      else if (path.startsWith("@ov:")) {
+        const overlay = slide.overlays?.find((o) => o.id === path.split(":")[1]);
+        if (overlay) set(overlay);
+      } else set(get(path));
     }
   }
 
@@ -318,7 +363,22 @@ export function createInspector({ onFieldFocus }) {
     }
   }
 
-  function revealField(path) {
+  function revealField(path, { focusAlt = false } = {}) {
+    if (path.startsWith("@overlay:")) {
+      const id = path.slice("@overlay:".length);
+      body.querySelector(`[data-path="@ov:${CSS.escape(id)}:text"]`)?.focus();
+      return;
+    }
+    if (focusAlt) {
+      // The inspector re-renders when the image arrives: focus its alt field then.
+      const started = Date.now();
+      const tryFocus = () => {
+        const alt = body.querySelector(`[data-path="${CSS.escape(path)}.alt"]`);
+        if (alt) alt.focus();
+        else if (Date.now() - started < 2000) setTimeout(tryFocus, 100);
+      };
+      setTimeout(tryFocus, 50);
+    }
     const candidates = [path, path.split(".").slice(0, -1).join("."), path.split(".")[0]];
     for (const candidate of candidates) {
       const el = body.querySelector(`.field[data-path="${CSS.escape(candidate)}"]`);

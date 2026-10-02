@@ -10,15 +10,16 @@ slots:
   subtitle: { type: text, max: 120, sample: "How we prepare, review and deliver presentations that people can act on." }
   presenter: { type: text, max: 50, sample: Presenter name }
   details: { type: text, max: 50, sample: Event or date }
+  visual: { type: image, description: Optional picture shown instead of the decorative motif }
 ---
 <div class="title-body">
   {{#if eyebrow}}<p class="eyebrow reveal">{{eyebrow}}</p>{{/if}}
   <h1 id="{{slide.titleId}}" class="reveal">{{title}}</h1>
   {{#if subtitle}}<p class="lead reveal">{{subtitle}}</p>{{/if}}
 </div>
-<div class="motif" aria-hidden="true">
+{{#if visual}}<figure class="media visual reveal">{{visual}}</figure>{{else}}<div class="motif" aria-hidden="true">
   <span class="m m1"></span><span class="m m2"></span><span class="m m3"></span>
-</div>
+</div>{{/if}}
 <footer class="title-meta reveal">
   <span>{{presenter}}</span>
   <span>{{details}}</span>
@@ -36,6 +37,7 @@ h1 .old { font-size: 2.6cqw; margin-bottom: .6cqw; }
   border-top: 1px solid var(--df-line); padding-top: 1.2cqw;
 }
 .motif { position: absolute; right: 4cqw; top: 50%; transform: translateY(-58%); width: 22cqw; height: 26cqw; }
+.visual { position: absolute; right: 4cqw; top: calc(50% - 15.5cqw); width: 24cqw; height: 27cqw; }
 .m { position: absolute; border-radius: var(--df-radius-frame); }
 .m1 { inset: 0 6cqw 9cqw 0; background: var(--df-primary-soft); border: 1px solid var(--df-primary-line); }
 .m2 { inset: 7cqw 0 2cqw 7cqw; background: var(--df-paper); border: 1.5px dashed var(--df-dashed); }
