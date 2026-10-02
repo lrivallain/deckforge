@@ -2,12 +2,13 @@
 // network, pass the layout check at 1280×720, and their charts measure
 // within 1% of the figures in deck.yaml.
 
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import YAML from "yaml";
-import { ROOT, tempDeck } from "./helpers.js";
+import { CLI, ROOT, tempDeck } from "./helpers.js";
 
 const body = fs.readFileSync(path.join(ROOT, "skills/deckforge/scripts/layout-check.js"), "utf8");
 const STARTERS = ["architecture-review", "postmortem", "assessment", "decision-record"];
@@ -41,6 +42,40 @@ for (const name of STARTERS) {
     }
   });
 }
+
+test("the viewer works under the offline CSP of --check-offline", async ({ page, context }) => {
+  const deck = tempDeck({ example: "postmortem", runtime: "inline" });
+  try {
+    execFileSync(process.execPath, [CLI, "build", deck.dir, "--runtime", "inline", "--check-offline"], { stdio: "pipe" });
+    expect(fs.readFileSync(deck.html, "utf8")).toContain('http-equiv="Content-Security-Policy"');
+    const violations = [];
+    const watch = (p) => p.on("console", (msg) => {
+      if (/Content[- ]Security[- ]Policy|Refused to/i.test(msg.text())) violations.push(msg.text());
+    });
+    watch(page);
+    context.on("page", watch);
+    await context.addInitScript(() => {
+      document.addEventListener("securitypolicyviolation", (e) => console.error(`Refused to load: CSP ${e.violatedDirective} ${e.blockedURI}`));
+    });
+    await page.goto(`file://${deck.html}#1`);
+    await expect(page.locator("#df-slide-select")).toBeVisible();
+    await page.keyboard.press("n");
+    await expect(page.locator(".notes-panel")).toContainText("Blameless format");
+    await page.locator("#df-slide-select").selectOption({ index: 3 });
+    await expect(page).toHaveURL(/#4$/);
+    await expect(page.locator(".notes-panel")).toContainText("The bars are computed from the values");
+    const [popup] = await Promise.all([page.waitForEvent("popup"), page.locator("#df-presenter").click()]);
+    await expect(popup.locator("#p-title")).toContainText("4 / ");
+    await expect(popup.locator("#p-notes")).toContainText("The bars are computed");
+    await popup.locator("#p-next-btn").click();
+    await expect(page).toHaveURL(/#5$/);
+    await page.locator("#df-previous").click();
+    await expect(page).toHaveURL(/#4$/);
+    expect(violations).toEqual([]);
+  } finally {
+    deck.cleanup();
+  }
+});
 
 const within1 = (actual, expected) => expect(Math.abs(actual - expected), `${actual} vs ${expected}`).toBeLessThan(1);
 // The viewer presents one slide at a time: open the one to measure.
