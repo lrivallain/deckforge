@@ -172,6 +172,25 @@ test("aurora example: no accessibility violations, overflow or network requests"
   }
 });
 
+for (const example of ["starter", "aurora"]) {
+  test(`azure theme on the ${example} example has no accessibility violations`, async ({ page }) => {
+    const deck = tempDeck({ example, theme: "azure" });
+    try {
+      await page.goto(url(deck));
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "azure");
+      await page.locator("#df-static").click();
+      const total = await page.locator(".stage > .slide").count();
+      for (let i = 0; i < total; i++) {
+        const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+        expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`), `slide ${i + 1}`).toEqual([]);
+        await page.keyboard.press("ArrowRight");
+      }
+    } finally {
+      deck.cleanup();
+    }
+  });
+}
+
 test("matches build-presentation starter.html pixel for pixel (when available)", async ({ browser }) => {
   const starter = path.join(os.homedir(), ".copilot/skills/build-presentation/assets/starter.html");
   test.skip(!fs.existsSync(starter), "starter.html reference not installed");

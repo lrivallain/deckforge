@@ -8,10 +8,12 @@ import path from "node:path";
 export const ROOT = path.resolve(import.meta.dirname, "../..");
 export const CLI = path.join(ROOT, "bin/deckforge.js");
 
-export function tempDeck({ runtime = "local", example = "starter" } = {}) {
+export function tempDeck({ runtime = "local", example = "starter", theme = null } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-e2e-"));
   const source = path.join(ROOT, "examples", example);
-  fs.copyFileSync(path.join(source, "deck.yaml"), path.join(dir, "deck.yaml"));
+  let yaml = fs.readFileSync(path.join(source, "deck.yaml"), "utf8");
+  if (theme) yaml = yaml.replace(/^ {2}theme: .*$/m, `  theme: ${theme}`);
+  fs.writeFileSync(path.join(dir, "deck.yaml"), yaml);
   if (fs.existsSync(path.join(source, "assets"))) fs.cpSync(path.join(source, "assets"), path.join(dir, "assets"), { recursive: true });
   execFileSync(process.execPath, [CLI, "build", dir, "--runtime", runtime], { stdio: "pipe" });
   return { dir, yaml: path.join(dir, "deck.yaml"), html: path.join(dir, "deck.html"), cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };

@@ -1,0 +1,53 @@
+name: azure
+label: Azure
+description: >-
+  Microsoft Azure look on Fluent 2 foundations: white slides on a sky-tinted
+  surround, Azure blue (#0078D4) primary, Microsoft navy ink and Fluent cyan
+  accents, Segoe UI Variable and Cascadia Code (local fonts with named
+  fallbacks; no network), Fluent corner radii, curves and shadows.
+palette:
+  bg: "#EEF4FA"
+  paper: "#FFFFFF"
+  line: "#DCE7F3"
+  ink: "#243A5E"           # Microsoft navy
+  muted: "#4A6283"
+  node: "#F5F9FD"
+  primary: "#0078D4"       # Azure blue
+  primary-soft: "#DEECF9"  # Fluent themeLighter
+  primary-line: "#B3D6F2"
+  primary-text: "#005A9E"  # Fluent themeDark: small blue text, 4.5:1 on every surface
+  accent: "#0099BC"        # Fluent cyan
+  accent-soft: "#E0F7FC"
+  accent-line: "#8ADCEC"
+  accent-text: "#0C6E8A"   # small cyan text, 4.5:1 on every surface
+  frame: "#F2FBFD"
+  dashed: "#7A8FA8"
+  ok: "#107C10"            # Fluent green
+fonts:
+  heading:
+    family: Segoe UI Variable Display
+    fallback: '"Segoe UI", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Selawik, Arial, sans-serif'
+  body:
+    family: Segoe UI Variable Text
+    fallback: '"Segoe UI", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Selawik, Arial, sans-serif'
+  mono:
+    family: Cascadia Code
+    fallback: '"Cascadia Mono", Consolas, "SF Mono", Menlo, monospace'
+radii:
+  slide: 8px
+  card: 6px
+  panel: 8px
+  frame: 12px
+  small: 4px
+  pill: 99px
+spacing:
+  padding: 3cqw 4cqw 2cqw
+  gap: 1.3cqw
+  grid: 1.1cqw
+motion:
+  duration: .5s
+  easing: cubic-bezier(.1, .9, .2, 1)   # Fluent decelerateMid
+  distance: 8px
+  stagger: .12s
+shadow:
+  slide: 0 8px 16px rgb(0 0 0 / 14%), 0 0 2px rgb(0 0 0 / 12%)   # Fluent shadow16
