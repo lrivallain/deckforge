@@ -32,11 +32,19 @@ generates a static `deck.html`:
 You need Node.js **20.19 or later**, or **22.12 or later**.
 
 ```bash
-# from GitHub (the built runtime in dist/ is committed)
-npm install -g github:lrivallain/deckforge
+# from the GitHub archive (the built runtime in dist/ is committed)
+npm install -g https://github.com/lrivallain/deckforge/archive/refs/heads/master.tar.gz
 # or run it without installing
-npx github:lrivallain/deckforge --help
+npx -y github:lrivallain/deckforge --help
+npx -y github:lrivallain/deckforge new my-talk
 ```
+
+Once releases are tagged, pin a version with
+`https://github.com/lrivallain/deckforge/archive/refs/tags/v<version>.tar.gz`.
+
+Do not use `npm install -g github:lrivallain/deckforge`. Some npm versions (seen with npm 11.12.1
+on Node 25) install an empty package and a broken `deckforge` link that way. Use the archive URL
+instead.
 
 The Copilot assistant uses the optional dependency `@github/copilot-sdk`, which
 bundles the Copilot runtime (about 100 MB). It installs by default. For a slim install
