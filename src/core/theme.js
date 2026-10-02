@@ -9,11 +9,14 @@ export const PALETTE_KEYS = [
   "accent", "accent-soft", "accent-line",
 ];
 const OPTIONAL_PALETTE = { frame: null, ok: "#1F9D6B", dashed: null, chrome: null, "accent-text": null, "primary-text": null };
+export const OPTIONAL_PALETTE_KEYS = Object.keys(OPTIONAL_PALETTE);
 const DEFAULT_RADII = { slide: "12px", card: "10px", panel: "12px", frame: "14px", small: "8px", pill: "99px" };
 const DEFAULT_SPACING = { padding: "3cqw 4cqw 2cqw", gap: "1.3cqw", grid: "1.1cqw" };
 const DEFAULT_MOTION = { duration: ".55s", easing: "ease", distance: "8px", stagger: ".15s" };
 const DEFAULT_SHADOW = { slide: "0 24px 60px rgb(22 32 47 / 10%)" };
-const FONT_ROLES = ["heading", "body", "mono"];
+/** Defaults of the non-colour token groups (what an omitted key resolves to). */
+export const THEME_DEFAULTS = { radii: DEFAULT_RADII, spacing: DEFAULT_SPACING, motion: DEFAULT_MOTION, shadow: DEFAULT_SHADOW };
+export const FONT_ROLES = ["heading", "body", "mono"];
 const DEFAULT_FALLBACKS = {
   heading: '"Segoe UI", system-ui, sans-serif',
   body: '"Segoe UI", system-ui, Arial, sans-serif',
@@ -174,4 +177,67 @@ export function themeToCss(theme) {
   for (const [key, value] of Object.entries(theme.shadow)) vars.push(`--df-shadow-${key}: ${value};`);
   lines.push(`:root {\n  ${vars.join("\n  ")}\n}`);
   return lines.join("\n");
+}
+
+/** sRGB colour of a CSS value ("#rgb", "#rrggbb", "#rrggbbaa", "rgb(…)"); null when unknown or translucent. */
+export function parseColor(value) {
+  const text = String(value ?? "").trim().toLowerCase();
+  let rgb;
+  let alpha = 1;
+  const hex = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/.exec(text);
+  if (hex) {
+    let digits = hex[1];
+    if (digits.length <= 4) digits = [...digits].map((d) => d + d).join("");
+    rgb = [0, 2, 4].map((i) => parseInt(digits.slice(i, i + 2), 16));
+    if (digits.length === 8) alpha = parseInt(digits.slice(6, 8), 16) / 255;
+  } else {
+    const fn = /^rgba?\(\s*([\d.]+%?)[\s,]+([\d.]+%?)[\s,]+([\d.]+%?)\s*(?:[,/]\s*([\d.]+%?)\s*)?\)$/.exec(text);
+    if (!fn) return null;
+    const channel = (v) => (v.endsWith("%") ? (parseFloat(v) * 255) / 100 : parseFloat(v));
+    rgb = fn.slice(1, 4).map(channel);
+    if (fn[4] !== undefined) alpha = fn[4].endsWith("%") ? parseFloat(fn[4]) / 100 : parseFloat(fn[4]);
+  }
+  if (rgb.some((c) => !Number.isFinite(c) || c < 0 || c > 255) || alpha < 1) return null;
+  return rgb.map((c) => Math.round(c));
+}
+
+/** "#rrggbb" for an opaque colour value, else null (e.g. for <input type="color">). */
+export function colorToHex(value) {
+  const rgb = parseColor(value);
+  return rgb ? `#${rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}` : null;
+}
+
+function luminance([r, g, b]) {
+  const lin = (c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+/** WCAG contrast ratio of two colour values (1–21), or null when either cannot be parsed. */
+export function contrastRatio(a, b) {
+  const ca = parseColor(a);
+  const cb = parseColor(b);
+  if (!ca || !cb) return null;
+  const [hi, lo] = [luminance(ca), luminance(cb)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+// Text tokens and the surfaces they are read on: every pair needs WCAG AA (4.5:1).
+export const TEXT_TOKENS = ["ink", "muted", "primary-text", "accent-text"];
+export const TEXT_SURFACES = ["paper", "node", "primary-soft", "accent-soft"];
+const CONTRAST_PAIRS = TEXT_TOKENS.flatMap((fg) => TEXT_SURFACES.map((bg) => [fg, bg]));
+export const MIN_CONTRAST = 4.5;
+
+/** Readability warnings for a normalized theme's palette. */
+export function themeContrastIssues(theme) {
+  const issues = [];
+  for (const [fg, bg] of CONTRAST_PAIRS) {
+    const ratio = contrastRatio(theme.palette[fg], theme.palette[bg]);
+    if (ratio !== null && ratio < MIN_CONTRAST) {
+      issues.push({ level: "warning", pair: [fg, bg], ratio, message: `Low contrast: ${fg} on ${bg} is ${ratio.toFixed(2)}:1 (text needs at least ${MIN_CONTRAST}:1).` });
+    }
+  }
+  return issues;
 }

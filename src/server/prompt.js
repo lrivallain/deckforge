@@ -132,3 +132,54 @@ export function improvePrompt({ text, label, description, max, richtext, kind, s
   lines.push("", "Text to improve:", "<<<", text, ">>>");
   return lines.join("\n");
 }
+
+// Palette roles the theme designer must fill (hex colours only).
+export const THEME_PALETTE_ROLES = {
+  bg: "surround behind the slides in the editor/viewer; close to paper but distinct",
+  paper: "slide background (light scheme: near white; dark scheme: near black)",
+  line: "hairlines, borders and dividers on paper; subtle",
+  ink: "main text on paper, node and the soft tints; aim for 7:1 on paper",
+  muted: "secondary text (captions, labels); at least 4.5:1 on paper",
+  node: "fill of cards and diagram nodes; very close to paper",
+  primary: "main brand colour for shapes, strokes and highlights",
+  "primary-soft": "light tint of primary used as a card background behind ink text (dark scheme: a deep tint)",
+  "primary-line": "medium tint of primary for borders around primary-soft areas",
+  accent: "second, restrained emphasis colour that contrasts with primary",
+  "accent-soft": "light tint of accent used as a background behind ink text (dark scheme: a deep tint)",
+  "accent-line": "medium tint of accent for borders around accent-soft areas",
+  "primary-text": "primary darkened (light scheme) or lightened (dark scheme) for small text; at least 4.5:1 on paper",
+  "accent-text": "accent darkened or lightened for small text; at least 4.5:1 on paper",
+  frame: "soft fill of highlight frames; usually between paper and accent-soft",
+  ok: "success colour for check marks; green family, readable on paper",
+};
+
+/** System prompt for the one-shot "generate a palette" request (no tools). */
+export function themeSystemPrompt(meta) {
+  const roles = Object.entries(THEME_PALETTE_ROLES).map(([key, role]) => `- "${key}": ${role}`).join("\n");
+  return `You are the deckforge theme designer. You design ONE colour palette for presentation slides from the user's request.
+Reply with ONE JSON object only (no preamble, no explanation, no Markdown code fences):
+{"label": "<short theme name, 1-3 words>", "description": "<one sentence describing the look>", "colorScheme": "light" | "dark", "palette": { <every key below>: "#RRGGBB" }}
+
+Palette keys and their roles:
+${roles}
+
+Rules:
+- Every palette value is a 6-digit hex colour like "#0F6CBD". No names, rgb(), gradients or transparency.
+- Use "dark" only when the slides (paper) are dark; then ink and muted are light.
+- Every text token (ink, muted, primary-text, accent-text) must reach WCAG AA (4.5:1) on every surface it sits on: paper, node, primary-soft and accent-soft.
+- Keep it professional and calm: one primary colour, one restrained accent, neutral surfaces.
+- Follow brand colours, moods or references the user gives. Write the label and description in the deck language.
+
+<brief>
+${briefBlock(meta)}
+</brief>`;
+}
+
+/** User prompt for a palette request; `current` is the palette being edited (for reference). */
+export function themePrompt({ prompt, current }) {
+  const lines = ["Theme request:", "<<<", prompt, ">>>"];
+  if (current?.palette && Object.keys(current.palette).length) {
+    lines.push("", `Current palette (${current.colorScheme === "dark" ? "dark" : "light"} scheme), for reference only — replace it when the request asks for something different:`, JSON.stringify(current.palette));
+  }
+  return lines.join("\n");
+}

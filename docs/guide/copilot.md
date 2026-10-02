@@ -76,6 +76,16 @@ alt text and the brief's goal. One click asks Copilot to rewrite that text so it
 - The button then turns into a cancel icon that restores the previous text. Typing by hand removes that option.
 - Rewrites use a short-lived session with no tools (`POST /api/agent/improve`) and don't appear in the chat.
 
+## Generate a palette
+
+In the [theme editor](./themes#theme-editor), describe the look you want, for example *"calm forest greens with a warm
+copper accent, for a sustainability report"*, then click **Generate**. Copilot proposes every palette colour, a light
+or dark scheme, a label and a description:
+
+- The deck brief is part of the request, and Copilot is asked for text colours that reach 4.5:1 contrast.
+- The colours fill the form for review. Nothing is saved until you click **Save theme**. **Restore previous colours** undoes the proposal.
+- Requests use a short-lived session with no tools (`POST /api/agent/theme`) and don't appear in the chat.
+
 ## Model
 
 By default, Copilot uses your default model. To pick another one, set `DECKFORGE_MODEL`:

@@ -61,4 +61,9 @@ test("previews render without srcdoc support", async ({ page }) => {
   await page.getByTestId("open-template-editor").click();
   await expect(slideIn(page, "[data-testid=te-frame]")).toHaveCount(1);
   await expect(page.getByTestId("te-issues")).not.toContainText("Overflow");
+  await page.getByRole("button", { name: "Close template editor" }).click();
+
+  // Theme editor sample slides.
+  await page.getByTestId("open-theme-editor").click();
+  for (const n of [0, 1, 2]) await expect(slideIn(page, `[data-testid=th-frame] >> nth=${n}`), `theme preview ${n}`).toHaveCount(1);
 });

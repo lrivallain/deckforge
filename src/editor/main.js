@@ -11,6 +11,7 @@ import { createChat } from "./chat.js";
 import { pickTemplate } from "./picker.js";
 import { openSettings } from "./settings.js";
 import { openTemplateEditor } from "./template-editor.js";
+import { openThemeEditor } from "./theme-editor.js";
 import { op, opQuiet, undo, redo } from "./actions.js";
 import { exportPptx } from "./export.js";
 
@@ -49,6 +50,7 @@ function createTopbar({ onToggleChat }) {
       undoBtn, redoBtn,
       h("span", { class: "divider" }),
       h("label", { class: "theme-picker" }, swatchHost, themeSelect),
+      h("button", { type: "button", class: "btn btn-ghost", onClick: () => openThemeEditor(), "data-testid": "open-theme-editor", title: "Edit or create a theme" }, icon("palette", 16), "Themes"),
       h("button", { type: "button", class: "btn btn-ghost", onClick: () => openTemplateEditor(), "data-testid": "open-template-editor" }, icon("code", 16), "Templates"),
       h("button", { type: "button", class: "btn btn-ghost", onClick: openSettings, "data-testid": "open-settings" }, icon("settings", 16), "Deck"),
       exportBtn,

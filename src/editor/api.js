@@ -67,6 +67,7 @@ export const api = {
   undo: () => request("POST", "/api/undo", {}),
   redo: () => request("POST", "/api/redo", {}),
   saveTemplate: (name, source, scope) => request("PUT", `/api/templates/${encodeURIComponent(name)}`, { source, scope }),
+  saveTheme: (name, source, scope) => request("PUT", `/api/themes/${encodeURIComponent(name)}`, { source, scope }),
   agent: (prompt, scope, slideId) => request("POST", "/api/agent", { prompt, scope, slideId }),
   agentAbort: () => request("POST", "/api/agent/abort", {}),
   agentReset: () => request("POST", "/api/agent/reset", {}),
@@ -76,6 +77,7 @@ export const api = {
   agentOpenApp: () => request("POST", "/api/agent/open-app", {}),
   installCopilotTools: () => request("POST", "/api/copilot/install-tools", {}),
   improve: (payload, { signal } = {}) => request("POST", "/api/agent/improve", payload, { signal }),
+  generateTheme: (payload, { signal } = {}) => request("POST", "/api/agent/theme", payload, { signal }),
 };
 
 export function connectEvents(handlers) {

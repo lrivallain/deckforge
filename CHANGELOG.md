@@ -7,6 +7,7 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Editor: a **Themes** theme editor. Edit every theme token (colours with pickers, fonts, radii, spacing, motion, shadow, or the raw YAML) with a live preview of sample slides and contrast warnings. Ask Copilot to generate a palette from a description, then save to the deck's `themes/` or `~/.config/deckforge/themes` and apply it to the deck. New endpoints: `PUT /api/themes/<name>` and `POST /api/agent/theme`.
 - PowerPoint export: `deckforge export <deck>` and the editor's **PowerPoint** button write an editable `deck.pptx`
   with native text boxes, shapes, pictures, links and speaker notes. Icons and gradients become vector pictures.
   The CLI uses Playwright (optional dependency) to lay the deck out in headless Chromium.

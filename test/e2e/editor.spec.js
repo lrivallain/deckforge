@@ -194,6 +194,68 @@ test("Copilot whole-deck scope can restructure the deck (mocked SDK)", async ({ 
   await expect(railItem(page, "implementation")).not.toHaveClass(/is-hidden/);
 });
 
+test("theme editor edits colours, asks Copilot for a palette, saves and applies it (mocked SDK)", async ({ page }) => {
+  await page.getByTestId("open-theme-editor").click();
+  const dialog = page.getByRole("dialog");
+  // Opens on the deck theme; built-ins are saved as a copy.
+  await expect(page.getByTestId("th-name")).toHaveValue("build-custom");
+  await expect(page.getByTestId("th-frame")).toHaveCount(3);
+  await expect(page.getByTestId("th-issues")).toContainText("No problems found");
+  const preview = page.frameLocator("[data-testid=th-frame] >> nth=0");
+  await expect(preview.locator(".slide")).toBeVisible();
+  const a11y = await new AxeBuilder({ page }).include(".theme-editor").exclude("iframe").withTags(["wcag2a", "wcag2aa"]).analyze();
+  expect(a11y.violations.filter((v) => ["serious", "critical"].includes(v.impact)).map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`)).toEqual([]);
+
+  // Manual colour edit: the preview follows, low contrast is reported.
+  const ink = dialog.locator("#th-color-ink");
+  await ink.fill("#DDDDDD");
+  await expect(page.getByTestId("th-issues")).toContainText("Low contrast: ink on paper");
+  await expect.poll(() => preview.locator("body").evaluate((b) => getComputedStyle(b.ownerDocument.documentElement).getPropertyValue("--df-ink").trim())).toBe("#DDDDDD");
+  await expect(page.getByTestId("th-save")).toBeEnabled();
+
+  // Copilot palette: fills the form and can be reverted.
+  await page.getByTestId("th-prompt").fill("teal and coral, dark");
+  await page.getByTestId("th-generate").click();
+  await expect(dialog.locator("#th-color-primary")).toHaveValue("#2BB3A3");
+  await expect(page.getByTestId("th-scheme")).toHaveValue("dark");
+  await expect(page.getByTestId("th-label")).toHaveValue("Lagoon night");
+  await expect(page.getByTestId("th-issues")).toContainText("No problems found");
+  await page.getByTestId("th-revert").click();
+  await expect(dialog.locator("#th-color-ink")).toHaveValue("#DDDDDD");
+  await page.getByTestId("th-generate").click();
+  await expect(dialog.locator("#th-color-ink")).toHaveValue("#E8F4F2");
+
+  // Typography and tokens tabs edit the same YAML document.
+  await dialog.getByRole("tab", { name: "Shape & motion" }).click();
+  await dialog.locator("#th-radii-card").fill("4px");
+  await dialog.getByRole("tab", { name: "YAML" }).click();
+  await expect(page.locator("[data-testid=th-code] .cm-content")).toContainText("card: 4px");
+  await expect(page.locator("[data-testid=th-code] .cm-content")).toContainText("Bricolage Grotesque");
+  // General fields stay in sync with the YAML pane.
+  await page.getByTestId("th-scheme").selectOption("light");
+  await expect(page.locator("[data-testid=th-code] .cm-content")).toContainText("colorScheme: light");
+  await page.getByTestId("th-scheme").selectOption("dark");
+  await expect(page.locator("[data-testid=th-code] .cm-content")).toContainText("colorScheme: dark");
+
+  await page.getByTestId("th-name").fill("lagoon");
+  await expect(page.getByTestId("th-apply")).toBeDisabled();
+  await page.getByTestId("th-save").click();
+  await expect(page.locator(".toast-success", { hasText: "Saved lagoon" })).toBeVisible();
+  const file = path.join(editor.dir, "themes/lagoon.yaml");
+  const saved = await waitForFile(() => (fs.existsSync(file) ? fs.readFileSync(file, "utf8") : ""), (s) => s.includes("name: lagoon"));
+  expect(saved).toMatch(/colorScheme: dark/);
+  expect(saved).toMatch(/primary: "#2BB3A3"/);
+  expect(saved).toMatch(/faces:/);
+  await expect(dialog.locator('.te-item[data-theme="lagoon"]')).toBeVisible();
+
+  await page.getByTestId("th-apply").click();
+  await waitForFile(editor.readYaml, (y) => /theme: lagoon/.test(y));
+  await expect(page.getByTestId("th-apply")).toBeDisabled();
+  await dialog.getByRole("button", { name: "Close theme editor" }).click();
+  await expect(page.getByTestId("theme-select")).toHaveValue("lagoon");
+  await waitForFile(editor.readHtml, (h) => h.includes("--df-primary: #2BB3A3"));
+});
+
 test("Copilot improves a text field and the change can be cancelled (mocked SDK)", async ({ page }) => {
   const eyebrow = page.locator('textarea[data-path="eyebrow"]');
   const button = page.locator('.field[data-path="eyebrow"]').getByTestId("ai-improve");

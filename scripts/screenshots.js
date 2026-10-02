@@ -123,6 +123,16 @@ async function editorShots() {
     await save(page, "template-editor");
     await page.getByRole("dialog").getByRole("button", { name: "Close template editor" }).click();
 
+    await page.getByTestId("open-theme-editor").click();
+    await page.getByTestId("th-prompt").fill("Calm forest greens with a warm copper accent, for a sustainability report");
+    await page.getByTestId("th-generate").click();
+    await page.waitForFunction(() => document.querySelector("[data-testid=th-label]")?.value === "Forest copper");
+    await page.getByTestId("th-name").fill("forest-copper");
+    await page.getByTestId("th-issues").getByText("No problems found").waitFor();
+    await settle(page);
+    await save(page, "theme-editor");
+    await page.getByRole("dialog").getByRole("button", { name: "Close theme editor" }).click();
+
     await page.locator('.rail-item[data-id="zoom"]').click();
     await page.getByTestId("toggle-chat").click();
     await page.getByTestId("chat-input").fill("Write concise speaker notes for this slide and tighten the problem text.");

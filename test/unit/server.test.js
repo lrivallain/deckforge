@@ -5,8 +5,8 @@ import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { startServer, resolveInside, protectDeckHtml } from "../../src/server/http.js";
 import { DeckStore } from "../../src/server/store.js";
-import { AgentController, cleanImproved, deckToolSpecs, MAX_IMPROVE_CHARS } from "../../src/server/agent.js";
-import { systemPrompt } from "../../src/server/prompt.js";
+import { AgentController, cleanImproved, deckToolSpecs, MAX_IMPROVE_CHARS, MAX_THEME_PROMPT_CHARS, parseThemeReply } from "../../src/server/agent.js";
+import { systemPrompt, themePrompt, themeSystemPrompt } from "../../src/server/prompt.js";
 import { generateToken } from "../../src/server/token.js";
 import { devCliArgs } from "../../scripts/dev-args.js";
 import * as mockSdk from "../fixtures/mock-sdk.js";
@@ -102,6 +102,47 @@ describe("DeckStore", () => {
     expect(() => store.saveTemplate("../evil", source, "deck")).toThrow(/lowercase/);
     expect(() => store.saveTemplate("my-quote", source.replace("name: my-quote", "name: other"), "deck")).toThrow(/must match/);
     expect(() => store.saveTemplate("x", "x", "builtin")).toThrow();
+  });
+
+  it("saves themes only inside the allowed folders and rebuilds decks that use them", () => {
+    const configHome = path.join(dir, "config");
+    const saved = process.env.DECKFORGE_CONFIG_DIR;
+    process.env.DECKFORGE_CONFIG_DIR = configHome;
+    try {
+      const source = fs.readFileSync(path.join(root, "themes/build.yaml"), "utf8").replace("name: build", "name: my-brand").replace('primary: "#0F6CBD"', 'primary: "#0B7368"');
+      const events = [];
+      store.on("change", (e) => events.push(e));
+      const result = store.saveTheme("my-brand", source, "deck");
+      expect(result).toMatchObject({ name: "my-brand", scope: "deck", path: path.join(dir, "themes/my-brand.yaml"), active: true, issues: [] });
+      expect(store.themes["my-brand"]).toMatchObject({ scope: "deck", palette: { primary: "#0B7368" } });
+      expect(events.at(-1)).toMatchObject({ op: "save_theme", changed: [] });
+      expect(store.snapshot().themes.find((t) => t.name === "my-brand").source).toBe(source);
+
+      // Used by the deck: every slide changes.
+      store.apply("set_theme", { theme: "my-brand" });
+      store.saveTheme("my-brand", source.replace('"#0B7368"', '"#095E55"'), "deck");
+      expect(events.at(-1).changed).toEqual(store.deck.slides.map((s) => s.id));
+      expect(store.build().ok).toBe(true);
+      expect(fs.readFileSync(path.join(dir, "deck.html"), "utf8")).toContain("--df-primary: #095E55");
+
+      // A deck theme shadows a user theme with the same name.
+      const user = store.saveTheme("my-brand", source, "user");
+      expect(user).toMatchObject({ path: path.join(configHome, "themes/my-brand.yaml"), active: false });
+      expect(store.themes["my-brand"].scope).toBe("deck");
+
+      const low = store.saveTheme("low-contrast", source.replace("name: build", "name: low-contrast").replace("name: my-brand", "name: low-contrast").replace('muted: "#53617A"', 'muted: "#BBBBBB"'), "user");
+      expect(low.issues.map((i) => i.pair[0])).toContain("muted");
+
+      expect(() => store.saveTheme("../evil", source, "deck")).toThrow(/lowercase/);
+      expect(() => store.saveTheme("my-brand", source.replace("name: my-brand", "name: other"), "deck")).toThrow(/must match/);
+      expect(() => store.saveTheme("my-brand", source.replace(/ {2}ink: .*\n/, ""), "deck")).toThrow(/Missing palette.ink/);
+      expect(() => store.saveTheme("my-brand", "palette: [", "deck")).toThrow(/Invalid theme YAML/);
+      expect(() => store.saveTheme("my-brand", source, "builtin")).toThrow(/Cannot write themes/);
+      expect(fs.readFileSync(path.join(root, "themes/build.yaml"), "utf8")).toContain("name: build");
+    } finally {
+      if (saved === undefined) delete process.env.DECKFORGE_CONFIG_DIR;
+      else process.env.DECKFORGE_CONFIG_DIR = saved;
+    }
   });
 
   it("reloads external edits to deck.yaml as an undoable change", async () => {
@@ -213,6 +254,30 @@ describe("HTTP server", () => {
     expect(await ok.json()).toEqual({ text: "Improved: Make it better" });
     const empty = await post({ text: "" }, auth());
     expect(empty.status).toBe(400);
+    expect(app.store.undoStack.length).toBe(0);
+  });
+
+  it("saves themes and generates palettes over the API", async () => {
+    await start();
+    const json = (body) => ({ method: "POST", headers: auth({ "content-type": "application/json" }), body: JSON.stringify(body) });
+    const source = fs.readFileSync(path.join(root, "themes/build.yaml"), "utf8").replace("name: build", "name: api-theme");
+    const put = await req("/api/themes/api-theme", { ...json({ source, scope: "deck" }), method: "PUT" });
+    expect(put.status).toBe(200);
+    expect(await put.json()).toMatchObject({ ok: true, name: "api-theme", scope: "deck", active: true });
+    expect(fs.existsSync(path.join(dir, "themes/api-theme.yaml"))).toBe(true);
+    const state = await (await req("/api/state", { headers: auth() })).json();
+    expect(state.themes.find((t) => t.name === "api-theme")).toMatchObject({ scope: "deck", source });
+    const bad = await req("/api/themes/api-theme", { ...json({ source: "name: api-theme\n", scope: "deck" }), method: "PUT" });
+    expect(bad.status).toBe(400);
+    expect((await bad.json()).error).toMatch(/Missing palette/);
+    expect((await req("/api/themes/api-theme", { method: "PUT", headers: { "content-type": "application/json" }, body: "{}" })).status).toBe(401);
+
+    const generated = await req("/api/agent/theme", json({ prompt: "teal and coral, dark", current: { palette: { primary: "#0F6CBD" }, colorScheme: "light" } }));
+    expect(generated.status).toBe(200);
+    expect(await generated.json()).toMatchObject({ label: "Lagoon night", colorScheme: "dark", palette: { primary: "#2BB3A3" }, issues: [] });
+    expect((await req("/api/agent/theme", json({ prompt: " " }))).status).toBe(400);
+    expect((await req("/api/agent/theme", { ...json({ prompt: "x" }), headers: auth({ "content-type": "application/json", origin: "https://evil.example" }) })).status).toBe(403);
+    // Nothing is applied to the deck.
     expect(app.store.undoStack.length).toBe(0);
   });
 
@@ -414,6 +479,49 @@ describe("AgentController", () => {
     expect(events.filter((e) => e.type !== "status")).toEqual([]);
     expect(agent.client.deleted).toEqual([globalThis.__deckforgeMockImproveSession.sessionId]);
     expect(agent.improving).toBe(0);
+  });
+
+  it("generates a palette with a tool-less one-shot session", async () => {
+    agent = new AgentController({ store, factory: mockSdk });
+    const before = JSON.stringify(store.deck);
+    const result = await agent.generateTheme({ prompt: "Fresh teal with a coral accent", current: { palette: { primary: "#0F6CBD", evil: "x", ink: { no: 1 } }, colorScheme: "light" } });
+    expect(result).toMatchObject({ label: "Lagoon", description: "Teal and coral on calm neutrals.", colorScheme: "light", issues: [] });
+    expect(Object.keys(result.palette)).toEqual(expect.arrayContaining(["bg", "paper", "ink", "primary", "accent-soft", "accent-text"]));
+    const session = globalThis.__deckforgeMockImproveSession;
+    expect(session.config.tools).toEqual([]);
+    expect(session.config.systemMessage.content).toContain("deckforge theme designer");
+    expect(session.config.systemMessage.content).toContain("audience: People preparing diagram-led talks");
+    expect(JSON.stringify(store.deck)).toBe(before);
+    expect(store.undoStack.length).toBe(0);
+    expect(agent.client.deleted).toContain(session.sessionId);
+    expect(agent.improving).toBe(0);
+
+    await expect(agent.generateTheme({ prompt: "  " })).rejects.toThrow(/Describe the palette/);
+    await expect(agent.generateTheme({ prompt: "x".repeat(MAX_THEME_PROMPT_CHARS + 1) })).rejects.toThrow(/too long/);
+    await expect(agent.generateTheme({ prompt: "#error model down" })).rejects.toMatchObject({ message: "model down", status: 502 });
+    await expect(agent.generateTheme({ prompt: "#raw I cannot do that" })).rejects.toMatchObject({ message: /no JSON object/, status: 502 });
+    await expect(agent.generateTheme({ prompt: '#raw {"palette": {"bg": "#FFFFFF"}}' })).rejects.toThrow(/missing or non-hex paper/);
+  });
+
+  it("parses palette answers strictly", () => {
+    const palette = Object.fromEntries(["bg", "paper", "line", "ink", "muted", "node", "primary", "primary-soft", "primary-line", "accent", "accent-soft", "accent-line"].map((k) => [k, k === "ink" ? "#111111" : "#f5f5f5"]));
+    const reply = parseThemeReply(`Here you go:\n${JSON.stringify({ label: " Calm\n grey ", colorScheme: "night", palette: { ...palette, ok: "green", frame: "#ABCDEF", extra: "#000000" } })}\nEnjoy!`);
+    expect(reply.label).toBe("Calm grey");
+    expect(reply.colorScheme).toBe("light");
+    expect(reply.palette.bg).toBe("#F5F5F5");
+    expect(reply.palette.frame).toBe("#ABCDEF");
+    expect(reply.palette).not.toHaveProperty("ok");
+    expect(reply.palette).not.toHaveProperty("extra");
+    // muted (#f5f5f5) is unreadable on paper.
+    expect(reply.issues.map((i) => i.pair.join("/"))).toContain("muted/paper");
+    expect(() => parseThemeReply("{not json}")).toThrow(/could not be parsed/);
+    expect(() => parseThemeReply(JSON.stringify({ palette: { ...palette, ink: "rgb(0,0,0)" } }))).toThrow(/non-hex ink/);
+    const prompt = themePrompt({ prompt: "Ocean", current: { palette: { primary: "#0F6CBD" }, colorScheme: "dark" } });
+    expect(prompt).toContain("Theme request:\n<<<\nOcean\n>>>");
+    expect(prompt).toContain('dark scheme');
+    expect(prompt).toContain('{"primary":"#0F6CBD"}');
+    expect(themePrompt({ prompt: "Ocean" })).not.toContain("Current palette");
+    expect(themeSystemPrompt(store.deck.meta)).toMatch(/"accent-text":/);
   });
 
   it("validates improve requests and reports failures", async () => {

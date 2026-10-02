@@ -26,7 +26,7 @@
 ## Why deckforge
 
 - **Write slides as data.** Each slide in `deck.yaml` picks a template and fills its slots. The text is validated and every slide keeps a consistent layout.
-- **Themes and templates.** It ships with 4 themes and 20 templates, from one-idea slides to diagrams, and you can add your own.
+- **Themes and templates.** It ships with 4 themes and 20 templates, from one-idea slides to diagrams, and you can add your own. The theme editor lets you pick the colours yourself or ask Copilot for a palette.
 - **Live editor.** Edit text in place, use a typed inspector, add images and overlays, and undo any change. Saves automatically.
 - **GitHub Copilot inside.** Ask for changes to one slide or the whole deck. Copilot can only use deck tools.
   Continue the same conversation in Copilot CLI or the Copilot app (`deckforge mcp`) and watch its edits in the editor as they happen.

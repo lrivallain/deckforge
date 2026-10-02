@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseTheme, ThemeError } from "../../src/core/theme.js";
+import { colorToHex, contrastRatio, parseColor, parseTheme, themeContrastIssues, ThemeError } from "../../src/core/theme.js";
 import { normalizeDeck, parseDeckYaml, stringifyDeck, validateDeck, DeckError } from "../../src/core/deck.js";
 import { applyOp, OpError } from "../../src/core/ops.js";
 import { renderDeck, renderSlideDocument, VERSION, cdnBase } from "../../src/core/render.js";
@@ -312,5 +312,33 @@ describe("renderDeck", () => {
   });
   it("VERSION matches package.json", () => {
     expect(VERSION).toBe(JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version);
+  });
+});
+
+describe("theme colour helpers", () => {
+  it("parses opaque CSS colours", () => {
+    expect(parseColor("#0F6CBD")).toEqual([15, 108, 189]);
+    expect(parseColor("#fff")).toEqual([255, 255, 255]);
+    expect(parseColor("#000000ff")).toEqual([0, 0, 0]);
+    expect(parseColor("rgb(22 32 47)")).toEqual([22, 32, 47]);
+    expect(parseColor("rgba(255, 0, 0, 1)")).toEqual([255, 0, 0]);
+    for (const value of ["rgb(22 32 47 / 10%)", "#0008", "linear-gradient(90deg, #fff, #000)", "teal", "", undefined]) expect(parseColor(value), String(value)).toBeNull();
+    expect(colorToHex("rgb(15, 108, 189)")).toBe("#0f6cbd");
+    expect(colorToHex("transparent")).toBeNull();
+  });
+
+  it("computes WCAG contrast ratios", () => {
+    expect(contrastRatio("#000", "#fff")).toBeCloseTo(21, 5);
+    expect(contrastRatio("#777", "#777")).toBeCloseTo(1, 5);
+    expect(contrastRatio("#767676", "#FFFFFF")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("gradient", "#fff")).toBeNull();
+  });
+
+  it("flags unreadable text tokens and skips values it cannot parse", () => {
+    for (const theme of Object.values(themes)) expect(themeContrastIssues(theme), theme.name).toEqual([]);
+    const palette = { ...themes.build.palette, muted: "#BBBBBB", "accent-soft": "linear-gradient(#fff, #eee)" };
+    const issues = themeContrastIssues({ palette });
+    expect(issues.map((i) => i.pair)).toEqual([["muted", "paper"], ["muted", "node"], ["muted", "primary-soft"]]);
+    expect(issues[0]).toMatchObject({ level: "warning", message: expect.stringMatching(/^Low contrast: muted on paper is 1\.\d\d:1/) });
   });
 });

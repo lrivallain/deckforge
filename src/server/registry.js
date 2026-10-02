@@ -117,3 +117,10 @@ export function templateDirFor(scope, deckDir) {
   if (scope === "user") return path.join(configDir(), "templates");
   throw new Error(`Cannot write templates with scope "${scope}"`);
 }
+
+/** Resolve the directory a theme should be saved into for a scope. */
+export function themeDirFor(scope, deckDir) {
+  if (scope === "deck") return path.join(deckDir, "themes");
+  if (scope === "user") return path.join(configDir(), "themes");
+  throw new Error(`Cannot write themes with scope "${scope}"`);
+}
