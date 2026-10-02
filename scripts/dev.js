@@ -141,12 +141,15 @@ if (flag("--reset")) {
 if (!fs.existsSync(tokenFile)) fs.writeFileSync(tokenFile, crypto.randomBytes(12).toString("base64url"));
 const token = fs.readFileSync(tokenFile, "utf8").trim();
 const port = await pickPort();
-console.log(`dev: ${mode} on port ${port} (kept across restarts), deck ${path.relative(root, work)}/deck.yaml`);
+// Keep port numbers out of everything printed before the "Editor:" line: the
+// GitHub Copilot app treats "port N" as a server URL and would open it without
+// the token.
+console.log(`dev: deckforge ${mode} on ${path.relative(root, work)}/deck.yaml (same URL across restarts)`);
 
 const children = new Set();
 let stopping = false;
-const run = (args) => {
-  const child = spawn(process.execPath, args, { cwd: root, stdio: "inherit", env: { ...process.env, CI: "" } });
+const run = (args, env = {}) => {
+  const child = spawn(process.execPath, args, { cwd: root, stdio: "inherit", env: { ...process.env, CI: "", ...env } });
   children.add(child);
   child.once("exit", (code, signal) => {
     children.delete(child);
@@ -183,10 +186,10 @@ run(["scripts/build.js", "--watch"]);
 // Give esbuild a moment to produce dist/ before the server starts.
 setTimeout(() => {
   if (stopping) return;
-  const args = [
-    "--watch-preserve-output", "--watch-path=src", "--watch-path=bin", "--watch-path=dist",
-    "bin/deckforge.js", mode, path.join(work, "deck.yaml"), "--port", String(port), "--no-open",
-  ];
-  if (mode === "edit") args.push("--token", token);
-  run(args);
+  const cliArgs = [mode, path.join(work, "deck.yaml"), "--port", String(port), "--no-open"];
+  if (mode === "edit") cliArgs.push("--token", token);
+  run(
+    ["--watch-preserve-output", "--watch-path=src", "--watch-path=bin", "--watch-path=dist", "scripts/dev-server.js"],
+    { DECKFORGE_DEV_ARGS: JSON.stringify(cliArgs) },
+  );
 }, 800);
