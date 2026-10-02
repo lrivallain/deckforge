@@ -42,3 +42,28 @@ jobs:
           name: playwright-report-node${{ matrix.node }}
           path: playwright-report
           retention-days: 7
+
+  # Install the packed tarball globally, as a user would, and run the CLI.
+  global-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pack and install globally
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP"
+          npm install -g "$RUNNER_TEMP"/deckforge-*.tgz --omit=optional --no-audit --no-fund
+      - name: Smoke test the installed CLI
+        working-directory: ${{ runner.temp }}
+        run: |
+          deckforge --version
+          deckforge new smoke --title Smoke
+          deckforge build smoke --runtime inline
+          test -s smoke/deck.yaml
+          test -s smoke/deck.html
+          deckforge new local --title Local
+          deckforge build local --runtime local
+          test -s local/deck.html
+          test -s local/deckforge/deckforge.viewer.js
