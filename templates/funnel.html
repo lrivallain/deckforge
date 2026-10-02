@@ -1,0 +1,52 @@
+---
+name: funnel
+label: Funnel
+description: >-
+  From a full inventory down to the final scope in up to five steps. Bar
+  widths are computed from the numbers when the deck is rendered; each step
+  can say what was excluded and why.
+category: technical
+order: 5
+slots:
+  eyebrow: { type: text, max: 40, sample: Migration scope }
+  title: { type: richtext, max: 60, required: true, sample: 'From 412 servers to <span class="blue">a first wave of 64</span>' }
+  subtitle: { type: text, max: 60, sample: Paris data centre. }
+  unit: { type: text, max: 12, sample: servers, description: Shown after each value }
+  steps:
+    type: cards
+    max: 5
+    fields:
+      label: { type: text, max: 24 }
+      value: { type: number }
+      note: { type: text, max: 60, description: What was excluded at this step and why }
+    sample:
+      - { label: Inventory, value: 412, note: Every server in the CMDB export }
+      - { label: In use, value: 318, note: "−94 idle for 90 days: decommission" }
+      - { label: Supported OS, value: 241, note: "−77 on end-of-life systems: upgrade first" }
+      - { label: First wave, value: 64, note: Stateless tiers with a named owner }
+  source: { type: text, max: 90, sample: "Source: illustrative figures" }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<ol class="funnel" aria-label="{{slide.title}}: {{#each steps}}{{label}} {{value}} {{unit}}{{#unless @last}}, {{/unless}}{{/each}}">
+  {{#each steps}}<li class="step reveal{{#if @last}} final{{/if}}">
+    <span class="label">{{label}}</span>
+    <span class="track"><span class="bar" data-value="{{value}}" style="--size: {{@pct.value}}%"><span class="value">{{value}}</span></span></span>
+    <span class="note">{{#if note}}{{note}}{{else}}{{unit}}{{/if}}</span>
+  </li>{{/each}}
+</ol>
+{{#if source}}<p class="source reveal">{{source}}</p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.funnel { flex: 1; min-height: 0; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; gap: .9cqw; }
+.step { display: grid; grid-template-columns: 15cqw minmax(0, 1fr) 24cqw; align-items: center; gap: 1.6cqw; }
+.label { font: 600 1.75cqw / 1.2 var(--df-font-heading); text-align: right; }
+.track { display: flex; justify-content: center; min-width: 0; height: 4.4cqw; }
+.bar { flex: none; width: var(--size); min-width: 1px; height: 100%; display: grid; place-items: center; background: var(--df-primary-soft); border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-small); }
+.final .bar { background: var(--df-primary); border-color: var(--df-primary); color: var(--df-paper); }
+.value { font: 700 2cqw / 1 var(--df-font-heading); white-space: nowrap; padding: 0 .4cqw; }
+.note { font-size: 1.4cqw; line-height: 1.35; color: var(--df-muted); }
+</style>

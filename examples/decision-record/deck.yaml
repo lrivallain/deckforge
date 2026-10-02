@@ -1,0 +1,85 @@
+meta:
+  title: Message broker - decision record
+  lang: en
+  theme: build
+  runtime: inline
+  footer: ADR-007 / message broker
+  brief:
+    topic: Choosing the message broker for the event-driven order pipeline
+    audience: Engineering leads
+    goal: Agree the broker and the conditions attached to the decision
+    duration: 10 minutes
+slides:
+  - id: title
+    template: title
+    data:
+      eyebrow: Decision record ADR-007
+      title: One broker for every team. <span class="blue">We propose a managed one.</span>
+      subtitle: Why we need to decide, the options we compared and the decision with its consequences.
+      presenter: Integration guild
+      details: Engineering leads · October
+    notes: Keep this deck next to the ADR in the repository; review changes to it like code.
+  - id: context
+    template: split
+    data:
+      kicker: Why decide now
+      title: Three brokers today, <span class="accent">none of them owned</span>
+      leftLabel: Today
+      leftText: Each team runs its own broker. Upgrades slip, and nobody is on call for them.
+      rightLabel: What we need
+      rightText: One supported broker for the order pipeline, <strong>with an owner and an SLO</strong>.
+      highlightRight: true
+    sources:
+      - Platform inventory, September
+  - id: options
+    template: options-matrix
+    data:
+      eyebrow: Options
+      title: A managed broker <span class="blue">wins on effort and risk</span>
+      subtitle: Scored by the integration guild.
+      optionHeader: Option
+      criteria: [Operations effort, Throughput, Team skills, Lock-in, Cost]
+      options:
+        - { name: Self-hosted Kafka, ratings: [Poor, Strong, Weak, Low, Medium] }
+        - { name: Managed Kafka, ratings: [Good, Strong, Good, Medium, Medium], recommended: true }
+        - { name: Cloud queue service, ratings: [Good, Medium, Good, High, Low] }
+      recommendationLabel: Recommendation
+      recommendation: Managed Kafka keeps our client libraries and removes the on-call burden.
+  - id: cost
+    template: bars
+    data:
+      eyebrow: Cost
+      title: Managed Kafka costs more to run, <span class="blue">less to own</span>
+      subtitle: Monthly cost in k€, including people time.
+      unit: k€
+      vertical: true
+      items:
+        - { label: Self-hosted Kafka, value: 6, projected: 9 }
+        - { label: Managed Kafka, value: 11, projected: 1.5, focus: true }
+        - { label: Cloud queue service, value: 4, projected: 2 }
+      projectedLabel: Operations time
+      source: "Source: vendor quotes and time tracking, Q3"
+    sources:
+      - Vendor quotes, Q3
+      - Team time tracking, Q3
+    notes: Each column stacks the service cost and the operations time; both are computed from the values.
+  - id: decision
+    template: decision
+    data:
+      eyebrow: ADR-007
+      title: Use managed Kafka <span class="blue">for the order pipeline</span>
+      status: Accepted · 2026-10-08
+      contextLabel: Context
+      context: Three self-run brokers, no owner and an event-driven order pipeline planned for Q1.
+      decisionLabel: Decision
+      decision: <strong>Adopt a managed Kafka service</strong> owned by the platform team; retire the other brokers by June.
+      consequencesLabel: Consequences
+      pros: [No broker upgrades or on-call for the teams, Same client libraries and tooling]
+      cons: [Higher service bill than self-hosting, Topics and quotas to govern centrally]
+  - id: close
+    template: closing
+    data:
+      kicker: Next step
+      title: Approve ADR-007 today
+      text: The platform team starts the managed cluster on Monday and migrates the order topics first.
+      link: { label: Read ADR-007, href: "#title" }

@@ -1,0 +1,77 @@
+---
+name: bars
+label: Bar chart
+description: >-
+  Up to eight labelled bars, horizontal or vertical (columns). Bar lengths are
+  computed from the numbers when the deck is rendered, so they always match
+  the figures. An optional projected amount is stacked after a bar, hatched.
+  Real, sourced figures only.
+category: data
+order: 1
+slots:
+  eyebrow: { type: text, max: 40, sample: Run cost by service }
+  title: { type: richtext, max: 60, required: true, sample: 'Compute drives <span class="blue">most of the bill</span>' }
+  subtitle: { type: text, max: 60, sample: Monthly run rate in k€. }
+  unit: { type: text, max: 12, sample: k€, description: Shown after each value }
+  vertical: { type: boolean, description: Vertical columns instead of horizontal bars }
+  items:
+    type: cards
+    max: 8
+    fields:
+      label: { type: text, max: 22 }
+      value: { type: number }
+      projected: { type: number, description: "Optional projected amount, stacked after the value and hatched" }
+      focus: { type: boolean, description: Show this bar in the accent colour }
+    sample:
+      - { label: Compute, value: 42, projected: 6, focus: true }
+      - { label: Databases, value: 18 }
+      - { label: Storage, value: 14, projected: 3 }
+      - { label: Network, value: 9.5 }
+      - { label: Monitoring, value: 4 }
+  projectedLabel: { type: text, max: 24, sample: Projected growth, description: Legend of the hatched part }
+  source: { type: text, max: 90, sample: "Source: illustrative figures" }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<figure class="chart{{#if vertical}} vertical{{/if}} reveal" role="img" aria-label="{{slide.title}}: {{#each items}}{{label}} {{value}} {{unit}}{{#if projected}} (+{{projected}} {{projectedLabel}}){{/if}}{{#unless @last}}; {{/unless}}{{/each}}">
+  {{#each items}}
+  <div class="bar-row{{#if focus}} focus{{/if}}">
+    <span class="label">{{label}}</span>
+    <span class="track"><span class="bar" data-value="{{value}}" style="--size: {{@pct.value}}%"></span>{{#if projected}}<span class="bar projected" style="--size: {{@pct.projected}}%"></span>{{/if}}<span class="value">{{value}}{{#if unit}}<span class="unit"> {{unit}}</span>{{/if}}{{#if projected}}<small> +{{projected}}</small>{{/if}}</span></span>
+  </div>
+  {{/each}}
+</figure>
+<table class="sr-only">
+  <caption>{{slide.title}}</caption>
+  <tbody>{{#each items}}<tr><th scope="row">{{label}}</th><td>{{value}} {{unit}}</td>{{#if projected}}<td>+{{projected}} {{projectedLabel}}</td>{{/if}}</tr>{{/each}}</tbody>
+</table>
+{{#if items.@sum.projected}}<p class="source reveal"><span class="key"><span class="swatch hatch" aria-hidden="true"></span>{{projectedLabel}}</span>{{source}}</p>{{else}}{{#if source}}<p class="source reveal">{{source}}</p>{{/if}}{{/if}}
+{{> foot}}
+
+<style scoped>
+.chart { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.2cqw; }
+.bar-row { display: grid; grid-template-columns: 17cqw minmax(0, 1fr); align-items: center; gap: 1.4cqw; }
+.label { font-size: 1.7cqw; line-height: 1.2; text-align: right; overflow-wrap: anywhere; }
+/* Bars scale against the content box; the padding keeps room for the value at the end of the longest bar. */
+.track { display: flex; align-items: center; min-width: 0; height: 3.2cqw; padding-right: 13cqw; }
+.bar { flex: none; width: var(--size); height: 100%; background: var(--df-primary); border-radius: 2px; }
+.bar.projected, .swatch.hatch {
+  background: repeating-linear-gradient(135deg, var(--df-primary) 0 .25cqw, var(--df-primary-soft) .25cqw .7cqw);
+  box-shadow: inset 0 0 0 1px var(--df-primary-line);
+}
+.focus .bar:not(.projected) { background: var(--df-accent); }
+.focus .bar.projected { background: repeating-linear-gradient(135deg, var(--df-accent) 0 .25cqw, var(--df-accent-soft) .25cqw .7cqw); box-shadow: inset 0 0 0 1px var(--df-accent-line); }
+.value { flex: none; padding: 0 1cqw; font: 700 2cqw / 1 var(--df-font-heading); letter-spacing: -.02em; white-space: nowrap; }
+.unit, .value small { font: 400 1.25cqw var(--df-font-mono); letter-spacing: 0; color: var(--df-muted); }
+.focus .value { color: var(--df-accent-text, var(--df-accent)); }
+.vertical { flex-direction: row; align-items: stretch; justify-content: center; gap: 2cqw; }
+.vertical .bar-row { flex: 1 1 0; max-width: 14cqw; min-width: 0; grid-template-columns: none; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: .8cqw; }
+.vertical .track { order: 1; flex-direction: column-reverse; align-items: center; width: 100%; height: 100%; padding: 4cqw 0 0; }
+.vertical .label { order: 2; text-align: center; font-size: 1.5cqw; }
+.vertical .bar { width: min(100%, 7cqw); height: var(--size); }
+.vertical .value { padding: 0 0 .7cqw; }
+.source { display: flex; align-items: center; gap: 2cqw; }
+.key { display: inline-flex; align-items: center; gap: .6cqw; }
+</style>

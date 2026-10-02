@@ -29,7 +29,7 @@ features:
     link: /guide/writing-decks
   - icon: 🎨
     title: Themes and templates
-    details: 4 themes and 20 templates, from one-idea slides to diagrams. Create your own with a front-matter, HTML and CSS file.
+    details: 4 themes and 32 templates, from one-idea slides to diagrams and data-driven charts. Create your own with a front-matter, HTML and CSS file.
     link: /guide/templates
   - icon: ✏️
     title: Live editor

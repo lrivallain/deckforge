@@ -26,12 +26,14 @@
 ## Why deckforge
 
 - **Write slides as data.** Each slide in `deck.yaml` picks a template and fills its slots. The text is validated and every slide keeps a consistent layout.
-- **Themes and templates.** It ships with 4 themes and 20 templates, from one-idea slides to diagrams, and you can add your own.
+- **Themes and templates.** It ships with 4 themes and 32 templates, from one-idea slides to diagrams, data-driven charts and technical reviews, and you can add your own.
 - **Live editor.** Edit text in place, use a typed inspector, add images and overlays, and undo any change. Saves automatically.
 - **GitHub Copilot inside.** Ask for changes to one slide or the whole deck. Copilot can only use deck tools.
   Continue the same conversation in Copilot CLI or the Copilot app (`deckforge mcp`) and watch its edits in the editor as they happen.
 - **One static file.** Speaker notes, a presenter window and print to PDF. No network requests by default.
 - **Editable PowerPoint export.** Native text boxes, shapes and pictures, with your speaker notes.
+- **Offline technical decks.** Architecture reviews, postmortems, assessments and decision records: charts computed from the figures,
+  per-slide sources, `--check-offline` and `--strip-notes` for confidential sharing, and `deckforge diff` for pull request reviews.
 
 ## Install
 
@@ -50,7 +52,8 @@ deckforge build my-talk --runtime inline                    # one self-contained
 deckforge export my-talk                                    # an editable deck.pptx
 ```
 
-To start from a complete deck, run `deckforge new my-talk --example aurora`.
+To start from a complete deck, run `deckforge new my-talk --example aurora`, or a technical starter:
+`--example architecture-review`, `postmortem`, `assessment` or `decision-record`.
 
 ## Documentation
 
@@ -61,6 +64,7 @@ To start from a complete deck, run `deckforge new my-talk --example aurora`.
 | [Themes](https://deckforge.vuptime.io/guide/themes) · [Templates](https://deckforge.vuptime.io/guide/templates) | Galleries of themes and templates |
 | [Editor](https://deckforge.vuptime.io/guide/editor) · [Copilot](https://deckforge.vuptime.io/guide/copilot) | Edit slides visually or by asking Copilot |
 | [Present and share](https://deckforge.vuptime.io/guide/presenting) | Viewer, print to PDF, PowerPoint export, runtime modes |
+| [Technical decks](https://deckforge.vuptime.io/guide/technical-decks) · [Share offline](https://deckforge.vuptime.io/guide/offline) · [Git and CI](https://deckforge.vuptime.io/guide/git-ci) | Charts from data, starters, confidential one-file sharing, reviews in pull requests |
 | [Copilot skill](https://deckforge.vuptime.io/guide/copilot-skill) | Let the Copilot CLI build a deck from a brief |
 | [Reference](https://deckforge.vuptime.io/reference/cli) | CLI, `deck.yaml`, theme and template files, security model |
 

@@ -231,6 +231,8 @@ export function createStage({ onSlotFocus }) {
     reorder.refresh();
     measure();
     for (const el of doc.querySelectorAll(".df-slot")) {
+      // Screen-reader-only copies (chart data tables) are not editing targets.
+      if (el.closest(".sr-only")) continue;
       const type = el.dataset.dfType;
       const path = el.dataset.dfSlot;
       el.setAttribute("contenteditable", type === "richtext" ? "true" : "plaintext-only");

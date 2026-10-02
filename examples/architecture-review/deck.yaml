@@ -1,0 +1,126 @@
+meta:
+  title: Order platform - architecture review
+  lang: en
+  theme: build
+  runtime: inline
+  footer: Order platform / architecture review
+  brief:
+    topic: Architecture review of the order platform before the peak season
+    audience: Architecture board and service owners
+    goal: Approve the proposed change to the order pipeline and its risk mitigations
+    duration: 20 minutes
+slides:
+  - id: title
+    template: title
+    data:
+      eyebrow: Architecture review
+      title: The order platform holds today. <span class="blue">Peak season needs one change.</span>
+      subtitle: Current state, the bottleneck we found, three options and the change we propose.
+      presenter: Platform team
+      details: Architecture board · October
+    notes: |
+      Replace every figure in this deck with your own, and keep the sources field of each slide up to date.
+      The Sources appendix at the end is generated from those fields.
+  - id: health
+    template: kpis
+    data:
+      eyebrow: Where we stand
+      title: Healthy today, <span class="amber">close to the limit at peak</span>
+      subtitle: Last 90 days, production.
+      kpis:
+        - { value: 99.94%, label: Availability, note: "SLO 99.9% · met", tone: good }
+        - { value: 420 ms, label: p95 checkout latency, note: "Budget 500 ms", tone: warn }
+        - { value: 2.1×, label: Peak traffic expected, note: Black Friday forecast, tone: focus }
+        - { value: "31", label: Deploys per week, note: "From 18 last year", tone: good }
+      source: "Source: monitoring dashboards, 90-day export"
+    sources:
+      - Monitoring dashboards, 90-day export
+      - { label: Peak forecast 2026, href: "https://example.com/forecast" }
+    notes: The latency budget is the one number to remember. At twice the traffic it breaks.
+  - id: flow
+    template: lifecycle
+    data:
+      eyebrow: How an order flows
+      title: Three services, <span class="blue">one synchronous chain</span>
+      subtitle: Each hop adds latency and a failure mode.
+      stages:
+        - { label: 01 / INGEST, title: API gateway, text: Authenticates and validates the order., owner: "Owner: edge team", focus: false }
+        - { label: 02 / PROCESS, title: Order service, text: Prices and reserves stock in one call to the inventory database., owner: "Owner: order team", focus: true }
+        - { label: 03 / FULFIL, title: Fulfilment, text: Books the carrier and sends the confirmation., owner: "Owner: logistics team", focus: false }
+      connector: calls
+      feedback: Failures retry synchronously from the gateway
+      takeawayLabel: The takeaway
+      takeaway: The order service waits on the inventory database for every order.
+  - id: latency
+    template: bars
+    data:
+      eyebrow: Latency budget
+      title: The inventory lock <span class="amber">takes half the budget</span>
+      subtitle: p95 per hop at today's peak, in ms.
+      unit: ms
+      items:
+        - { label: Inventory lock, value: 210, projected: 160, focus: true }
+        - { label: Pricing, value: 85, projected: 40 }
+        - { label: Gateway, value: 60, projected: 10 }
+        - { label: Carrier booking, value: 45, projected: 15 }
+        - { label: Confirmation, value: 20 }
+      projectedLabel: Added at 2.1× traffic
+      source: "Source: load test LT-48, 2.1× replay"
+    sources:
+      - Load test LT-48 report
+    notes: Bars are computed from the values. Change a number and the bar follows.
+  - id: options
+    template: options-matrix
+    data:
+      eyebrow: Options
+      title: Reserve stock asynchronously <span class="blue">for the best balance</span>
+      subtitle: Scored with the order and data teams.
+      optionHeader: Option
+      criteria: [Peak latency, Effort, Risk, Run cost]
+      options:
+        - { name: Scale the database, ratings: [Weak, Low, Low, High] }
+        - { name: Async reservation, ratings: [Good, Medium, Medium, Low], recommended: true }
+        - { name: Split the inventory, ratings: [Good, High, High, Medium] }
+      recommendationLabel: Recommendation
+      recommendation: Move the stock reservation to an event, confirm the order first and compensate the rare failures.
+  - id: decision
+    template: decision
+    data:
+      eyebrow: ADR-021
+      title: Reserve stock <span class="blue">after the order is accepted</span>
+      status: Proposed · for approval today
+      contextLabel: Context
+      context: At 2.1× traffic the synchronous inventory lock pushes p95 latency to 560 ms, above the 500 ms budget.
+      decisionLabel: Decision
+      decision: <strong>Publish an order-accepted event and reserve stock asynchronously</strong>; cancel and notify when stock is gone.
+      consequencesLabel: Consequences
+      pros: [p95 latency back under 350 ms at peak, The database lock leaves the checkout path]
+      cons: [About 0.2% of orders cancelled after acceptance, A new compensation flow to test and operate]
+  - id: risks
+    template: risk-register
+    data:
+      eyebrow: Risks
+      title: Three risks, <span class="amber">all with an owner</span>
+      subtitle: Reviewed with service owners.
+      riskHeader: Risk
+      impactHeader: Impact
+      likelihoodHeader: Likelihood
+      ownerHeader: Owner
+      mitigationHeader: Mitigation
+      risks:
+        - { risk: Oversold stock during flash sales, impact: High, likelihood: Medium, owner: Order team, mitigation: Hold a 2% safety stock on promoted items. }
+        - { risk: Event backlog at peak, impact: Medium, likelihood: Medium, owner: Platform team, mitigation: Autoscale consumers; alert on lag over 30 s. }
+        - { risk: Customers confused by late cancellations, impact: Medium, likelihood: Low, owner: Customer care, mitigation: Clear email and an instant refund. }
+  - id: confirm
+    template: checklist
+    data:
+      eyebrow: Before we build
+      title: Four points to confirm <span class="blue">with the board</span>
+      subtitle: Decision needed today.
+      ownerHeader: Owner
+      dueHeader: Due
+      items:
+        - { item: Approve ADR-021 and the compensation flow, owner: Architecture board, due: Today }
+        - { item: Agree the 0.2% late-cancellation budget, owner: Product owner, due: 10 Oct }
+        - { item: Load test at 2.5× before the code freeze, owner: Platform team, due: 31 Oct }
+        - { item: Update the runbook and on-call training, owner: SRE lead, due: 7 Nov }

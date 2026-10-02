@@ -21,6 +21,20 @@ content:
   - { src: /screenshots/templates/bullets.png, title: "Key points", name: bullets, caption: "Up to five points and a takeaway." }
   - { src: /screenshots/templates/two-column.png, title: "Two columns", name: two-column, caption: "Compare two options side by side." }
   - { src: /screenshots/templates/quote.png, title: "Quote", name: quote, caption: "One quotation with attribution." }
+data:
+  - { src: /screenshots/templates/bars.png, title: "Bar chart", name: bars, caption: "Bars sized from the numbers, projected part hatched." }
+  - { src: /screenshots/templates/donut.png, title: "Donut chart", name: donut, caption: "Share of a whole, total in the centre." }
+  - { src: /screenshots/templates/compare-bars.png, title: "Current vs target", name: compare-bars, caption: "Two stacked bars on one scale." }
+  - { src: /screenshots/templates/kpis.png, title: "Key figures", name: kpis, caption: "Three or four figures with a tone." }
+  - { src: /screenshots/templates/table.png, title: "Data table", name: table, caption: "Numeric columns and a computed total." }
+technical:
+  - { src: /screenshots/templates/timeline.png, title: "Timeline", name: timeline, caption: "Incident or migration phases." }
+  - { src: /screenshots/templates/options-matrix.png, title: "Options matrix", name: options-matrix, caption: "Options × criteria → recommendation." }
+  - { src: /screenshots/templates/risk-register.png, title: "Risk register", name: risk-register, caption: "Impact, likelihood, owner, mitigation." }
+  - { src: /screenshots/templates/decision.png, title: "Decision record", name: decision, caption: "Context → decision → consequences." }
+  - { src: /screenshots/templates/funnel.png, title: "Funnel", name: funnel, caption: "Inventory → exclusions → scope." }
+  - { src: /screenshots/templates/checklist.png, title: "Checklist", name: checklist, caption: "Points to confirm, with owners." }
+  - { src: /screenshots/templates/sources.png, title: "Sources", name: sources, caption: "Generated appendix of the slides' sources." }
 media:
   - { src: /screenshots/templates/image.png, title: "Image", name: image, caption: "One picture with a caption or panel." }
   - { src: /screenshots/templates/image-text.png, title: "Image and text", name: image-text, caption: "Picture next to headline and points." }
@@ -57,6 +71,21 @@ so you can show the idea first and then the real components.
 ## Content
 
 <Gallery :items="$frontmatter.content" />
+
+## Charts and data
+
+The values of these templates are plain numbers: bar lengths, segments and totals are computed when the deck is
+built, so a chart can't drift from its figures. Each chart also gets a text alternative generated from the data.
+See [Technical decks](technical-decks).
+
+<Gallery :items="$frontmatter.data" />
+
+## Technical
+
+For architecture reviews, postmortems, assessments and decision records. The `sources` slide is added for you
+from the slides' `sources:` fields.
+
+<Gallery :items="$frontmatter.technical" />
 
 ## Media
 

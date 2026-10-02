@@ -2,7 +2,7 @@
 
 import { escapeAttr, escapeHtml, textToHtml } from "./html.js";
 import { renderTemplate } from "./template.js";
-import { publishedData, slideTitle } from "./deck.js";
+import { makeSlideId, publishedData, slideTitle } from "./deck.js";
 import { renderOverlays } from "./overlay.js";
 
 export const VERSION = "0.1.0";
@@ -27,8 +27,38 @@ function missingTemplate(name) {
   };
 }
 
+const sourceLabel = (source) => (typeof source === "string" ? source : source.href && source.label !== source.href ? `${source.label} (${source.href})` : source.label);
+
+function notesHtml(slide) {
+  const paragraphs = slide.notes ? slide.notes.split(/\n{2,}/).map((p) => `<p>${textToHtml(p.trim())}</p>`) : [];
+  if (slide.sources?.length) paragraphs.push(`<p class="notes-sources">Sources: ${slide.sources.map((s) => escapeHtml(sourceLabel(s))).join("; ")}</p>`);
+  return paragraphs.join("");
+}
+
+/**
+ * The generated "Sources" appendix slide: every `sources:` entry of the
+ * visible slides, with the slide it supports. null when there is none, when
+ * meta.sourcesSlide is false or when no `sources` template is available.
+ */
+export function sourcesAppendix(deck, slides, templates) {
+  if (deck.meta.sourcesSlide === false || !templates.sources) return null;
+  const entries = [];
+  slides.forEach((slide, index) => {
+    (slide.sources || []).forEach((source, i) => {
+      const link = typeof source === "string"
+        ? (/^(https?:|mailto:)/i.test(source) ? { label: source, href: source } : { label: source, href: "" })
+        : { label: source.label, href: source.href };
+      // The slide is named once, on its first source.
+      entries.push(i ? { number: "", slide: "", source: link } : { number: pad(index + 1), slide: slideTitle(slide, templates[slide.template]), source: link });
+    });
+  });
+  if (!entries.length) return null;
+  const title = typeof deck.meta.sourcesSlide === "string" ? deck.meta.sourcesSlide : "Sources";
+  return { id: makeSlideId(deck.slides.map((s) => s.id), "sources"), template: "sources", title, generated: true, data: { title, entries }, notes: "" };
+}
+
 /** Render one slide <section>. */
-export function renderSlide(deck, slide, { index, total, templates, edit = false, includePlaceholders = false, assetUrl }) {
+export function renderSlide(deck, slide, { index, total, templates, edit = false, includePlaceholders = false, assetUrl, stripNotes = false }) {
   const template = templates[slide.template] || missingTemplate(slide.template);
   const titleId = `${slide.id}-title`;
   const title = slideTitle(slide, templates[slide.template]);
@@ -64,7 +94,8 @@ export function renderSlide(deck, slide, { index, total, templates, edit = false
   const classes = ["slide", `df-t-${template.name}`, ...template.classes].join(" ");
   const labelled = inner.includes(`id="${titleId}"`) ? `aria-labelledby="${escapeAttr(titleId)}"` : `aria-label="${escapeAttr(title)}"`;
   const overlays = renderOverlays(slide, { edit, assetUrl });
-  const notes = slide.notes ? `\n  <aside class="slide-notes" hidden aria-label="Speaker notes">${slide.notes.split(/\n{2,}/).map((p) => `<p>${textToHtml(p.trim())}</p>`).join("")}</aside>` : "";
+  const notesContent = stripNotes ? "" : notesHtml(slide);
+  const notes = notesContent ? `\n  <aside class="slide-notes" hidden aria-label="Speaker notes">${notesContent}</aside>` : "";
   return `<section class="${escapeAttr(classes)}" id="slide-${escapeAttr(slide.id)}" data-slide-id="${escapeAttr(slide.id)}" data-template="${escapeAttr(slide.template)}" data-title="${escapeAttr(title)}" ${labelled}>
   <div class="slide-inner">
 ${inner.trim()}
@@ -112,13 +143,16 @@ function safeInlineStyle(css) {
 /**
  * Render a complete static deck.html.
  * @param {object} deck normalized deck
- * @param {object} opts { templates, theme, runtime: local|cdn|inline, assets: {css, js}, assetBase, version, assetUrl }
+ * @param {object} opts { templates, theme, runtime: local|cdn|inline, assets: {css, js}, assetBase, version, assetUrl, stripNotes, csp }
  *   assetUrl(src) maps "assets/…" image paths (e.g. to data URIs for the inline runtime).
+ *   stripNotes leaves the speaker notes out; csp adds a Content-Security-Policy meta tag.
  */
 export function renderDeck(deck, opts) {
-  const { templates, theme, runtime = "local", assets = {}, version = VERSION, assetUrl } = opts;
+  const { templates, theme, runtime = "local", assets = {}, version = VERSION, assetUrl, stripNotes = false, csp = "" } = opts;
   const slides = visibleSlides(deck);
-  const sections = slides.map((slide, index) => renderSlide(deck, slide, { index, total: slides.length, templates, assetUrl })).join("\n");
+  const appendix = sourcesAppendix(deck, slides, templates);
+  if (appendix) slides.push(appendix);
+  const sections = slides.map((slide, index) => renderSlide(deck, slide, { index, total: slides.length, templates, assetUrl, stripNotes })).join("\n");
   let cssTag;
   let jsTag;
   if (runtime === "inline") {
@@ -133,7 +167,7 @@ export function renderDeck(deck, opts) {
   return `<!doctype html>
 <html lang="${escapeAttr(deck.meta.lang)}" data-theme="${escapeAttr(theme?.name ?? "")}">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8">${csp ? `\n  <meta http-equiv="Content-Security-Policy" content="${escapeAttr(csp)}">` : ""}
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="deckforge ${escapeAttr(version)}">
   <title>${escapeHtml(deck.meta.title)}</title>${description ? `\n  <meta name="description" content="${escapeAttr(description)}">` : ""}

@@ -75,6 +75,9 @@ const LIVE_RELOAD = (eventsPath, nonce) => `<script nonce="${nonce}">(function()
  * <script>), so a content-sanitizer bypass cannot drive the API.
  */
 export function protectDeckHtml(html, nonce, { editorUrl } = {}) {
+  // The offline CSP of an inline build would block live reload and the
+  // editor's PPTX export (they need the server); the header CSP below replaces it.
+  html = String(html).replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\s*/i, "");
   const marker = "<script data-df-runtime>";
   const index = html.lastIndexOf(marker);
   let out = index === -1 ? html : `${html.slice(0, index)}<script data-df-runtime nonce="${nonce}">${html.slice(index + marker.length)}`;

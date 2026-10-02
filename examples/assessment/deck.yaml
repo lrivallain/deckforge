@@ -1,0 +1,135 @@
+meta:
+  title: Data centre exit - assessment
+  lang: en
+  theme: build
+  runtime: inline
+  footer: Data centre exit / assessment
+  brief:
+    topic: Assessment of the migration of the Paris data centre to the cloud
+    audience: IT leadership and finance
+    goal: Agree the scope, the target cost and the first migration wave
+    duration: 20 minutes
+slides:
+  - id: title
+    template: title
+    data:
+      eyebrow: Assessment
+      title: Leave the Paris data centre. <span class="blue">Start with 64 servers.</span>
+      subtitle: Current state, target state, the cost comparison, the risks and the next steps.
+      presenter: Cloud programme
+      details: Steering committee · Q4
+    notes: |
+      Every chart in this deck is computed from the numbers in deck.yaml.
+      Update the figures and sources together; the Sources appendix is generated from each slide's sources field.
+  - id: scope
+    template: funnel
+    data:
+      eyebrow: Current state
+      title: From 412 servers to <span class="blue">a first wave of 64</span>
+      subtitle: Paris data centre.
+      unit: servers
+      steps:
+        - { label: Inventory, value: 412, note: Every server in the CMDB export }
+        - { label: In use, value: 318, note: "−94 idle for 90 days: decommission" }
+        - { label: Supported OS, value: 241, note: "−77 on end-of-life systems: upgrade first" }
+        - { label: First wave, value: 64, note: Stateless tiers with a named owner }
+      source: "Source: CMDB export and 90-day utilisation report"
+    sources:
+      - CMDB export, 1 September
+      - Utilisation report, 90 days
+  - id: spend
+    template: donut
+    data:
+      eyebrow: Current cost
+      title: Hardware and licences <span class="blue">are two thirds of the bill</span>
+      subtitle: Annual run cost of the data centre.
+      unit: k€
+      centreLabel: k€ per year
+      items:
+        - { label: Hardware and support, value: 410 }
+        - { label: Licences, value: 290 }
+        - { label: Facilities and power, value: 180 }
+        - { label: Operations staff, value: 120 }
+        - { label: Network, value: 50 }
+      source: "Source: finance cost centre 4410, FY2026"
+    sources:
+      - Finance cost centre 4410, FY2026
+  - id: workloads
+    template: table
+    data:
+      eyebrow: Cost by workload
+      title: Three workloads hold <span class="blue">90% of the spend</span>
+      subtitle: Monthly cost in k€.
+      labelHeader: Workload
+      col1: Compute
+      col2: Storage
+      col3: Network
+      col4: Licences
+      rows:
+        - { label: Customer portal, v1: 18.4, v2: 3.1, v3: 1.2, v4: 4, focus: true }
+        - { label: Data platform, v1: 12.9, v2: 9.6, v3: 0.8, v4: 6.5 }
+        - { label: Integration hub, v1: 7.2, v2: 0.9, v3: 2.4, v4: 1.5 }
+        - { label: Internal tools, v1: 2.8, v2: 0.6, v3: 0.2, v4: 0 }
+        - { label: Batch jobs, v1: 2.1, v2: 1.4, v3: 0.1, v4: 0 }
+      totalLabel: Total
+      source: "Source: cost allocation model v3"
+    sources:
+      - Cost allocation model v3
+    notes: The total row is computed from the values, so it always adds up.
+  - id: target
+    template: compare-bars
+    data:
+      eyebrow: Target state
+      title: Managed services cut <span class="blue">the run cost by 35%</span>
+      subtitle: Monthly run cost in k€, after wave 3.
+      unit: k€
+      currentLabel: Today
+      targetLabel: Target
+      segments:
+        - { label: Compute, current: 42, target: 24 }
+        - { label: Databases, current: 18, target: 15 }
+        - { label: Storage, current: 14, target: 11 }
+        - { label: Operations, current: 12, target: 6 }
+      source: "Source: cloud pricing calculator, list prices"
+    sources:
+      - { label: Cloud pricing calculator, href: "https://example.com/pricing" }
+  - id: risks
+    template: risk-register
+    data:
+      eyebrow: Risks
+      title: Four risks, <span class="amber">one needs a decision today</span>
+      subtitle: Reviewed with service owners.
+      riskHeader: Risk
+      impactHeader: Impact
+      likelihoodHeader: Likelihood
+      ownerHeader: Owner
+      mitigationHeader: Mitigation
+      risks:
+        - { risk: Data loss during the database cut-over, impact: Critical, likelihood: Low, owner: DBA team, mitigation: Rehearse twice; keep the source read-only for 48 h. }
+        - { risk: Licence costs double on the new platform, impact: High, likelihood: Medium, owner: Procurement, mitigation: Negotiate before the pilot ends. }
+        - { risk: Team lacks cloud operations experience, impact: Medium, likelihood: High, owner: Platform lead, mitigation: Pair with the vendor for the first three waves. }
+        - { risk: Data centre contract renews in June, impact: High, likelihood: Low, owner: Programme lead, mitigation: Give notice now for a 12-month exit. }
+  - id: plan
+    template: timeline
+    data:
+      eyebrow: Next steps
+      title: Three waves, <span class="blue">out by next autumn</span>
+      subtitle: Plan for approval.
+      events:
+        - { time: Oct, title: Landing zone, text: "Network, identity and guardrails in place." }
+        - { time: Nov, title: Wave 1, text: 64 stateless servers., focus: true }
+        - { time: Feb, title: Wave 2, text: Databases and the data platform. }
+        - { time: May, title: Wave 3, text: Integration hub and batch jobs. }
+        - { time: Sep, title: Exit, text: Hardware returned and contract closed., focus: true }
+  - id: decide
+    template: checklist
+    data:
+      eyebrow: Decisions
+      title: Three decisions <span class="blue">for this committee</span>
+      subtitle: Needed to start wave 1 in November.
+      ownerHeader: Owner
+      dueHeader: Due
+      items:
+        - { item: Approve the wave 1 scope of 64 servers, owner: Steering committee, due: Today }
+        - { item: Give notice on the data centre contract, owner: Procurement, due: 31 Oct }
+        - { item: Fund the landing zone and vendor pairing, owner: Finance, due: 31 Oct }

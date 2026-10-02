@@ -101,7 +101,8 @@ Stop the server once you are done, unless the user asked to keep it running.
 
 Deliver:
 - the `deck.html` path and how to open it (double-click, or `deckforge serve <dir>`);
-- for sharing as one file: `deckforge build <dir> --runtime inline --out <name>.html`;
+- for sharing as one file: `deckforge build <dir> --runtime inline --out <name>.html`
+  (add `--check-offline` to prove it loads nothing from the network, and `--strip-notes` for a copy without speaker notes);
 - the refinement path: `deckforge edit <dir>` (inline editing, images, overlays, the Copilot drawer, undo);
 - genuine limitations: unsupported claims flagged in the notes, font substitution, images still to approve.
 

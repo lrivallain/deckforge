@@ -73,6 +73,12 @@ describe("export model helpers", () => {
     expect(spread.stops.map((s) => s.offset)).toEqual([0, 0.5, 1]);
     expect(parseGradient("radial-gradient(circle, rgb(0, 0, 0), rgb(255, 255, 255))", 10, 10).type).toBe("radial");
     expect(parseGradient("repeating-linear-gradient(red, blue)", 10, 10)).toBeNull();
+    expect(parseGradient("repeating-radial-gradient(rgb(0, 0, 0) 0px, rgb(1, 1, 1) 4px)", 10, 10)).toBeNull();
+    // Hatching: one 9px period repeated along a 100px line.
+    const hatch = parseGradient("repeating-linear-gradient(90deg, rgb(15, 108, 189) 0px, rgb(15, 108, 189) 3px, rgb(234, 243, 252) 3px, rgb(234, 243, 252) 9px)", 100, 20);
+    expect(hatch).toMatchObject({ type: "linear", angle: 90, period: 0.09 });
+    expect(hatch.stops.map((s) => s.offset)).toEqual([0, 0.3333, 0.3333, 1]);
+    expect(gradientSvg(hatch, 100, 20)).toContain('x1="0" y1="10" x2="9" y2="10" spreadMethod="repeat"');
     const svg = gradientSvg(g, 100, 50, 8);
     expect(svg).toContain("<linearGradient");
     expect(svg).toContain('x1="50" y1="50" x2="50" y2="0"');
