@@ -203,13 +203,16 @@ export async function startServer({
   store.on("warning", (info) => broadcast("warning", info));
   agent?.on("event", (event) => broadcast("agent", event));
 
+  // Cookies are shared by every port of 127.0.0.1: name the token per port so
+  // several editors can run side by side without overwriting each other.
+  const cookieName = () => `df_token_${actualPort}`;
   const allowedHosts = () => new Set([`127.0.0.1:${actualPort}`, `localhost:${actualPort}`, `[::1]:${actualPort}`]);
 
   function authorized(req) {
     if (!requireAuth) return true;
     const header = req.headers["x-deckforge-token"];
     if (header && safeEqual(header, token)) return true;
-    return safeEqual(parseCookies(req.headers.cookie).df_token, token);
+    return safeEqual(parseCookies(req.headers.cookie)[cookieName()], token);
   }
 
   function serveFile(res, file, { deckPage = false, deckAsset = false } = {}) {
@@ -292,7 +295,7 @@ export async function startServer({
         url.searchParams.delete("token");
         const location = url.pathname + (url.search || "") + (url.hash || "");
         res.writeHead(302, {
-          "Set-Cookie": `df_token=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/`,
+          "Set-Cookie": `${cookieName()}=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/`,
           Location: location,
           "Cache-Control": "no-store",
         });
@@ -340,7 +343,11 @@ export async function startServer({
     clients.clear();
     store.close();
     await agent?.dispose();
-    await new Promise((resolve) => server.close(resolve));
+    await new Promise((resolve) => {
+      server.close(resolve);
+      // Do not wait for browsers' keep-alive or in-flight image requests.
+      server.closeAllConnections?.();
+    });
   };
   return {
     server,
