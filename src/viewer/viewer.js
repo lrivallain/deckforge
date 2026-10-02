@@ -18,11 +18,26 @@
   const presenterButton = $("df-presenter");
   const fullscreenButton = $("df-fullscreen");
   const announcement = $("df-announcement");
+  const editLink = createEditLink();
   let current = 0;
   let presenter = null;
   let startedAt = null;
   let notesPanel = null;
 
+  // `deckforge edit` marks the decks it serves: link back to the editor.
+  function createEditLink() {
+    const meta = document.querySelector('meta[name="deckforge-editor"]');
+    const base = meta && meta.getAttribute("content");
+    if (!base || !/^\/(?!\/)/.test(base)) return null;
+    const link = document.createElement("a");
+    link.id = "df-edit";
+    link.href = base;
+    link.title = "Edit this slide (E)";
+    link.textContent = "Edit";
+    link.dataset.base = base;
+    controls.insertBefore(link, announcement);
+    return link;
+  }
   // Stagger entrance delays in reading order unless the author set --delay.
   // Overlays come after the template elements, or at their explicit step
   // (data-df-order: 0 = with the first template element).
@@ -103,6 +118,10 @@
     select.value = String(current);
     announcement.textContent = `Slide ${current + 1} of ${slides.length}: ${slides[current].dataset.title || ""}`;
     if (location.hash !== `#${current + 1}`) history.replaceState(null, "", `#${current + 1}`);
+    if (editLink) {
+      const id = slides[current].dataset.slideId;
+      editLink.href = id ? `${editLink.dataset.base.split("#")[0]}#slide-${id}` : editLink.dataset.base;
+    }
     renderNotesPanel();
     updatePresenter();
   }
@@ -218,6 +237,11 @@
       case "n": case "N": event.preventDefault(); toggleNotes(); return;
       case "p": case "P": event.preventDefault(); openPresenter(); return;
       case "f": case "F": event.preventDefault(); toggleFullscreen(); return;
+      case "e": case "E":
+        if (!editLink) return;
+        event.preventDefault();
+        location.href = editLink.href;
+        return;
       default: return;
     }
     event.preventDefault();

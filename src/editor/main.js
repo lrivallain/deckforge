@@ -111,6 +111,12 @@ async function main() {
 
   applySnapshot(snapshot);
 
+  // The viewer's Edit link opens /#slide-<id>: start on that slide.
+  const linked = /^#slide-([\w-]+)$/.exec(location.hash)?.[1];
+  if (linked) {
+    if (state.deck.slides.some((s) => s.id === linked)) select(linked);
+    history.replaceState(null, "", location.pathname + location.search);
+  }
   if (state.registryErrors.length) {
     const first = state.registryErrors[0];
     toast(`${state.registryErrors.length} template/theme file(s) could not be loaded — ${first.path}: ${first.message}`, { kind: "error", timeout: 8000 });

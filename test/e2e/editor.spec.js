@@ -214,6 +214,20 @@ test("the served deck works under its CSP and blocks injected scripts", async ({
   expect(errors).toEqual([]);
 });
 
+test("the served viewer links back to the editor on the current slide", async ({ page }) => {
+  await page.goto(`${editor.origin}/deck/deck.html#2`);
+  const edit = page.locator("#df-edit");
+  await expect(edit).toHaveAttribute("href", "/#slide-implementation");
+  await page.keyboard.press("ArrowRight");
+  await expect(edit).toHaveAttribute("href", "/#slide-lifecycle");
+  await edit.click();
+  await expect(page).toHaveURL(`${editor.origin}/`);
+  await expect(railItem(page, "lifecycle")).toHaveAttribute("aria-current", "true");
+  await page.goto(`${editor.origin}/deck/deck.html#4`);
+  await page.keyboard.press("e");
+  await expect(page).toHaveURL(`${editor.origin}/`);
+  await expect(railItem(page, "zoom")).toHaveAttribute("aria-current", "true");
+});
 test("template switches are labelled, reversible and keep content", async ({ page }) => {
   await railItem(page, "concept").click();
   await page.getByTestId("change-template").click();

@@ -229,9 +229,19 @@ describe("HTTP server", () => {
     expect(fs.readFileSync(path.join(dir, "deck.html"), "utf8")).not.toContain("EventSource");
   });
 
+  it("marks the deck served by the editor so the viewer links back to it", async () => {
+    expect(protectDeckHtml("<head></head><body></body>", "n").html).not.toContain("deckforge-editor");
+    expect(protectDeckHtml("<head></head><body></body>", "n", { editorUrl: "/" }).html).toContain('<meta name="deckforge-editor" content="/"></head>');
+    await start();
+    const html = await (await req("/deck/deck.html", { headers: auth() })).text();
+    expect(html).toContain('<meta name="deckforge-editor" content="/">');
+    expect(fs.readFileSync(path.join(dir, "deck.html"), "utf8")).not.toContain("deckforge-editor");
+  });
+
   it("serve mode is read-only and needs no token", async () => {
     await start({ mode: "serve" });
     expect((await req("/deck/deck.html")).status).toBe(200);
+    expect(await (await req("/deck/deck.html")).text()).not.toContain("deckforge-editor");
     expect((await req("/api/op", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status).toBe(404);
   });
 });
