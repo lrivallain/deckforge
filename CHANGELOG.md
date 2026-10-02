@@ -15,6 +15,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - Editor: the page no longer scrolls past the app, which used to push the toolbar out of view.
+- Editor: the URL printed by `deckforge edit` now opens from hosts that start navigations on another site, such as the GitHub Copilot app's built-in browser. The token cookie is `SameSite=Lax` instead of `Strict`.
+- `npm run dev` no longer fails at random with "Option '--token' argument is ambiguous": tokens never start with `-`, and the token is passed as `--token=<t>`.
 
 ## [0.1.0]
 

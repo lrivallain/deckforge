@@ -82,7 +82,7 @@ deckforge edit <deck> [--port 0] [--token <t>] [--runtime …] [--no-open]
 ```
 
 Starts the [editor](../guide/editor) on `127.0.0.1` with a random port and a token that is new each time it starts. It then opens
-`http://127.0.0.1:<port>/?token=…`. `--port` and `--token` set fixed values. `--no-open` doesn't open the browser.
+`http://127.0.0.1:<port>/?token=…`. `--port` and `--token` set fixed values; write a token that starts with `-` as `--token=<t>`. `--no-open` doesn't open the browser.
 
 ## serve
 
