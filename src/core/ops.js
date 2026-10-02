@@ -5,6 +5,8 @@
 import { makeSlideId, normalizeSlide } from "./deck.js";
 import { sampleData } from "./template.js";
 import { RUNTIME_MODES } from "./deck.js";
+import { IMAGE_FITS, isSafeImageSrc, normalizeFocus } from "./image.js";
+import { normalizeOverlay, OverlayError } from "./overlay.js";
 
 export class OpError extends Error {
   constructor(message) {
@@ -76,7 +78,7 @@ function compatible(slot, value) {
   if (value === undefined || value === null) return false;
   if (slot.type === "list" || slot.type === "cards") return Array.isArray(value);
   if (slot.type === "boolean") return typeof value === "boolean";
-  if (slot.type === "link") return typeof value === "string" || (typeof value === "object" && !Array.isArray(value));
+  if (slot.type === "link" || slot.type === "image") return typeof value === "string" || (typeof value === "object" && !Array.isArray(value));
   return typeof value === "string";
 }
 
@@ -117,6 +119,49 @@ function realize(slide, keys) {
   const touched = new Set(keys);
   slide.placeholders = slide.placeholders.filter((k) => !touched.has(k));
   if (!slide.placeholders.length) delete slide.placeholders;
+}
+
+function getPath(target, path) {
+  let node = target;
+  for (const part of String(path).split(".").map(checkKey)) {
+    if (node === null || typeof node !== "object" || !Object.hasOwn(node, part)) return undefined;
+    node = node[part];
+  }
+  return node;
+}
+
+function findOverlay(slide, overlayId) {
+  const index = (slide.overlays || []).findIndex((o) => o.id === overlayId);
+  if (index === -1) throw new OpError(`Slide "${slide.id}" has no overlay "${overlayId}"`);
+  return index;
+}
+
+function toOverlay(raw, existing) {
+  try {
+    return normalizeOverlay(cleanData(raw), existing);
+  } catch (err) {
+    if (err instanceof OverlayError) throw new OpError(err.message);
+    throw err;
+  }
+}
+
+const OVERLAY_PROPS = new Set(["x", "y", "w", "h", "z", "rotate", "order", "data"]);
+
+function patchOverlay(slide, overlayId, props) {
+  if (!props || typeof props !== "object" || Array.isArray(props)) throw new OpError("overlay props must be an object");
+  const index = findOverlay(slide, overlayId);
+  const current = slide.overlays[index];
+  const next = { ...current, data: { ...current.data } };
+  for (const [key, value] of Object.entries(props)) {
+    if (!OVERLAY_PROPS.has(key)) throw new OpError(`Unknown overlay property "${key}" (kind and id cannot change)`);
+    if (key === "data") {
+      if (!value || typeof value !== "object" || Array.isArray(value)) throw new OpError("overlay data must be an object");
+      Object.assign(next.data, cleanData(value));
+    } else if (value === null) delete next[key];
+    else next[key] = value;
+  }
+  slide.overlays[index] = toOverlay(next, slide.overlays.filter((o) => o.id !== overlayId).map((o) => o.id));
+  if (slide.overlays[index].id !== overlayId) throw new OpError(`Invalid overlay id "${overlayId}"`);
 }
 
 function slideLabel(deck, slide) {
@@ -246,6 +291,87 @@ export const OPS = {
     return { deck: next, changed: next.slides.map((s) => s.id), result: { meta: next.meta } };
   },
 };
+
+Object.assign(OPS, {
+  /** Move one item of a list/cards slot (drag to reorder). */
+  move_item(deck, { id, path, from, to }) {
+    const next = clone(deck);
+    const slide = next.slides[findIndex(next, id)];
+    const list = getPath(slide.data, path);
+    if (!Array.isArray(list)) throw new OpError(`"${path}" is not a list`);
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to < 0 || from >= list.length || to >= list.length) {
+      throw new OpError(`Invalid move in "${path}" (${from} → ${to}, ${list.length} items)`);
+    }
+    const [item] = list.splice(from, 1);
+    list.splice(to, 0, item);
+    realize(slide, [String(path).split(".")[0]]);
+    return { deck: next, changed: [id], result: { id, path, from, to } };
+  },
+
+  /** Put an image in an image slot (default: the template's first image slot). */
+  set_image(deck, { id, slot, path, src, alt, fit, focus }, ctx) {
+    const next = clone(deck);
+    const slide = next.slides[findIndex(next, id)];
+    const value = String(path ?? src ?? "").trim();
+    if (!isSafeImageSrc(value)) throw new OpError(`Unsupported image source "${value}" (use a file in assets/, e.g. assets/1a2b3c4d5e6f.png)`);
+    if (fit !== undefined && !IMAGE_FITS.includes(fit)) throw new OpError(`fit must be one of ${IMAGE_FITS.join(", ")}`);
+    const template = ctx.templates?.[slide.template];
+    let target = slot;
+    if (!target) {
+      target = Object.entries(template?.slots || {}).find(([, s]) => s.type === "image")?.[0];
+      if (!target) throw new OpError(`Template "${slide.template}" has no image slot: use add_overlay with kind "image" instead`);
+    }
+    const head = String(target).split(".")[0];
+    if (template && !Object.hasOwn(template.slots, head)) throw new OpError(`Template "${slide.template}" has no slot "${head}"`);
+    const previous = getPath(slide.data, target);
+    const keep = previous && typeof previous === "object" && !(slide.placeholders || []).includes(head) ? previous : {};
+    const image = {
+      src: value,
+      alt: String(alt ?? keep.alt ?? ""),
+      fit: fit ?? keep.fit ?? "cover",
+      focus: normalizeFocus(focus ?? keep.focus),
+    };
+    setPath(slide.data, target, image);
+    realize(slide, [head]);
+    return { deck: next, changed: [id], result: { id, slot: target, image } };
+  },
+
+  add_overlay(deck, { id, overlay, overlays }) {
+    const next = clone(deck);
+    const slide = next.slides[findIndex(next, id)];
+    const list = overlays ?? (overlay ? [overlay] : null);
+    if (!Array.isArray(list) || !list.length) throw new OpError("add_overlay needs an overlay");
+    slide.overlays ||= [];
+    const ids = [];
+    for (const raw of list) {
+      const top = slide.overlays.reduce((max, o) => Math.max(max, o.z), 0);
+      const item = toOverlay({ z: top + 1, ...raw }, slide.overlays.map((o) => o.id));
+      slide.overlays.push(item);
+      ids.push(item.id);
+    }
+    return { deck: next, changed: [id], result: { id, overlayIds: ids, overlays: slide.overlays.filter((o) => ids.includes(o.id)) } };
+  },
+
+  /** Patch one overlay ({overlayId, props}) or several at once ({updates: [...]}) as one change. */
+  update_overlay(deck, { id, overlayId, props, updates }) {
+    const next = clone(deck);
+    const slide = next.slides[findIndex(next, id)];
+    const list = updates ?? [{ overlayId, props }];
+    if (!Array.isArray(list) || !list.length) throw new OpError("update_overlay needs overlayId and props");
+    for (const update of list) patchOverlay(slide, update?.overlayId, update?.props);
+    return { deck: next, changed: [id], result: { id, overlays: slide.overlays.filter((o) => list.some((u) => u.overlayId === o.id)) } };
+  },
+
+  remove_overlay(deck, { id, overlayId, overlayIds }) {
+    const next = clone(deck);
+    const slide = next.slides[findIndex(next, id)];
+    const ids = overlayIds ?? [overlayId];
+    if (!Array.isArray(ids) || !ids.length) throw new OpError("remove_overlay needs overlayId");
+    for (const overlay of ids) slide.overlays.splice(findOverlay(slide, overlay), 1);
+    if (!slide.overlays.length) delete slide.overlays;
+    return { deck: next, changed: [id], result: { id, removed: ids } };
+  },
+});
 
 export function applyOp(deck, name, args = {}, ctx = {}) {
   const op = OPS[name];

@@ -12,8 +12,9 @@ import YAML from "yaml";
 import { escapeAttr, escapeHtml, isSafeUrl, sanitizeRichText, stripTags, textToHtml } from "./html.js";
 import { renderIcon } from "./icons.js";
 import { scopeCss } from "./css.js";
+import { normalizeImage, renderImage } from "./image.js";
 
-export const SLOT_TYPES = ["text", "richtext", "list", "cards", "icon", "link", "boolean"];
+export const SLOT_TYPES = ["text", "richtext", "list", "cards", "icon", "link", "boolean", "image"];
 const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 const RESERVED_SLOTS = new Set(["slide", "deck", "this"]);
 
@@ -270,7 +271,7 @@ function linkParts(value) {
   return { label: String(value.label ?? value.href ?? ""), href: String(value.href ?? "") };
 }
 
-function formatValue(value, type, { inTag, edit, path, placeholder }) {
+function formatValue(value, type, { inTag, edit, path, placeholder, assetUrl }) {
   if (value === undefined || value === null) value = "";
   if (inTag) {
     if (type === "link") return escapeAttr(isSafeUrl(linkParts(value).href) ? linkParts(value).href : "");
@@ -285,6 +286,13 @@ function formatValue(value, type, { inTag, edit, path, placeholder }) {
       break;
     case "icon":
       return renderIcon(value);
+    case "image": {
+      const attrs = edit && path ? ` data-df-image="${escapeAttr(path)}"` : "";
+      const img = renderImage(value, { assetUrl, attrs });
+      if (img || !edit || !path) return img;
+      // Editor-only drop target for an empty image slot (never published).
+      return `<df-image class="df-img-empty" data-df-image="${escapeAttr(path)}">Drop an image</df-image>`;
+    }
     case "link": {
       const { label, href } = linkParts(value);
       if (!label) return "";
@@ -361,7 +369,7 @@ function renderNodes(nodes, frames, options, out) {
         const { value, type, path } = lookup(node.path, frames);
         const editable = options.edit && path && !path.startsWith("slide.") && !path.startsWith("deck.");
         const placeholder = Boolean(editable && options.placeholders?.has(path.split(".")[0]));
-        out.push(formatValue(value, type, { inTag: node.inTag, edit: editable, path, placeholder }));
+        out.push(formatValue(value, type, { inTag: node.inTag, edit: editable, path, placeholder, assetUrl: options.assetUrl }));
         break;
       }
       case "partial": {
@@ -427,7 +435,7 @@ export function renderTemplate(template, data, ctx = {}) {
     path: "",
   };
   const frames = [builtins, { fields: template.slots, value: data || {}, path: "" }];
-  renderNodes(template.ast.children, frames, { edit: Boolean(ctx.edit), placeholders: ctx.placeholders }, out);
+  renderNodes(template.ast.children, frames, { edit: Boolean(ctx.edit), placeholders: ctx.placeholders, assetUrl: ctx.assetUrl }, out);
   return out.join("");
 }
 
@@ -465,7 +473,7 @@ export function sampleData(template) {
 export function checkSlotLimits(template, data) {
   const issues = [];
   const check = (slot, value, path) => {
-    if (value === undefined || value === null || value === "") {
+    if (value === undefined || value === null || value === "" || (slot.type === "image" && !normalizeImage(value))) {
       if (slot.required) issues.push({ level: "warning", slot: path, message: `"${path}" is required` });
       return;
     }

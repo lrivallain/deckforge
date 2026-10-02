@@ -24,12 +24,15 @@
   let notesPanel = null;
 
   // Stagger entrance delays in reading order unless the author set --delay.
+  // Overlays come after the template elements, or at their explicit step
+  // (data-df-order: 0 = with the first template element).
   const stagger = parseFloat(getComputedStyle(root).getPropertyValue("--df-motion-stagger")) || 0.15;
   for (const slide of slides) {
     let step = 0;
     for (const el of slide.querySelectorAll(".reveal")) {
-      if (!el.style.getPropertyValue("--delay")) el.style.setProperty("--delay", `${(step * stagger).toFixed(2)}s`);
-      step++;
+      const order = el.getAttribute("data-df-order");
+      const at = order !== null && /^\d+$/.test(order) ? Number(order) : step++;
+      if (!el.style.getPropertyValue("--delay")) el.style.setProperty("--delay", `${(at * stagger).toFixed(2)}s`);
     }
   }
 

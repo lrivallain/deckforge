@@ -6,3 +6,5 @@ export * from "./theme.js";
 export * from "./deck.js";
 export * from "./render.js";
 export * from "./ops.js";
+export * from "./image.js";
+export * from "./overlay.js";
