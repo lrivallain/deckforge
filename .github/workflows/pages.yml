@@ -40,7 +40,7 @@ jobs:
       # the same tarballs (same integrity hashes) from the public registry.
       - name: Use the public npm registry
         run: sed -E -i 's#https://[^"]+/_packaging/[^"]+/npm/registry/#https://registry.npmjs.org/#g' package-lock.json
-      - run: npm ci --omit=optional --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run docs:build
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
