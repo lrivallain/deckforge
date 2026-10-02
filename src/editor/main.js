@@ -128,6 +128,7 @@ async function main() {
     toast(`${state.registryErrors.length} template/theme file(s) could not be loaded — ${first.path}: ${first.message}`, { kind: "error", timeout: 8000 });
   }
 
+  let lastMcpToast = 0;
   connectEvents({
     open: async () => {
       if (state.connection === "offline") applySnapshot(await api.state(), { source: "reconnect" });
@@ -139,7 +140,11 @@ async function main() {
       topbar.update();
     },
     deck: async (event) => {
-      if (event.source === "agent" && event.changed?.length) markChanged(event.changed);
+      if ((event.source === "agent" || event.source === "mcp") && event.changed?.length) markChanged(event.changed);
+      if (event.source === "mcp" && Date.now() - lastMcpToast > 8000) {
+        lastMcpToast = Date.now();
+        toast("Copilot is editing this deck from outside the editor", { action: "Undo", onAction: undo, timeout: 5000 });
+      }
       if (event.state.registryVersion !== state.registryVersion) {
         applySnapshot(await api.state(), event);
       } else {

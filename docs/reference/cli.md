@@ -13,6 +13,7 @@ deckforge --help | --version
 | [`templates`](#templates) | List templates, slots, themes and icons |
 | [`edit`](#edit) | Start the local editor |
 | [`serve`](#serve) | Serve the deck read-only with live reload |
+| [`mcp`](#mcp) | Give Copilot CLI and the Copilot app the deck tools (MCP server) |
 | [`skill`](#skill) | Install the GitHub Copilot skill |
 
 `<deck>` is a `deck.yaml` file or the folder that contains it.
@@ -92,6 +93,28 @@ deckforge serve <deck> [--port 0] [--no-open]
 
 Serves the built deck read-only. It rebuilds and reloads the page when the deck changes.
 
+## mcp
+
+```bash
+deckforge mcp [<deck>]
+deckforge mcp --install [--force] [--dest <mcp-config.json>]
+```
+
+Runs a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio with the deck tools of the
+[Copilot assistant](../guide/copilot#what-it-can-and-cannot-do), plus `get_authoring_guide`. MCP clients start it
+themselves. Without `<deck>`, each call uses the `deck.yaml` of the server's working directory. Copilot starts
+servers in the session's folder. Outside a deck folder the server still starts, but its tools explain that there is no deck.
+
+When `deckforge edit` is running for the same deck, every call goes through the editor: changes appear live and can
+be undone there. Otherwise the server edits `deck.yaml` and rebuilds `deck.html` itself. stdout carries only the protocol,
+and logs go to stderr.
+
+`--install` registers the argument-less server as `deckforge` in `$COPILOT_HOME/mcp-config.json`
+(`~/.copilot/mcp-config.json` by default), which Copilot CLI and the Copilot app read for every session. It keeps
+the other servers, uses the current Node.js and deckforge paths, and refuses to replace a `deckforge` entry it did not
+write unless you pass `--force`. `--dest` writes another file. The editor's
+[Continue in Copilot](../guide/copilot#continue-in-copilot-cli-or-the-copilot-app) dialog does the same with one click.
+
 ## skill
 
 ```bash
@@ -106,7 +129,7 @@ Installs the [Copilot skill](../guide/copilot-skill).
 |---|---|
 | `DECKFORGE_CONFIG_DIR` | User folder for templates and themes. The default is `$XDG_CONFIG_HOME/deckforge` or `~/.config/deckforge` |
 | `DECKFORGE_MODEL` | Model used by the Copilot assistant |
-| `COPILOT_HOME` | Base folder used by `skill install-copilot` |
+| `COPILOT_HOME` | Copilot folder: `skill install-copilot` and `mcp --install` write into it, and the editor checks its `session-state` before resuming a conversation |
 
 ## Lookup order
 

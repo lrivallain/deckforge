@@ -34,7 +34,7 @@ export const state = {
   configDir: "",
   deckFile: "deck.yaml",
   outFile: "deck.html",
-  agent: { state: "idle", error: null, hint: null, messages: [] },
+  agent: { state: "idle", error: null, hint: null, messages: [], sessionId: null, connected: false, handedOff: false },
   highlights: new Map(),
   connection: "connecting",
   // Selected overlay ids on the selected slide.
@@ -93,6 +93,9 @@ export function applySnapshot(snapshot, info = {}) {
     state.agent.state = snapshot.agent.state;
     state.agent.error = snapshot.agent.error;
     state.agent.hint = snapshot.agent.hint;
+    state.agent.sessionId = snapshot.agent.sessionId ?? null;
+    state.agent.connected = Boolean(snapshot.agent.connected);
+    state.agent.handedOff = Boolean(snapshot.agent.handedOff);
     if (!state.agent.messages.length && snapshot.agent.history) {
       state.agent.messages = snapshot.agent.history.map((m) => ({ role: m.role, text: m.text }));
     }

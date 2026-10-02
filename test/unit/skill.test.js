@@ -70,7 +70,7 @@ describe("skill content", () => {
     const help = execFileSync(process.execPath, [cli, "--help"], { env, encoding: "utf8" });
     for (const file of markdown) {
       const source = fs.readFileSync(path.join(skillDir, file), "utf8");
-      for (const [, command] of source.matchAll(/deckforge (new|build|export|templates|edit|serve|skill)\b/g)) expect(help).toContain(`deckforge ${command}`);
+      for (const [, command] of source.matchAll(/deckforge (new|build|export|templates|edit|serve|mcp|skill)\b/g)) expect(help).toContain(`deckforge ${command}`);
       for (const [, option] of source.matchAll(/deckforge [a-z]+[^`\n]*?(--[a-z-]+)/g)) expect(help, `${file}: ${option}`).toContain(option);
     }
   });
