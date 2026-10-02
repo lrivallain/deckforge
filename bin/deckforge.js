@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// deckforge CLI: new | build | templates | edit | serve | skill
+// deckforge CLI: new | build | export | templates | edit | serve | skill
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -18,6 +18,7 @@ const HELP = `deckforge ${VERSION} — themeable, template-driven HTML presentat
 Usage
   deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora]]
   deckforge build <deck.yaml|dir> [--runtime local|cdn|inline] [--out deck.html] [--json]
+  deckforge export <deck.yaml|dir> [--out deck.pptx] [--json]
   deckforge templates [deck.yaml|dir] [--json]
   deckforge edit <deck.yaml|dir> [--port 0] [--token <t>] [--runtime …] [--no-open]
   deckforge serve <deck.yaml|dir> [--port 0] [--no-open]
@@ -27,6 +28,8 @@ Commands
   new        Create a deck folder with a deck.yaml (a title slide, or --example for a full specimen:
              "starter" (default, diagram-led) or "aurora" (dark theme, Essentials templates))
   build      Render deck.yaml to a static deck.html next to it (--json: machine-readable report)
+  export     Export deck.yaml to an editable PowerPoint deck.pptx next to it (native text,
+             shapes and pictures; needs Playwright: npm i -g playwright && npx playwright install chromium)
   templates  List the templates (with their slots), themes and icons a deck can use
   edit       Start the local editor (127.0.0.1 only, random port and per-run token)
   serve      Serve the built deck read-only, rebuilding and reloading on change
@@ -192,6 +195,38 @@ switch (command) {
       printIssues(result.issues, result.loadErrors);
       console.log(`Built ${path.relative(process.cwd(), result.outPath)} (${result.runtime} runtime, ${result.deck.slides.filter((s) => !s.hidden).length} slides)`);
       if (errors) process.exitCode = 2;
+    } catch (err) {
+      fail(err.message);
+    }
+    break;
+  }
+  case "export": {
+    const file = resolveDeck(target);
+    const { exportPptxFile } = await import("../src/server/export.js");
+    try {
+      const result = await exportPptxFile(file, { out: values.out });
+      const errors = result.issues.some((i) => i.level === "error");
+      if (jsonOutput) {
+        console.log(JSON.stringify({
+          ok: !errors,
+          deck: file,
+          outPath: result.outPath,
+          slides: result.slides,
+          warnings: result.warnings,
+          issues: result.issues,
+          loadErrors: result.loadErrors.map(({ path: p, message }) => ({ path: p, message })),
+        }, null, 2));
+        if (errors) process.exitCode = 2;
+        break;
+      }
+      printIssues(result.issues.filter((i) => i.level !== "info"), result.loadErrors);
+      if (errors) {
+        console.error("Not exported: fix the errors above first.");
+        process.exitCode = 2;
+        break;
+      }
+      for (const w of result.warnings) console.error(`  ! ${w}`);
+      console.log(`Exported ${path.relative(process.cwd(), result.outPath)} (${result.slides} slides)`);
     } catch (err) {
       fail(err.message);
     }

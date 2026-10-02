@@ -42,8 +42,8 @@ Resolve every bundled path from **the directory containing this SKILL.md**.
    ([workflow.md §5](references/workflow.md#5-inspect-the-rendered-deck)). Fix, rebuild, re-check.
 7. **Hand off.** Report the `deck.html` path and how to present it. Offer `deckforge edit <dir>` for
    hands-on refinement with the in-editor Copilot ([workflow.md §6](references/workflow.md#6-hand-off)).
-8. **PowerPoint**, when asked. After the user approves the HTML, follow
-   [html-to-pptx.md](references/html-to-pptx.md) with a `pptx` skill or the PowerPoint canvas.
+8. **PowerPoint**, when asked. After the user approves the HTML, run `deckforge export <dir> --json`
+   and check the result ([html-to-pptx.md](references/html-to-pptx.md)). Rebuild by hand only what it cannot do.
 
 ## Rules
 

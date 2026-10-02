@@ -7,6 +7,9 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- PowerPoint export: `deckforge export <deck>` and the editor's **PowerPoint** button write an editable `deck.pptx`
+  with native text boxes, shapes, pictures, links and speaker notes. Icons and gradients become vector pictures.
+  The CLI uses Playwright (optional dependency) to lay the deck out in headless Chromium.
 - Editor: drag an edge to resize the slide rail, the inspector or the Copilot panel. You can also use the keyboard, and double-click restores the default width. The widths persist, and rail thumbnails scale with the rail.
 
 ### Fixed

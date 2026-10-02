@@ -225,6 +225,28 @@ describe("HTTP server", () => {
     expect((await req("/assets/../package.json", { headers: auth() })).status).toBe(404);
   });
 
+  it("saves an exported .pptx next to deck.yaml and serves it as a download", async () => {
+    await start();
+    const pptx = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    const zip = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.alloc(64)]);
+    const post = (body, headers) => req("/api/export/pptx", { method: "POST", headers, body });
+    expect((await post(zip, { "content-type": pptx })).status).toBe(401);
+    expect((await post(zip, auth({ "content-type": pptx, origin: "https://evil.example" }))).status).toBe(403);
+    expect((await post(zip, auth({ "content-type": "text/plain" }))).status).toBe(415);
+    expect((await post(Buffer.from("<html>not a deck</html>".padEnd(64)), auth({ "content-type": pptx }))).status).toBe(400);
+    const ok = await post(zip, auth({ "content-type": pptx }));
+    expect(ok.status).toBe(201);
+    const saved = await ok.json();
+    expect(saved).toMatchObject({ ok: true, file: "deck.pptx", url: "/deck/deck.pptx", bytes: zip.length });
+    expect(saved.path).toBe(path.join(dir, "deck.pptx"));
+    expect(fs.readFileSync(saved.path).equals(zip)).toBe(true);
+    const download = await req(saved.url, { headers: auth() });
+    expect(download.status).toBe(200);
+    expect(download.headers.get("content-type")).toBe(pptx);
+    expect(download.headers.get("content-disposition")).toBe('attachment; filename="deck.pptx"');
+    expect((await req("/assets/deckforge.export.js")).status).toBe(200);
+  });
+
   it("serves the deck with a nonce CSP that only trusts the runtime", () => {
     const html = '<body><p><script data-df-runtime>evil()</script></p>\n<script data-df-runtime>\nruntime()\n</script>\n</body>';
     const { html: out, csp } = protectDeckHtml(html, "abc");
@@ -451,6 +473,18 @@ describe("CLI", () => {
     expect(fs.readFileSync(path.join(target, "deck.html"), "utf8")).toContain("cdn.jsdelivr.net/gh/lrivallain/deckforge@v");
     expect(() => execFileSync(process.execPath, [cli, "build", target, "--runtime", "bogus"], { env, stdio: "pipe" })).toThrow();
     expect(execFileSync(process.execPath, [cli, "--version"], { env, encoding: "utf8" }).trim()).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+  it("lists export in the help and refuses to export a deck with errors", () => {
+    expect(execFileSync(process.execPath, [cli, "--help"], { env, encoding: "utf8" })).toContain("deckforge export <deck.yaml|dir> [--out deck.pptx] [--json]");
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));
+    fs.writeFileSync(path.join(dir, "deck.yaml"), "meta:\n  title: Broken\nslides:\n  - id: a\n    template: nope\n");
+    const result = spawnSync(process.execPath, [cli, "export", dir, "--json"], { env, encoding: "utf8" });
+    expect(result.status).toBe(2);
+    const report = JSON.parse(result.stdout);
+    expect(report.ok).toBe(false);
+    expect(report.outPath).toBeNull();
+    expect(report.issues).toContainEqual(expect.objectContaining({ level: "error", message: 'Unknown template "nope"' }));
+    expect(fs.existsSync(path.join(dir, "deck.pptx"))).toBe(false);
   });
   it("creates decks from the bundled examples", () => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));

@@ -26,6 +26,33 @@
 Print from the browser. You get one 13.333 × 7.5 in page per slide, without the controls.
 For other paper sizes or margins, each slide is scaled down to fit. Images on slides you never opened are still printed.
 
+## Export to PowerPoint
+
+Click **PowerPoint** in the editor's top bar, or run:
+
+```bash
+deckforge export my-talk            # writes my-talk/deck.pptx
+```
+
+The export measures each slide as the browser lays it out and rebuilds it as native PowerPoint objects:
+
+| In the deck | In PowerPoint |
+|---|---|
+| Headlines, text, lists, links | Editable text boxes with the same fonts, sizes, colours and line spacing |
+| Cards, pills, panels, borders, dividers | Rectangles, rounded rectangles, ellipses and lines |
+| Images and image overlays | Pictures, cropped like on the slide |
+| Icons, arrowheads, gradients | Vector (SVG) pictures |
+| Speaker notes | Speaker notes |
+
+Hidden slides are left out. The editor saves `deck.pptx` next to `deck.yaml` and downloads it.
+The CLI needs Playwright, see [`deckforge export`](../reference/cli#export).
+
+::: warning Check the result
+Slides are exported in their final state, without the staged reveals. PowerPoint uses the fonts installed on the
+computer that opens the file: when a theme font is missing, the export uses the fallback the browser showed and
+lists it. See the [limitations](../reference/limitations).
+:::
+
 ## Runtime modes
 
 The `--runtime` option sets how `deck.html` loads the viewer's script and stylesheet:

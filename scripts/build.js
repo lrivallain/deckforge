@@ -1,4 +1,4 @@
-// Bundle the viewer and editor runtimes into dist/.
+// Bundle the viewer, editor and PPTX export runtimes into dist/.
 // Usage: node scripts/build.js [--watch]
 
 import * as esbuild from "esbuild";
@@ -13,6 +13,8 @@ const banner = { js: "/*! deckforge | MIT License | https://github.com/lrivallai
 const entries = [
   { in: "src/viewer/viewer.js", out: "deckforge.viewer", format: "iife" },
   { in: "src/viewer/viewer.css", out: "deckforge.viewer" },
+  // PPTX exporter (PptxGenJS + JSZip), loaded on demand by the editor and the CLI's headless page.
+  { in: "src/export/browser.js", out: "deckforge.export", format: "iife", platform: "browser" },
 ];
 if (fs.existsSync(path.join(root, "src/editor/main.js"))) {
   entries.push({ in: "src/editor/main.js", out: "deckforge.editor", format: "esm" });
@@ -28,6 +30,7 @@ const configs = entries.map((entry) => ({
   sourcemap: false,
   target: ["es2022", "chrome110", "firefox115", "safari16"],
   format: entry.format,
+  ...(entry.platform ? { platform: entry.platform } : {}),
   banner,
   legalComments: "none",
   logLevel: "info",

@@ -13,6 +13,8 @@ import { AgentController } from "./agent.js";
 import { editorPage } from "./editor-page.js";
 import { AssetError, listAssets, MAX_ASSET_BYTES, saveAsset } from "./assets.js";
 import { escapeHtml } from "../core/html.js";
+import { PPTX_MIME, looksLikePptx, pptxPathFor } from "./export.js";
+import { writeFileAtomic } from "./fs-util.js";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -34,9 +36,12 @@ const MIME = {
   ".ico": "image/x-icon",
   ".txt": "text/plain; charset=utf-8",
   ".pdf": "application/pdf",
+  ".pptx": PPTX_MIME,
 };
-const ASSETS = new Set(["deckforge.viewer.js", "deckforge.viewer.css", "deckforge.editor.js", "deckforge.editor.css", "deckforge.icon.svg"]);
+const ASSETS = new Set(["deckforge.viewer.js", "deckforge.viewer.css", "deckforge.editor.js", "deckforge.editor.css", "deckforge.export.js", "deckforge.icon.svg"]);
 const MAX_BODY = 2 * 1024 * 1024;
+// An exported deck embeds every image once, plus PNG previews of vector pictures.
+const MAX_PPTX_BYTES = 200 * 1024 * 1024;
 // Raw image bytes, or base64 inside JSON (4/3 larger plus the data: prefix).
 const MAX_ASSET_JSON = Math.ceil((MAX_ASSET_BYTES * 4) / 3) + 4096;
 // Uploaded SVG is only meant for <img>; opened directly it must stay inert.
@@ -235,6 +240,7 @@ export async function startServer({
     let body = fs.readFileSync(file);
     const headers = { "Content-Type": type };
     if (ext === ".svg") headers["Content-Security-Policy"] = SVG_CSP;
+    if (ext === ".pptx") headers["Content-Disposition"] = `attachment; filename="${path.basename(file).replace(/[^\w.-]/g, "_")}"`;
     if (deckAsset) headers["Cache-Control"] = "private, max-age=3600";
     if (deckPage && type.startsWith("text/html")) {
       const protectedPage = protectDeckHtml(body.toString("utf8"), crypto.randomBytes(16).toString("base64"), { editorUrl: mode === "edit" ? "/" : undefined });
@@ -266,6 +272,15 @@ export async function startServer({
         if (store.group) return send(res, 409, { error: "Copilot is applying changes. Wait for it to finish, then add the image again." });
         const buf = await readUpload(req);
         return send(res, 201, { ok: true, ...saveAsset(store.deckDir, buf) });
+      }
+      if (req.method === "POST" && route === "/export/pptx") {
+        const type = String(req.headers["content-type"] || "").split(";")[0].trim().toLowerCase();
+        if (type !== PPTX_MIME && type !== "application/octet-stream") return send(res, 415, { error: `Send the presentation as ${PPTX_MIME}` });
+        const buf = await readRaw(req, MAX_PPTX_BYTES);
+        if (!looksLikePptx(buf)) return send(res, 400, { error: "The body is not a .pptx file" });
+        const file = pptxPathFor(store.deckPath);
+        writeFileAtomic(file, buf);
+        return send(res, 201, { ok: true, path: file, file: path.basename(file), url: `/deck/${encodeURIComponent(path.basename(file))}`, bytes: buf.length });
       }
       if (!String(req.headers["content-type"] || "").startsWith("application/json")) return send(res, 415, { error: "Use application/json" });
     }

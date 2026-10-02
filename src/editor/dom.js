@@ -56,6 +56,7 @@ const ICON_PATHS = {
   layout: "M4 4h16v16H4zM4 10h16M10 10v10",
   image: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01",
   upload: "M12 16V4M7 9l5-5 5 5M5 20h14",
+  download: "M12 4v12M7 11l5 5 5-5M5 20h14",
   alignLeft: "M4 4v16M8 7h10v4H8zM8 14h6v4H8z",
   alignCenter: "M12 4v16M6 7h12v4H6zM8 14h8v4H8z",
   alignRight: "M20 4v16M6 7h10v4H6zM10 14h6v4h-6z",

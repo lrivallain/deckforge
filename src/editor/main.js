@@ -12,6 +12,7 @@ import { pickTemplate } from "./picker.js";
 import { openSettings } from "./settings.js";
 import { openTemplateEditor } from "./template-editor.js";
 import { op, opQuiet, undo, redo } from "./actions.js";
+import { exportPptx } from "./export.js";
 
 async function addSlide() {
   const name = await pickTemplate({ title: "Add a slide", confirmLabel: "Add slide" });
@@ -40,6 +41,7 @@ function createTopbar({ onToggleChat }) {
   const swatchHost = h("span", { class: "swatch-host" });
   const chatBtn = h("button", { type: "button", class: "btn btn-accent", "aria-pressed": "false", "data-testid": "toggle-chat", onClick: () => chatBtn.setAttribute("aria-pressed", String(onToggleChat())) }, icon("sparkles", 16), "Copilot");
   const viewLink = h("a", { class: "btn", target: "_blank", rel: "noopener", "data-testid": "open-viewer" }, icon("play", 14), "Present");
+  const exportBtn = h("button", { type: "button", class: "btn btn-ghost", "aria-label": "Export to PowerPoint", title: "Export an editable PowerPoint file (.pptx)", "data-testid": "export-pptx", onClick: () => exportPptx() }, icon("download", 16), "PowerPoint");
   const root = h("header", { class: "topbar" },
     h("div", { class: "brand" }, h("img", { class: "logo", src: "/assets/deckforge.icon.svg", alt: "", width: 30, height: 30 }), h("span", { class: "brand-name" }, "deckforge")),
     h("div", { class: "deck-info" }, title, saveState),
@@ -49,6 +51,7 @@ function createTopbar({ onToggleChat }) {
       h("label", { class: "theme-picker" }, swatchHost, themeSelect),
       h("button", { type: "button", class: "btn btn-ghost", onClick: () => openTemplateEditor(), "data-testid": "open-template-editor" }, icon("code", 16), "Templates"),
       h("button", { type: "button", class: "btn btn-ghost", onClick: openSettings, "data-testid": "open-settings" }, icon("settings", 16), "Deck"),
+      exportBtn,
       viewLink,
       chatBtn,
     ),
@@ -72,6 +75,7 @@ function createTopbar({ onToggleChat }) {
     viewLink.href = `/deck/${state.outFile}${visibleIndex >= 0 ? `#${visibleIndex + 1}` : ""}`;
     const offline = state.connection === "offline";
     const failed = state.lastBuild?.ok === false;
+    exportBtn.disabled = offline || failed;
     saveState.textContent = offline ? "Offline – reconnecting…" : state.busy ? "Copilot is editing…" : failed ? "Build failed" : "Saved";
     saveState.className = `save-state ${offline || failed ? "is-error" : state.busy ? "is-busy" : "is-ok"}`;
     saveState.title = failed ? state.lastBuild.error : `Saved to ${state.deckFile} · built ${state.outFile}`;

@@ -40,8 +40,27 @@ async function upload(file) {
   return data;
 }
 
+/** Save exported .pptx bytes next to deck.yaml; returns { path, file, url }. */
+async function savePptx(bytes) {
+  const res = await fetch("/api/export/pptx", {
+    method: "POST",
+    headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
+    body: bytes,
+    credentials: "same-origin",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || `${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
 export const api = {
   upload,
+  savePptx,
+  build: () => request("POST", "/api/build", {}),
   assets: () => request("GET", "/api/assets"),
   state: () => request("GET", "/api/state"),
   op: (name, args, opts = {}) => request("POST", "/api/op", { name, args, ...opts }),
