@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      # The lockfile may be generated behind a private npm mirror; resolve
+      # the same tarballs (same integrity hashes) from the public registry.
+      - name: Use the public npm registry
+        run: sed -E -i 's#https://[^"]+/_packaging/[^"]+/npm/registry/#https://registry.npmjs.org/#g' package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - name: Build and check that committed dist/ and examples are up to date
+        run: |
+          npm run build
+          node bin/deckforge.js build examples/starter
+          git diff --exit-code -- dist examples
+      - run: npm test
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright test
+        env:
+          CI: "1"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-node${{ matrix.node }}
+          path: playwright-report
+          retention-days: 7

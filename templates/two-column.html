@@ -1,0 +1,60 @@
+---
+name: two-column
+label: Two columns
+description: Compare two options, states or audiences side by side. One column can be highlighted to show the recommendation.
+category: content
+order: 2
+slots:
+  eyebrow: { type: text, max: 40, sample: Compare }
+  title: { type: richtext, max: 60, required: true, sample: 'Today versus <span class="blue">next quarter</span>' }
+  subtitle: { type: text, max: 60, sample: Same scope. Different handoffs. }
+  leftLabel: { type: text, max: 24, sample: Today }
+  leftTitle: { type: text, max: 40, sample: Drafts move by email }
+  leftText: { type: richtext, max: 120, sample: Reviewers receive attachments and reply in separate threads. }
+  leftPoints: { type: list, max: 4, maxLength: 60, sample: [Versions diverge, Decisions are implicit, Sources get lost] }
+  rightLabel: { type: text, max: 24, sample: Next quarter }
+  rightTitle: { type: text, max: 40, sample: One shared review space }
+  rightText: { type: richtext, max: 120, sample: Everyone comments on the same version with its evidence attached. }
+  rightPoints: { type: list, max: 4, maxLength: 60, sample: [One current version, Named decision owner, Linked sources] }
+  highlightRight: { type: boolean, sample: true, description: Highlight the right column as the recommendation }
+  takeawayLabel: { type: text, max: 20, sample: The takeaway }
+  takeaway: { type: text, max: 90, sample: "" }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="columns">
+  <article class="column reveal">
+    {{#if leftLabel}}<span class="pill">{{leftLabel}}</span>{{/if}}
+    <h2>{{leftTitle}}</h2>
+    {{#if leftText}}<p class="text">{{leftText}}</p>{{/if}}
+    {{#if leftPoints}}<ul>{{#each leftPoints}}<li>{{this}}</li>{{/each}}</ul>{{/if}}
+  </article>
+  <article class="column{{#if highlightRight}} chosen{{/if}} reveal">
+    {{#if rightLabel}}<span class="pill">{{rightLabel}}</span>{{/if}}
+    <h2>{{rightTitle}}</h2>
+    {{#if rightText}}<p class="text">{{rightText}}</p>{{/if}}
+    {{#if rightPoints}}<ul>{{#each rightPoints}}<li>{{this}}</li>{{/each}}</ul>{{/if}}
+  </article>
+</div>
+{{#if takeaway}}<p class="outcome reveal"><strong>{{takeawayLabel}}</strong><span>{{takeaway}}</span></p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.columns { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6cqw; min-height: 0; }
+.column {
+  display: flex; flex-direction: column; gap: 1.1cqw; padding: 1.8cqw 2cqw;
+  background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-panel);
+}
+.column.chosen { background: var(--df-primary-soft); border-color: var(--df-primary-line); }
+.column h2 { font-size: 2.5cqw; }
+.column .text { font-size: 1.8cqw; line-height: 1.4; color: var(--df-muted); }
+.column ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .7cqw; }
+.column li { font-size: 1.75cqw; line-height: 1.35; padding-left: 1.8cqw; position: relative; }
+.column li::before {
+  content: ""; position: absolute; left: 0; top: .55em; width: .8cqw; height: .8cqw;
+  border-radius: 50%; border: 2px solid var(--df-primary);
+}
+.column.chosen li::before { background: var(--df-primary); }
+</style>

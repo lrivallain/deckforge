@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en" data-theme="build">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="deckforge 0.1.0">
+  <title>Build Presentation - reusable style specimen</title>
+  <meta name="description" content="Show the concept map, implementation map, lifecycle and zoom layouts with neutral content">
+  <link rel="stylesheet" href="deckforge/deckforge.viewer.css">
+  <style id="df-theme">
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 800; font-style: normal; font-display: swap; src: local("Bricolage Grotesque ExtraBold Regular"), local("BricolageGrotesqueExtraBold-Regular"); }
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 600; font-style: normal; font-display: swap; src: local("Bricolage Grotesque SemiBold Regular"), local("BricolageGrotesqueSemiBold-Regular"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 400; font-style: normal; font-display: swap; src: local("Instrument Sans Regular"), local("InstrumentSans-Regular"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 600; font-style: normal; font-display: swap; src: local("Instrument Sans SemiBold Regular"), local("InstrumentSansSemiBold-Regular"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap; src: local("IBM Plex Mono Regular"), local("IBMPlexMono-Regular"); }
+:root {
+  color-scheme: light;
+  --df-bg: #EDF1F7;
+  --df-paper: #FFFFFF;
+  --df-line: #E2E8F2;
+  --df-ink: #16202F;
+  --df-muted: #53617A;
+  --df-node: #F7F9FC;
+  --df-primary: #0F6CBD;
+  --df-primary-soft: #EAF3FC;
+  --df-primary-line: #BBD7F0;
+  --df-accent: #C2620A;
+  --df-accent-soft: #FFF4E4;
+  --df-accent-line: #F0C078;
+  --df-frame: #FFFCF5;
+  --df-ok: #1F9D6B;
+  --df-dashed: #53617A;
+  --df-accent-text: #A8550A;
+  --df-chrome: #EDF1F7;
+  --df-primary-text: #0F6CBD;
+  --df-font-heading: "Bricolage Grotesque", "Trebuchet MS", "Segoe UI", sans-serif;
+  --df-font-body: "Instrument Sans", "Segoe UI", Arial, sans-serif;
+  --df-font-mono: "IBM Plex Mono", Consolas, monospace;
+  --df-radius-slide: 12px;
+  --df-radius-card: 10px;
+  --df-radius-panel: 12px;
+  --df-radius-frame: 14px;
+  --df-radius-small: 8px;
+  --df-radius-pill: 99px;
+  --df-space-padding: 3cqw 4cqw 2cqw;
+  --df-space-gap: 1.3cqw;
+  --df-space-grid: 1.1cqw;
+  --df-motion-duration: .55s;
+  --df-motion-easing: ease;
+  --df-motion-distance: 8px;
+  --df-motion-stagger: .15s;
+  --df-shadow-slide: 0 24px 60px rgb(22 32 47 / 10%);
+}
+  </style>
+  <style id="df-templates">
+/* template: concept-map */
+.df-t-concept-map .header {flex: 0 0 9cqw;}
+.df-t-concept-map .map {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--df-space-grid);}
+.df-t-concept-map .row {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid);}
+.df-t-concept-map .audience {display: flex; align-items: center; gap: .9cqw; padding: 1cqw; background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-card);}
+.df-t-concept-map .audience p {margin-top: .3cqw; color: var(--df-muted); font-size: 1.45cqw;}
+.df-t-concept-map .boundary {display: flex; flex-direction: column; gap: .9cqw; padding: 1cqw 1.2cqw; border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-frame); background: var(--df-frame);}
+.df-t-concept-map .boundary-label {display: flex; align-items: center; justify-content: space-between; gap: 1cqw;}
+.df-t-concept-map .boundary-label h2 {color: var(--df-accent);}
+.df-t-concept-map .boundary-label span {font: 400 1.1cqw var(--df-font-mono); color: var(--df-muted);}
+.df-t-concept-map .lanes {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid);}
+.df-t-concept-map .lane {border: 1.5px dashed var(--df-dashed); border-radius: var(--df-radius-card); padding: 1cqw 1.2cqw; background: var(--df-paper);}
+.df-t-concept-map .lane p {margin-top: .35cqw; font-size: 1.6cqw; line-height: 1.35; color: var(--df-muted);}
+.df-t-concept-map .capabilities {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: .8cqw;}
+.df-t-concept-map .capability {border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-small); background: var(--df-primary-soft); padding: .65cqw; text-align: center; font-size: 1.5cqw;}
+/* template: implementation-map */
+.df-t-implementation-map .header {flex: 0 0 9cqw;}
+.df-t-implementation-map .map {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--df-space-grid);}
+.df-t-implementation-map .row {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid);}
+.df-t-implementation-map .audience {display: flex; align-items: center; gap: .9cqw; padding: 1cqw; background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-card);}
+.df-t-implementation-map .audience p {margin-top: .3cqw; color: var(--df-muted); font-size: 1.45cqw;}
+.df-t-implementation-map .boundary {display: flex; flex-direction: column; gap: .9cqw; padding: 1cqw 1.2cqw; border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-frame); background: var(--df-frame);}
+.df-t-implementation-map .boundary-label {display: flex; align-items: center; justify-content: space-between; gap: 1cqw;}
+.df-t-implementation-map .boundary-label h2 {color: var(--df-accent);}
+.df-t-implementation-map .boundary-label span {font: 400 1.1cqw var(--df-font-mono); color: var(--df-muted);}
+.df-t-implementation-map .lanes {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid);}
+.df-t-implementation-map .lane {border: 1.5px dashed var(--df-dashed); border-radius: var(--df-radius-card); padding: 1cqw 1.2cqw; background: var(--df-paper);}
+.df-t-implementation-map .lane p {margin-top: .35cqw; font-size: 1.6cqw; line-height: 1.35; color: var(--df-muted);}
+.df-t-implementation-map .capabilities {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: .8cqw;}
+.df-t-implementation-map .capability {border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-small); background: var(--df-primary-soft); padding: .65cqw; text-align: center; font-size: 1.5cqw;}
+/* template: lifecycle */
+.df-t-lifecycle .lifecycle {flex: 1; display: flex; align-items: stretch; gap: .9cqw; min-height: 0;}
+.df-t-lifecycle .stage-card {flex: 1 1 0; min-width: 0; padding: 1.4cqw; border: 1px solid var(--df-line); border-radius: var(--df-radius-panel); background: var(--df-node); display: flex; flex-direction: column; gap: 1.2cqw;}
+.df-t-lifecycle .stage-card.focus {flex-grow: 1.2; border-color: var(--df-primary-line); background: var(--df-primary-soft);}
+.df-t-lifecycle .stage-card h2 {font-size: 2.5cqw;}
+.df-t-lifecycle .stage-card p {font-size: 1.8cqw; line-height: 1.4;}
+.df-t-lifecycle .stage-card .owner {margin-top: auto; font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted);}
+.df-t-lifecycle .arrow {flex: 0 0 2cqw;}
+.df-t-lifecycle .feedback {color: var(--df-accent-text); font: 400 1.4cqw / 1.4 var(--df-font-mono); text-align: center; padding: .6cqw;}
+/* template: zoom */
+.df-t-zoom .stepper {display: flex; gap: .6cqw; align-items: center;}
+.df-t-zoom .stepper .pill {color: var(--df-muted); border-color: var(--df-line);}
+.df-t-zoom .stepper .pill.active {background: var(--df-primary); color: var(--df-paper); border-color: var(--df-primary);}
+.df-t-zoom .zoom {flex: 1; display: grid; grid-template-columns: .85fr 2cqw 2fr; gap: var(--df-space-grid); align-items: stretch; min-height: 0;}
+.df-t-zoom .problem {background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-panel); padding: 1.4cqw;}
+.df-t-zoom .problem h2 {margin-bottom: 1cqw;}
+.df-t-zoom .problem p, .df-t-zoom .response p {font-size: 1.7cqw; line-height: 1.4; color: var(--df-muted);}
+.df-t-zoom .responses {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1cqw;}
+.df-t-zoom .response {border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-card); padding: 1.2cqw;}
+.df-t-zoom .response h2 {color: var(--df-primary); margin-bottom: .65cqw;}
+.df-t-zoom .response.highlight {border-color: var(--df-accent-line); background: var(--df-accent-soft);}
+.df-t-zoom .response.highlight h2 {color: var(--df-accent);}
+  </style>
+</head>
+<body>
+  <noscript><p class="no-script">All slides are shown below. Use the browser's print command for a PDF.</p></noscript>
+  <main class="stage" aria-label="Build Presentation - reusable style specimen">
+<section class="slide df-t-concept-map map-slide" id="slide-concept" data-slide-id="concept" data-template="concept-map" data-title="Concept map" aria-labelledby="concept-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">01 / Explain the shift</p><h1 id="concept-title"><span class="old">From isolated tasks.</span><span class="blue">To a shared workflow.</span></h1></div>
+  <p class="subtitle">Show the structure before naming the tools.</p>
+</header>
+<div class="map">
+  <div class="row">
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4L20 8l-4-4L4 16zM14 6l4 4"/></svg>
+      <div><h2>Creators</h2><p>Prepare the work</p></div>
+    </article>
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 12l3 3 5-6"/></svg>
+      <div><h2>Reviewers</h2><p>Resolve the open questions</p></div>
+    </article>
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 5h7l2 2 2-2h7v15h-7l-2 1-2-1H3zM12 7v14"/></svg>
+      <div><h2>Readers</h2><p>Understand the result</p></div>
+    </article>
+    
+  </div>
+  <div class="boundary reveal">
+    <div class="boundary-label"><h2>One review boundary</h2><span>accuracy · ownership · access</span></div>
+    <div class="lanes">
+      <article class="lane"><h3>Prepare</h3><p>Turn evidence into a clear draft.</p></article><article class="lane"><h3>Deliver</h3><p>Share the version people can use.</p></article>
+    </div>
+    
+    <div class="capabilities" aria-label="Shared capabilities">
+      <div class="capability">Context</div><div class="capability">Tools</div><div class="capability">History</div><div class="capability">Permissions</div>
+    </div>
+    
+  </div>
+</div>
+<p class="outcome reveal"><strong>The takeaway</strong><span>People, flow and shared capabilities form one understandable map.</span></p>
+<footer class="foot"><span>Build presentation / illustrative workflow</span><span class="num">01 / 04</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Start with the audience, not the tools. Walk the map top to bottom:<br>who is involved, the shared boundary, then the capabilities they rely on.</p><p>Pause on the takeaway before moving on.</p></aside>
+</section>
+<section class="slide df-t-implementation-map map-slide" id="slide-implementation" data-slide-id="implementation" data-template="implementation-map" data-title="Implementation map" aria-labelledby="implementation-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">02 / Keep the same map</p><h1 id="implementation-title">Now name the <span class="amber">components.</span></h1></div>
+  <p class="subtitle">Same positions.<br>Concrete labels.</p>
+</header>
+<div class="map">
+  <div class="row">
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4L20 8l-4-4L4 16zM14 6l4 4"/></svg>
+      <div><h2>Authoring space</h2><p>Where creators prepare</p></div>
+    </article>
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 12l3 3 5-6"/></svg>
+      <div><h2>Review queue</h2><p>Where reviewers decide</p></div>
+    </article>
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 5h7l2 2 2-2h7v15h-7l-2 1-2-1H3zM12 7v14"/></svg>
+      <div><h2>Published view</h2><p>Where readers arrive</p></div>
+    </article>
+    
+  </div>
+  <div class="boundary reveal">
+    <div class="boundary-label"><h2>One review boundary</h2><span>accuracy · ownership · access</span></div>
+    <div class="lanes">
+      <article class="lane"><h3>Draft workspace</h3><p>The working version and its evidence.</p></article><article class="lane"><h3>Delivery channel</h3><p>The approved version and its audience.</p></article>
+    </div>
+    
+    <div class="capabilities" aria-label="Shared implementation components">
+      <div class="capability">Source register</div><div class="capability">Templates</div><div class="capability">Change log</div><div class="capability">Roles</div>
+    </div>
+    
+  </div>
+</div>
+<p class="outcome reveal"><strong>The takeaway</strong><span>Change the labels, not the audience&#39;s mental model.</span></p>
+<footer class="foot"><span>Build presentation / illustrative workflow</span><span class="num">02 / 04</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Same geometry as the previous slide. Point out that only the labels changed.</p></aside>
+</section>
+<section class="slide df-t-lifecycle" id="slide-lifecycle" data-slide-id="lifecycle" data-template="lifecycle" data-title="Lifecycle" aria-labelledby="lifecycle-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">03 / Explain the handoffs</p><h1 id="lifecycle-title">Prepare. Review. <span class="blue">Deliver.</span></h1></div>
+  <p class="subtitle">Make each responsibility visible.</p>
+</header>
+<div class="lifecycle">
+  
+  
+  <article class="stage-card reveal">
+    <span class="pill">01 / INPUT</span>
+    <h2>Prepare</h2>
+    <p>Gather sources.<br>Choose the message.<br>Make a first draft.</p>
+    <p class="owner">Owner: creator</p>
+  </article>
+  
+  <span class="arrow reveal" role="img" aria-label="then">&rarr;</span>
+  <article class="stage-card focus reveal">
+    <span class="pill">02 / DECISION</span>
+    <h2>Review</h2>
+    <p>Compare the draft with the brief and evidence. Resolve what is unclear.</p>
+    <p class="owner">Owner: reviewer</p>
+  </article>
+  
+  <span class="arrow reveal" role="img" aria-label="then">&rarr;</span>
+  <article class="stage-card reveal">
+    <span class="pill">03 / OUTPUT</span>
+    <h2>Deliver</h2>
+    <p>Share an approved version. Make the next action clear.</p>
+    <p class="owner">Owner: publisher</p>
+  </article>
+  
+</div>
+<p class="feedback reveal">Feedback from readers → the next preparation cycle</p>
+<p class="outcome reveal"><strong>The takeaway</strong><span>The diagram explains who acts, what changes, and where feedback returns.</span></p>
+<footer class="foot"><span>Build presentation / illustrative workflow</span><span class="num">03 / 04</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Name the owner of each stage. The feedback line is the only loop in this system.</p></aside>
+</section>
+<section class="slide df-t-zoom" id="slide-zoom" data-slide-id="zoom" data-template="zoom" data-title="Problem to response" aria-labelledby="zoom-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">04 / Zoom into one step</p><h1 id="zoom-title">Make the response <span class="blue">concrete.</span></h1></div>
+  <p class="subtitle">One problem.<br>A clear response.</p>
+</header>
+
+<div class="stepper reveal" role="group" aria-label="Current focus: review">
+  <span class="pill">Prepare</span><span aria-hidden="true">&rarr;</span><span class="pill active">Review / focus</span><span aria-hidden="true">&rarr;</span><span class="pill">Deliver</span>
+</div>
+
+<div class="zoom">
+  <article class="problem reveal">
+    <p class="eyebrow">The problem</p>
+    <h2>The message is difficult to review.</h2>
+    <p>The purpose, evidence and decision are scattered across the draft.</p>
+  </article>
+  <span class="arrow reveal" role="img" aria-label="respond with">&rarr;</span>
+  <div class="responses">
+    
+    <article class="response reveal"><h2>Explicit scope</h2><p>One audience, one purpose and a clear boundary.</p></article>
+    
+    <article class="response reveal"><h2>Source notes</h2><p>Keep claims connected to their evidence.</p></article>
+    
+    <article class="response reveal"><h2>Shared templates</h2><p>Keep the structure familiar while the content changes.</p></article>
+    
+    <article class="response highlight reveal"><h2>Review gate</h2><p>Name the decision and the person who makes it.</p></article>
+    
+  </div>
+</div>
+<p class="outcome reveal"><strong>The takeaway</strong><span>Use this layout to connect a pain point to a practical next step.</span></p>
+<footer class="foot"><span>Style specimen / <a href="https://ozgurkarahan.com/agentic-platform/" target="_blank" rel="noopener noreferrer">Reference deck</a></span><span class="num">04 / 04</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>One problem, four concrete responses. The amber card is the decision gate.</p></aside>
+</section>
+  </main>
+  <nav class="controls" aria-label="Slide controls" hidden>
+  <button id="df-previous" type="button" aria-label="Previous slide">Previous</button>
+  <label class="sr-only" for="df-slide-select">Choose a slide</label>
+  <select id="df-slide-select"></select>
+  <button id="df-next" type="button" aria-label="Next slide">Next</button>
+  <span class="controls-sep" aria-hidden="true"></span>
+  <button id="df-static" type="button" aria-pressed="false" title="Disable animations (S)">Static</button>
+  <button id="df-notes" type="button" aria-pressed="false" title="Show speaker notes (N)">Notes</button>
+  <button id="df-presenter" type="button" title="Open presenter view (P)">Presenter</button>
+  <button id="df-fullscreen" type="button" aria-pressed="false" title="Fullscreen (F)">Fullscreen</button>
+  <span id="df-announcement" class="sr-only" role="status" aria-live="polite"></span>
+</nav>
+  <script src="deckforge/deckforge.viewer.js" defer></script>
+</body>
+</html>

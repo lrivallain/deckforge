@@ -1,0 +1,65 @@
+// HTTP + SSE client for the deckforge editor server.
+
+async function request(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: body !== undefined ? { "Content-Type": "application/json" } : {},
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    credentials: "same-origin",
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { error: text };
+  }
+  if (!res.ok) {
+    const err = new Error(data.error || `${res.status} ${res.statusText}`);
+    err.status = res.status;
+    err.details = data.details;
+    throw err;
+  }
+  return data;
+}
+
+export const api = {
+  state: () => request("GET", "/api/state"),
+  op: (name, args, opts = {}) => request("POST", "/api/op", { name, args, ...opts }),
+  undo: () => request("POST", "/api/undo", {}),
+  redo: () => request("POST", "/api/redo", {}),
+  saveTemplate: (name, source, scope) => request("PUT", `/api/templates/${encodeURIComponent(name)}`, { source, scope }),
+  agent: (prompt, scope, slideId) => request("POST", "/api/agent", { prompt, scope, slideId }),
+  agentAbort: () => request("POST", "/api/agent/abort", {}),
+  agentReset: () => request("POST", "/api/agent/reset", {}),
+  agentStatus: () => request("GET", "/api/agent"),
+};
+
+export function connectEvents(handlers) {
+  let source;
+  let retry = 500;
+  const open = () => {
+    source = new EventSource("/api/events");
+    source.addEventListener("hello", () => {
+      retry = 500;
+      handlers.open?.();
+    });
+    for (const name of ["deck", "built", "agent", "warning"]) {
+      source.addEventListener(name, (event) => {
+        try {
+          handlers[name]?.(JSON.parse(event.data));
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
+    source.onerror = () => {
+      handlers.error?.();
+      source.close();
+      setTimeout(open, retry);
+      retry = Math.min(retry * 2, 8000);
+    };
+  };
+  open();
+  return () => source?.close();
+}

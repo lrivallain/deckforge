@@ -1,0 +1,137 @@
+meta:
+  title: Build Presentation - reusable style specimen
+  lang: en
+  theme: build
+  footer: Build presentation / illustrative workflow
+  brief:
+    topic: A reusable presentation style specimen
+    audience: People preparing diagram-led talks
+    goal: Show the concept map, implementation map, lifecycle and zoom layouts with neutral content
+    duration: 5 minutes
+slides:
+  - id: concept
+    template: concept-map
+    title: Concept map
+    data:
+      eyebrow: 01 / Explain the shift
+      title: <span class="old">From isolated tasks.</span><span class="blue">To a shared workflow.</span>
+      subtitle: Show the structure before naming the tools.
+      audiences:
+        - icon: pen
+          title: Creators
+          text: Prepare the work
+        - icon: review
+          title: Reviewers
+          text: Resolve the open questions
+        - icon: book
+          title: Readers
+          text: Understand the result
+      boundary: One review boundary
+      boundaryNote: accuracy · ownership · access
+      lanes:
+        - title: Prepare
+          text: Turn evidence into a clear draft.
+        - title: Deliver
+          text: Share the version people can use.
+      capabilitiesLabel: Shared capabilities
+      capabilities: [Context, Tools, History, Permissions]
+      takeawayLabel: The takeaway
+      takeaway: People, flow and shared capabilities form one understandable map.
+    notes: |
+      Start with the audience, not the tools. Walk the map top to bottom:
+      who is involved, the shared boundary, then the capabilities they rely on.
+
+      Pause on the takeaway before moving on.
+  - id: implementation
+    template: implementation-map
+    title: Implementation map
+    data:
+      eyebrow: 02 / Keep the same map
+      title: Now name the <span class="amber">components.</span>
+      subtitle: |-
+        Same positions.
+        Concrete labels.
+      audiences:
+        - icon: pen
+          title: Authoring space
+          text: Where creators prepare
+        - icon: review
+          title: Review queue
+          text: Where reviewers decide
+        - icon: book
+          title: Published view
+          text: Where readers arrive
+      boundary: One review boundary
+      boundaryNote: accuracy · ownership · access
+      lanes:
+        - title: Draft workspace
+          text: The working version and its evidence.
+        - title: Delivery channel
+          text: The approved version and its audience.
+      capabilitiesLabel: Shared implementation components
+      capabilities: [Source register, Templates, Change log, Roles]
+      takeawayLabel: The takeaway
+      takeaway: Change the labels, not the audience's mental model.
+    notes: Same geometry as the previous slide. Point out that only the labels changed.
+  - id: lifecycle
+    template: lifecycle
+    title: Lifecycle
+    data:
+      eyebrow: 03 / Explain the handoffs
+      title: Prepare. Review. <span class="blue">Deliver.</span>
+      subtitle: Make each responsibility visible.
+      stages:
+        - label: 01 / INPUT
+          title: Prepare
+          text: |-
+            Gather sources.
+            Choose the message.
+            Make a first draft.
+          owner: "Owner: creator"
+        - label: 02 / DECISION
+          title: Review
+          text: Compare the draft with the brief and evidence. Resolve what is unclear.
+          owner: "Owner: reviewer"
+          focus: true
+        - label: 03 / OUTPUT
+          title: Deliver
+          text: Share an approved version. Make the next action clear.
+          owner: "Owner: publisher"
+      connector: then
+      feedback: Feedback from readers → the next preparation cycle
+      takeawayLabel: The takeaway
+      takeaway: The diagram explains who acts, what changes, and where feedback returns.
+    notes: Name the owner of each stage. The feedback line is the only loop in this system.
+  - id: zoom
+    template: zoom
+    title: Problem to response
+    footer: Style specimen / <a href="https://ozgurkarahan.com/agentic-platform/">Reference deck</a>
+    data:
+      eyebrow: 04 / Zoom into one step
+      title: Make the response <span class="blue">concrete.</span>
+      subtitle: |-
+        One problem.
+        A clear response.
+      steps:
+        - label: Prepare
+        - label: Review / focus
+          active: true
+        - label: Deliver
+      stepperLabel: "Current focus: review"
+      problemLabel: The problem
+      problemTitle: The message is difficult to review.
+      problemText: The purpose, evidence and decision are scattered across the draft.
+      bridge: respond with
+      responses:
+        - title: Explicit scope
+          text: One audience, one purpose and a clear boundary.
+        - title: Source notes
+          text: Keep claims connected to their evidence.
+        - title: Shared templates
+          text: Keep the structure familiar while the content changes.
+        - title: Review gate
+          text: Name the decision and the person who makes it.
+          highlight: true
+      takeawayLabel: The takeaway
+      takeaway: Use this layout to connect a pain point to a practical next step.
+    notes: One problem, four concrete responses. The amber card is the decision gate.

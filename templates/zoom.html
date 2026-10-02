@@ -1,0 +1,82 @@
+---
+name: zoom
+label: Problem → response
+description: >-
+  Zoom into one step: a compact lifecycle stepper, a small problem card, a
+  bridge and up to four response cards (one may be highlighted), then a wide
+  outcome bar (recipe E).
+category: diagram
+order: 4
+slots:
+  eyebrow: { type: text, max: 40, sample: "04 / Zoom into one step" }
+  title: { type: richtext, max: 60, required: true, sample: 'Make the response <span class="blue">concrete.</span>' }
+  subtitle: { type: text, max: 60, sample: "One problem.\nA clear response." }
+  steps:
+    type: cards
+    max: 5
+    fields:
+      label: { type: text, max: 24 }
+      active: { type: boolean }
+    sample:
+      - { label: Prepare, active: false }
+      - { label: Review / focus, active: true }
+      - { label: Deliver, active: false }
+  stepperLabel: { type: text, max: 60, sample: "Current focus: review", description: Accessible description of the stepper }
+  problemLabel: { type: text, max: 24, sample: The problem }
+  problemTitle: { type: text, max: 60, sample: The message is difficult to review. }
+  problemText: { type: text, max: 110, sample: "The purpose, evidence and decision are scattered across the draft." }
+  bridge: { type: text, max: 24, sample: respond with, description: Accessible label of the bridge arrow }
+  responses:
+    type: cards
+    max: 4
+    fields:
+      title: { type: text, max: 24 }
+      text: { type: text, max: 70 }
+      highlight: { type: boolean }
+    sample:
+      - { title: Explicit scope, text: "One audience, one purpose and a clear boundary." }
+      - { title: Source notes, text: Keep claims connected to their evidence. }
+      - { title: Shared templates, text: Keep the structure familiar while the content changes. }
+      - { title: Review gate, text: Name the decision and the person who makes it., highlight: true }
+  takeawayLabel: { type: text, max: 20, sample: The takeaway }
+  takeaway: { type: text, max: 90, sample: Use this layout to connect a pain point to a practical next step. }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+{{#if steps}}
+<div class="stepper reveal" role="group" aria-label="{{stepperLabel}}">
+  {{#each steps}}{{#unless @first}}<span aria-hidden="true">&rarr;</span>{{/unless}}<span class="pill{{#if active}} active{{/if}}">{{label}}</span>{{/each}}
+</div>
+{{/if}}
+<div class="zoom">
+  <article class="problem reveal">
+    <p class="eyebrow">{{problemLabel}}</p>
+    <h2>{{problemTitle}}</h2>
+    <p>{{problemText}}</p>
+  </article>
+  <span class="arrow reveal" role="img" aria-label="{{bridge}}">&rarr;</span>
+  <div class="responses">
+    {{#each responses}}
+    <article class="response{{#if highlight}} highlight{{/if}} reveal"><h2>{{title}}</h2><p>{{text}}</p></article>
+    {{/each}}
+  </div>
+</div>
+{{#if takeaway}}<p class="outcome reveal"><strong>{{takeawayLabel}}</strong><span>{{takeaway}}</span></p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.stepper { display: flex; gap: .6cqw; align-items: center; }
+.stepper .pill { color: var(--df-muted); border-color: var(--df-line); }
+.stepper .pill.active { background: var(--df-primary); color: var(--df-paper); border-color: var(--df-primary); }
+.zoom { flex: 1; display: grid; grid-template-columns: .85fr 2cqw 2fr; gap: var(--df-space-grid); align-items: stretch; min-height: 0; }
+.problem { background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-panel); padding: 1.4cqw; }
+.problem h2 { margin-bottom: 1cqw; }
+.problem p, .response p { font-size: 1.7cqw; line-height: 1.4; color: var(--df-muted); }
+.responses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1cqw; }
+.response { border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-card); padding: 1.2cqw; }
+.response h2 { color: var(--df-primary); margin-bottom: .65cqw; }
+.response.highlight { border-color: var(--df-accent-line); background: var(--df-accent-soft); }
+.response.highlight h2 { color: var(--df-accent); }
+</style>
