@@ -91,6 +91,10 @@ export class DeckStore extends EventEmitter {
 
   /** Apply an operation. Returns the op result. */
   apply(name, args, { source = "user", label, coalesce } = {}) {
+    // Keep agent turns atomic: their undo entry must only contain agent changes.
+    if (this.group && source !== this.group.source) {
+      throw new OpError("Copilot is applying changes. Wait for it to finish or press Stop, then edit again.");
+    }
     const before = this.deck;
     const { deck, changed, result } = applyOp(before, name, args, this.ctx);
     this.deck = deck;

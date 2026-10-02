@@ -132,6 +132,17 @@ describe("ops", () => {
     const { deck } = applyOp(base, "set_template", { id: "a", template: "section" }, ctx);
     expect(deck.slides[0]).toMatchObject({ template: "section", data: { title: "A", number: "02" } });
   });
+  it("reject prototype-polluting paths and keys", () => {
+    for (const path of ["__proto__.polluted", "constructor.prototype.polluted", "cards.0.__proto__.x", "a b"]) {
+      expect(() => applyOp(base, "update_slide", { id: "a", set: { [path]: "x" } }, ctx), path).toThrow(OpError);
+    }
+    expect(() => applyOp(base, "update_slide", { id: "a", data: JSON.parse('{"__proto__": {"polluted": 1}}') }, ctx)).toThrow(OpError);
+    expect(() => applyOp(base, "update_slide", { id: "a", set: { cards: JSON.parse('[{"__proto__": {"x": 1}}]') } }, ctx)).toThrow(OpError);
+    expect(() => applyOp(base, "add_slide", { template: "quote", data: JSON.parse('{"constructor": {"prototype": {"x": 1}}}') }, ctx)).toThrow(OpError);
+    expect({}.polluted).toBeUndefined();
+    const { deck } = applyOp(base, "update_meta", { meta: { brief: JSON.parse('{"__proto__": {"x": 1}, "goal": "G"}') } }, ctx);
+    expect(Object.keys(deck.meta.brief)).toEqual(["goal"]);
+  });
   it("set_theme and update_meta validate their input", () => {
     expect(applyOp(base, "set_theme", { theme: "atelier" }, ctx).deck.meta.theme).toBe("atelier");
     expect(() => applyOp(base, "set_theme", { theme: "nope" }, ctx)).toThrow(OpError);

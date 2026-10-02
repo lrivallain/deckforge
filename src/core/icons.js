@@ -1,7 +1,7 @@
 // Built-in outline icon set: 24x24 viewBox, rendered with the theme's stroke
 // settings (see .icon in the viewer CSS). Each entry is inner SVG markup.
 
-export const ICONS = {
+export const ICONS = Object.freeze(Object.assign(Object.create(null), {
   pen: '<path d="M4 20h4L20 8l-4-4L4 16zM14 6l4 4"/>',
   review: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 12l3 3 5-6"/>',
   book: '<path d="M3 5h7l2 2 2-2h7v15h-7l-2 1-2-1H3zM12 7v14"/>',
@@ -47,12 +47,13 @@ export const ICONS = {
   network: '<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M11 7.3l-4.8 9.4M13 7.3l4.8 9.4M7.5 19h9"/>',
   money: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/>',
   building: '<path d="M4 21V5l8-2v18M12 8h8v13M2 21h20M7.5 8h1M7.5 12h1M7.5 16h1M15.5 12h1M15.5 16h1"/>',
-};
+}));
 
 export const ICON_NAMES = Object.keys(ICONS);
 
 export function renderIcon(name, extraClass = "") {
-  const body = ICONS[String(name ?? "").trim()];
+  const key = String(name ?? "").trim();
+  const body = Object.hasOwn(ICONS, key) ? ICONS[key] : null;
   if (!body) return "";
   const cls = extraClass ? `icon ${extraClass}` : "icon";
   return `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${body}</svg>`;

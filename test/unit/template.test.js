@@ -101,6 +101,10 @@ describe("renderTemplate", () => {
     expect(edit).toContain('data-df-slot="items.2"');
     expect(edit).toContain('title="Hello world"');
   });
+  it("never resolves inherited properties", () => {
+    const t = parseTemplate("---\nname: x\nslots: { a: text, c: { type: cards, fields: { t: text } } }\n---\n[{{a.constructor}}][{{a.length}}][{{c.0.t.__proto__}}]{{#each c}}[{{toString}}]{{/each}}");
+    expect(renderTemplate(t, { a: "abc", c: [{ t: "x" }] })).toBe("[][][][]");
+  });
   it("cannot be broken out of by attribute values", () => {
     const t = parseTemplate('---\nname: x\nslots: { a: text }\n---\n<p class="{{a}}">{{a}}</p>');
     const out = renderTemplate(t, { a: '"><script>alert(1)</script>' });

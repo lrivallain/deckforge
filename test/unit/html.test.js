@@ -79,5 +79,8 @@ describe("icons", () => {
     expect(ICON_NAMES.length).toBeGreaterThan(30);
     expect(renderIcon("pen")).toMatch(/^<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"/);
     expect(renderIcon("<script>")).toBe("");
+    expect(renderIcon("constructor")).toBe("");
+    expect(renderIcon("__proto__")).toBe("");
+    expect(renderIcon("toString")).toBe("");
   });
 });

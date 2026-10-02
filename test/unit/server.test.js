@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { startServer, resolveInside } from "../../src/server/http.js";
+import { startServer, resolveInside, protectDeckHtml } from "../../src/server/http.js";
 import { DeckStore } from "../../src/server/store.js";
 import { AgentController, deckToolSpecs } from "../../src/server/agent.js";
 import { systemPrompt } from "../../src/server/prompt.js";
@@ -73,6 +73,15 @@ describe("DeckStore", () => {
     expect(store.undoStack[0].label).toBe("Agent: test");
     store.undo();
     expect(store.deck.slides.length).toBe(4);
+  });
+
+  it("refuses user edits while an agent turn is open", () => {
+    store.beginGroup("Agent: busy", "agent");
+    store.apply("set_hidden", { id: "zoom", hidden: true }, { source: "agent" });
+    expect(() => store.apply("set_hidden", { id: "concept", hidden: true }, { source: "user" })).toThrow(/Copilot is applying changes/);
+    expect(store.endGroup()).toEqual(["zoom"]);
+    store.undo();
+    expect(store.deck.slides.every((s) => !s.hidden)).toBe(true);
   });
 
   it("saves templates only inside the allowed folders", () => {
@@ -166,6 +175,16 @@ describe("HTTP server", () => {
     expect(resolveInside("/a/b", "%2e%2e/%2e%2e/c")).toBe(path.resolve("/a/b/c"));
     expect(resolveInside("/a/b", ".git/config")).toBeNull();
     expect((await req("/assets/../package.json", { headers: auth() })).status).toBe(404);
+  });
+
+  it("serves the deck with a nonce CSP that only trusts the runtime", () => {
+    const html = '<body><p><script data-df-runtime>evil()</script></p>\n<script data-df-runtime>\nruntime()\n</script>\n</body>';
+    const { html: out, csp } = protectDeckHtml(html, "abc");
+    expect(csp).toContain("script-src 'self' 'nonce-abc'");
+    expect(csp).not.toMatch(/script-src[^;]*unsafe-inline/);
+    expect(out).toContain('<p><script data-df-runtime>evil()</script></p>');
+    expect(out).toContain('<script data-df-runtime nonce="abc">\nruntime()');
+    expect(out).toMatch(/<script nonce="abc">\(function\(\)\{try\{var es=new EventSource\("\/api\/events"\)/);
   });
 
   it("injects live reload into the served deck", async () => {
@@ -268,6 +287,29 @@ describe("AgentController", () => {
     const done = await until(() => events.find((e) => e.type === "done"));
     expect(done.error.message).toBe("boom");
     expect(store.group).toBeNull();
+  });
+
+  it("rejects a second request while the session is still starting", async () => {
+    let release;
+    const slow = { createClient: async () => { await new Promise((r) => (release = r)); return mockSdk.createClient(); } };
+    agent = new AgentController({ store, factory: slow });
+    const events = collect(agent);
+    await agent.chat({ prompt: "one", scope: "deck" });
+    await expect(agent.chat({ prompt: "two", scope: "deck" })).rejects.toThrow(/still working/);
+    release();
+    await until(() => events.find((e) => e.type === "done"));
+    expect(store.undoStack.length).toBe(0);
+  });
+
+  it("refuses tool calls outside of an active turn", async () => {
+    agent = new AgentController({ store, factory: mockSdk });
+    const events = collect(agent);
+    await agent.chat({ prompt: "#tools []", scope: "deck" });
+    await until(() => events.find((e) => e.type === "done"));
+    const tool = globalThis.__deckforgeMockSession.config.tools.find((t) => t.name === "remove_slide");
+    const result = await tool.handler({ id: "zoom" });
+    expect(result.resultType).toBe("failure");
+    expect(store.deck.slides.length).toBe(4);
   });
 
   it("builds a grounded system prompt", () => {

@@ -195,3 +195,20 @@ test("editor has no serious accessibility violations", async ({ page }) => {
   const serious = results.violations.filter((v) => ["serious", "critical"].includes(v.impact));
   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`)).toEqual([]);
 });
+
+test("the served deck works under its CSP and blocks injected scripts", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  // Simulate a sanitizer bypass by tampering with the generated file.
+  fs.writeFileSync(editor.html, editor.readHtml().replace("</main>", '<img src="x" onerror="window.__pwned=1"><script>window.__pwned=2</script></main>'));
+  await page.goto(`${editor.origin}/deck/deck.html`);
+  await expect(page.locator(".controls")).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(page).toHaveURL(/#2$/);
+  await page.keyboard.press("n");
+  await expect(page.locator(".notes-panel")).toContainText("Same geometry");
+  const [popup] = await Promise.all([page.waitForEvent("popup"), page.locator("#df-presenter").click()]);
+  await expect(popup.locator("#p-title")).toContainText("2 / 4");
+  expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
+  expect(errors).toEqual([]);
+});

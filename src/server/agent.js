@@ -108,7 +108,8 @@ export class AgentController extends EventEmitter {
       list_themes: () => Object.values(store.themes).map((t) => ({ name: t.name, label: t.label, description: t.description, current: t.name === store.deck.meta.theme })),
     };
     const mutate = (name) => (args) => {
-      if (this.turn?.scope === "slide") {
+      if (!this.turn || !this.store.group) throw new OpError("No active request: changes are only accepted while answering the user.");
+      if (this.turn.scope === "slide") {
         if (!SLIDE_SCOPED_OPS.has(name)) throw new OpError(`"${name}" is not allowed: the user limited this request to one slide (${this.turn.slideId}).`);
         if (args.id !== this.turn.slideId) throw new OpError(`Out of scope: only slide "${this.turn.slideId}" may be modified in this request.`);
       }
@@ -134,8 +135,16 @@ export class AgentController extends EventEmitter {
     }));
   }
 
-  async ensureSession() {
-    if (this.session) return this.session;
+  ensureSession() {
+    if (this.session) return Promise.resolve(this.session);
+    // Memoize the in-flight start so concurrent callers share one client.
+    this.starting ??= this.startSession().finally(() => {
+      this.starting = null;
+    });
+    return this.starting;
+  }
+
+  async startSession() {
     this.setState("starting");
     try {
       this.client = await this.factory.createClient({ cwd: this.store.deckDir });
@@ -203,9 +212,9 @@ export class AgentController extends EventEmitter {
     }
   }
 
-  finishTurn(error = null) {
+  finishTurn(error = null, expected = this.turn) {
     const turn = this.turn;
-    if (!turn) return;
+    if (!turn || turn !== expected) return;
     clearTimeout(turn.timer);
     this.turn = null;
     const changed = this.store.endGroup();
@@ -219,19 +228,26 @@ export class AgentController extends EventEmitter {
   async chat({ prompt, scope = "deck", slideId = null }) {
     prompt = String(prompt || "").trim();
     if (!prompt) throw new OpError("Empty prompt");
-    if (this.turn) throw new OpError("The agent is still working on the previous request");
+    if (this.turn || this.pending) throw new OpError("The agent is still working on the previous request");
     if (scope === "slide" && !this.store.deck.slides.some((s) => s.id === slideId)) throw new OpError("Select a slide first");
     this.record({ role: "user", text: prompt, scope, slideId });
+    this.pending = true;
     // Run asynchronously; progress is streamed as events.
     (async () => {
       try {
         await this.ensureSession();
       } catch (err) {
+        this.pending = false;
         this.emit("event", { type: "done", changed: [], error: { message: err.message, auth: Boolean(this.error?.auth) }, text: "" });
         this.record({ role: "error", text: err.message });
         return;
       }
-      this.turn = { scope, slideId, text: "", final: "", timer: setTimeout(() => this.abort("timeout"), TURN_TIMEOUT_MS) };
+      this.pending = false;
+      const turn = { scope, slideId, text: "", final: "" };
+      turn.timer = setTimeout(() => {
+        if (this.turn === turn) this.abort("timeout");
+      }, TURN_TIMEOUT_MS);
+      this.turn = turn;
       this.store.beginGroup(`Agent: ${prompt.slice(0, 48)}`, "agent");
       this.setState("busy");
       this.emit("event", { type: "start", scope, slideId });
@@ -242,7 +258,7 @@ export class AgentController extends EventEmitter {
       try {
         await this.session.send({ prompt: `${context}\n\n${prompt}` });
       } catch (err) {
-        this.finishTurn({ message: err.message, auth: /auth|login|401|token/i.test(err.message) });
+        this.finishTurn({ message: err.message, auth: /auth|login|401|token/i.test(err.message) }, turn);
       }
     })();
   }

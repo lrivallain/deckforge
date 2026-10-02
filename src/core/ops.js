@@ -27,12 +27,32 @@ function requireTemplate(ctx, name) {
   return template;
 }
 
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const KEY_RE = /^(?:\d+|[A-Za-z_][\w-]*)$/;
+
+function checkKey(key) {
+  if (UNSAFE_KEYS.has(key) || !KEY_RE.test(key)) throw new OpError(`Invalid slot key "${key}"`);
+  return key;
+}
+
+/** Deep-copy plain data, rejecting keys that could pollute prototypes. */
+function cleanData(value, depth = 0) {
+  if (depth > 12) throw new OpError("Slot data is nested too deeply");
+  if (Array.isArray(value)) return value.map((item) => cleanData(item, depth + 1));
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const key of Object.keys(value)) out[checkKey(key)] = cleanData(value[key], depth + 1);
+    return out;
+  }
+  return value;
+}
+
 function setPath(target, path, value) {
-  const parts = String(path).split(".");
+  const parts = String(path).split(".").map(checkKey);
   let node = target;
   for (let i = 0; i < parts.length - 1; i++) {
     const key = /^\d+$/.test(parts[i]) && Array.isArray(node) ? Number(parts[i]) : parts[i];
-    if (node[key] === undefined || node[key] === null || typeof node[key] !== "object") {
+    if (!Object.hasOwn(node, key) || node[key] === null || typeof node[key] !== "object") {
       node[key] = /^\d+$/.test(parts[i + 1]) ? [] : {};
     }
     node = node[key];
@@ -65,12 +85,12 @@ export const OPS = {
     const slide = next.slides[findIndex(next, id)];
     if (data !== undefined) {
       if (!data || typeof data !== "object" || Array.isArray(data)) throw new OpError("data must be an object of slot values");
-      slide.data = replace ? clone(data) : { ...slide.data, ...clone(data) };
+      slide.data = replace ? cleanData(data) : { ...slide.data, ...cleanData(data) };
       for (const [key, value] of Object.entries(slide.data)) if (value === null) delete slide.data[key];
     }
     if (set !== undefined) {
       if (!set || typeof set !== "object") throw new OpError("set must map slot paths to values");
-      for (const [path, value] of Object.entries(set)) setPath(slide.data, path, clone(value));
+      for (const [path, value] of Object.entries(set)) setPath(slide.data, path, cleanData(value));
     }
     if (notes !== undefined) slide.notes = String(notes ?? "");
     if (title !== undefined) {
@@ -88,7 +108,7 @@ export const OPS = {
     const tpl = requireTemplate(ctx, template);
     const next = clone(deck);
     const slide = normalizeSlide(
-      { id: id || makeSlideId(next.slides.map((s) => s.id), title || template), template, data: data ? { ...sampleData(tpl), ...clone(data) } : sampleData(tpl), notes, title },
+      { id: id || makeSlideId(next.slides.map((s) => s.id), title || template), template, data: data ? { ...sampleData(tpl), ...cleanData(data) } : sampleData(tpl), notes, title },
       next.slides.map((s) => s.id),
     );
     let position = next.slides.length;
@@ -136,7 +156,7 @@ export const OPS = {
     const next = clone(deck);
     const slide = next.slides[findIndex(next, id)];
     slide.template = template;
-    slide.data = adaptData(data ? { ...slide.data, ...clone(data) } : slide.data, tpl);
+    slide.data = adaptData(data ? { ...slide.data, ...cleanData(data) } : slide.data, tpl);
     return { deck: next, changed: [id], result: { id, template } };
   },
 
@@ -152,7 +172,9 @@ export const OPS = {
     const next = clone(deck);
     for (const [key, value] of Object.entries(meta)) {
       if (key === "brief") {
-        next.meta.brief = { ...next.meta.brief, ...(value || {}) };
+        const known = ["topic", "audience", "goal", "sources", "duration", "language", "notes"];
+        const patch = Object.fromEntries(Object.entries(value || {}).filter(([k]) => known.includes(k)));
+        next.meta.brief = { ...next.meta.brief, ...patch };
         for (const [k, v] of Object.entries(next.meta.brief)) if (v === null || v === "") delete next.meta.brief[k];
         if (next.meta.brief.sources && !Array.isArray(next.meta.brief.sources)) next.meta.brief.sources = [String(next.meta.brief.sources)];
       } else if (["title", "subtitle", "author", "date", "footer", "description", "lang"].includes(key)) {

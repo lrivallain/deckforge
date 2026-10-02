@@ -50,7 +50,33 @@ const EDITOR_CSP = [
   "frame-ancestors 'none'",
 ].join("; ");
 
-const LIVE_RELOAD = (eventsPath) => `<script>(function(){try{var es=new EventSource(${JSON.stringify(eventsPath)});es.addEventListener("built",function(){var h=location.hash;location.reload();});}catch(e){}})();</script>`;
+const LIVE_RELOAD = (eventsPath, nonce) => `<script nonce="${nonce}">(function(){try{var es=new EventSource(${JSON.stringify(eventsPath)});es.addEventListener("built",function(){location.reload();});}catch(e){}})();</script>`;
+
+/**
+ * Defense in depth for the generated deck served next to the editor API:
+ * only the deckforge runtime may run scripts (no inline handlers or injected
+ * <script>), so a content-sanitizer bypass cannot drive the API.
+ */
+export function protectDeckHtml(html, nonce) {
+  const marker = "<script data-df-runtime>";
+  const index = html.lastIndexOf(marker);
+  let out = index === -1 ? html : `${html.slice(0, index)}<script data-df-runtime nonce="${nonce}">${html.slice(index + marker.length)}`;
+  const bodyEnd = out.toLowerCase().lastIndexOf("</body>");
+  out = bodyEnd === -1 ? out + LIVE_RELOAD("/api/events", nonce) : out.slice(0, bodyEnd) + LIVE_RELOAD("/api/events", nonce) + out.slice(bodyEnd);
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net`,
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+    "img-src 'self' data: https:",
+    "font-src 'self' data: https:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "frame-ancestors 'self'",
+  ].join("; ");
+  return { html: out, csp };
+}
 
 function send(res, status, body, headers = {}) {
   const payload = typeof body === "string" || Buffer.isBuffer(body) ? body : JSON.stringify(body);
@@ -157,7 +183,7 @@ export async function startServer({
     return safeEqual(parseCookies(req.headers.cookie).df_token, token);
   }
 
-  function serveFile(res, file, { inject } = {}) {
+  function serveFile(res, file, { deckPage = false } = {}) {
     let stat;
     try {
       stat = fs.statSync(file);
@@ -167,8 +193,13 @@ export async function startServer({
     if (stat.isDirectory()) return send(res, 404, "Not found");
     const type = MIME[path.extname(file).toLowerCase()] || "application/octet-stream";
     let body = fs.readFileSync(file);
-    if (inject && type.startsWith("text/html")) body = body.toString("utf8").replace(/<\/body>/i, `${inject}</body>`);
-    send(res, 200, body, { "Content-Type": type });
+    const headers = { "Content-Type": type };
+    if (deckPage && type.startsWith("text/html")) {
+      const protectedPage = protectDeckHtml(body.toString("utf8"), crypto.randomBytes(16).toString("base64"));
+      body = protectedPage.html;
+      headers["Content-Security-Policy"] = protectedPage.csp;
+    }
+    send(res, 200, body, headers);
   }
 
   async function handleApi(req, res, url) {
@@ -249,7 +280,7 @@ export async function startServer({
       if (url.pathname.startsWith("/deck/")) {
         const file = resolveInside(store.deckDir, url.pathname.slice("/deck/".length));
         if (!file) return send(res, 404, "Not found");
-        return serveFile(res, file, { inject: file === store.outPath ? LIVE_RELOAD("/api/events") : null });
+        return serveFile(res, file, { deckPage: file === store.outPath });
       }
       return send(res, 404, "Not found");
     } catch (err) {

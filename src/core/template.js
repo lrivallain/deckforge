@@ -182,7 +182,7 @@ export function parseTemplate(source, { name, scope = "builtin", path = null } =
   if (!NAME_RE.test(templateName)) errors.push(`Template name "${templateName}" must match ${NAME_RE}`);
   const slots = {};
   for (const [key, def] of Object.entries(meta.slots || {})) {
-    if (RESERVED_SLOTS.has(key)) errors.push(`Slot name "${key}" is reserved`);
+    if (RESERVED_SLOTS.has(key) || key === "__proto__" || key === "constructor" || key === "prototype") errors.push(`Slot name "${key}" is reserved`);
     else if (!/^[A-Za-z_][\w-]*$/.test(key)) errors.push(`Invalid slot name "${key}"`);
     slots[key] = normalizeSlot(key, def, errors);
   }
@@ -224,14 +224,14 @@ export function analyzeTemplate(template) {
       if (node.type === "value" || node.type === "if" || node.type === "unless" || node.type === "each") {
         const head = node.path.split(".")[0];
         if (!(head.startsWith("@") || head === "this" || head === "slide" || head === "deck")) {
-          const found = [...scopes].reverse().find((s) => s.fields && head in s.fields);
+          const found = [...scopes].reverse().find((s) => s.fields && Object.hasOwn(s.fields, head));
           if (!found) issues.push({ level: "error", message: `Unknown slot "${node.path}"` });
           else if (found.root) used.add(head);
         }
       }
       if (node.type === "each") {
         const head = node.path.split(".")[0];
-        const found = [...scopes].reverse().find((s) => s.fields && head in s.fields);
+        const found = [...scopes].reverse().find((s) => s.fields && Object.hasOwn(s.fields, head));
         const slot = found?.fields[head];
         if (slot && slot.type !== "list" && slot.type !== "cards") {
           issues.push({ level: "error", message: `{{#each ${node.path}}} needs a list or cards slot` });
@@ -320,7 +320,7 @@ function lookup(path, frames) {
       if (frame.item === undefined) continue;
       return resolveIn(frame.item, frame.itemSchema, parts.slice(1), frame.path);
     }
-    if (frame.fields && (head in frame.fields || (frame.value && typeof frame.value === "object" && head in frame.value))) {
+    if (frame.fields && (Object.hasOwn(frame.fields, head) || (frame.value && typeof frame.value === "object" && Object.hasOwn(frame.value, head)))) {
       return resolveIn(frame.value?.[head], frame.fields[head] || { type: "text" }, parts.slice(1), frame.path ? `${frame.path}.${head}` : head);
     }
   }
@@ -334,6 +334,10 @@ function resolveIn(value, schema, rest, path) {
   let currentPath = path;
   for (const part of rest) {
     if (current === undefined || current === null) break;
+    if (typeof current !== "object" || !Object.hasOwn(current, part)) {
+      current = undefined;
+      break;
+    }
     if (Array.isArray(current) && /^\d+$/.test(part)) {
       current = current[Number(part)];
       currentSchema = currentSchema?.type === "cards" ? { type: "object", fields: currentSchema.fields } : { type: currentSchema?.of || "text" };

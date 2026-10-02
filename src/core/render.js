@@ -117,7 +117,7 @@ export function renderDeck(deck, opts) {
   let jsTag;
   if (runtime === "inline") {
     cssTag = `<style id="df-runtime">\n${safeInlineStyle(assets.css ?? "")}\n</style>`;
-    jsTag = `<script>\n${safeInlineScript(assets.js ?? "")}\n</script>`;
+    jsTag = `<script data-df-runtime>\n${safeInlineScript(assets.js ?? "")}\n</script>`;
   } else {
     const base = runtime === "cdn" ? cdnBase(version) : opts.assetBase ?? "deckforge/";
     cssTag = `<link rel="stylesheet" href="${escapeAttr(base)}deckforge.viewer.css">`;

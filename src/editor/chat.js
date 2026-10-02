@@ -130,7 +130,7 @@ export function createChat() {
 
   async function send() {
     const text = input.value.trim();
-    if (!text || state.agent.state === "busy" || state.agent.state === "starting") return;
+    if (!text || root.classList.contains("is-busy") || state.agent.state === "busy" || state.agent.state === "starting") return;
     const slide = selectedSlide();
     if (scope === "slide" && !slide) return;
     state.agent.messages.push({ role: "user", text });
