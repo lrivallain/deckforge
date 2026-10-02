@@ -1,0 +1,29 @@
+# GitHub Copilot app repository configuration.
+# Reference: https://docs.github.com/copilot/reference/github-copilot-app-reference/repository-configuration
+
+instructions: |
+  deckforge is a Node.js (>= 20.19) ESM project with no build step for the CLI/server; dist/ is built by esbuild.
+  - Install with `npm ci` only (lockfile-respecting; keep package-lock resolved URLs as generated).
+  - Checks: `npm run lint`, `npm test` (vitest), `npm run test:e2e` (Playwright: builds first). CI also checks
+    that dist/ and examples/starter/deck.html are up to date, so commit `npm run build` output.
+  - Live preview: `npm run dev` (esbuild watch + `deckforge edit` on .demo/preview, restarts on src/bin/dist changes).
+    It picks a free port in 4370-4399 once per run (`--port N` forces one), `--reset` restores the example deck,
+    `--serve` runs the read-only viewer. Stop it with Ctrl+C or SIGTERM; it cleans up its children.
+  - Never stop, restart or bind processes you did not start (other worktrees use 4370-4399; port 9000 is a
+    long-running local service). Kill only by the PIDs you started.
+
+scripts:
+  - name: Install dependencies
+    command: npm ci --no-audit --no-fund
+    triggers:
+      - session.create
+  - name: Live editor
+    command: npm run dev
+  - name: Live editor (reset example deck)
+    command: npm run dev -- --reset
+  - name: Viewer only
+    command: npm run dev -- --serve
+
+# `deckforge edit` prints "  Editor: http://127.0.0.1:<port>/?token=<token>" on every (re)start.
+server_ready_pattern: 'Editor: (https?://\S+)'
+auto_open_in_browser: true

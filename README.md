@@ -357,8 +357,23 @@ npm run build           # esbuild → dist/deckforge.{viewer,editor}.{js,css}
 npm test                # vitest unit tests (core, server, agent with a mocked SDK, CLI)
 npm run test:e2e        # Playwright (Chromium + WebKit): viewer a11y/print/no-JS, editor flows, agent (mocked SDK)
 npm run lint
-npm run dev             # rebuild on change + `deckforge edit` on a scratch copy of the example (port 4370)
+npm run dev             # rebuild on change + `deckforge edit` on a scratch copy of the example
+npm run dev -- --reset  # same, after restoring .demo/preview from examples/starter
+npm run dev -- --serve  # read-only viewer (`deckforge serve`) instead of the editor
 ```
+
+`npm run dev` runs esbuild in watch mode and `deckforge edit` on `.demo/preview/deck.yaml`. The server
+restarts when `src/`, `bin/` or `dist/` change. It picks the first
+free port in 4370–4399 once at startup and keeps it across restarts. The access token is also stable per
+checkout (`.demo/preview-token`), so the `Editor:` URL, printed after every restart, keeps working in an
+open tab. `--port N` forces a port. Several worktrees can run it at once: each reserves its port with a lock
+file in the OS temp directory. Ctrl+C or SIGTERM stops the watcher and the server.
+
+The [GitHub Copilot app](https://docs.github.com/copilot/reference/github-copilot-app-reference/repository-configuration)
+reads `.github/github-app.yml` from the default branch, after you trust it once. It runs
+`npm ci` when a session is created and adds on-demand **Live editor**, **Live editor (reset example deck)**
+and **Viewer only** scripts. Its `server_ready_pattern` (`Editor: (https?://\S+)`) captures the editor URL
+with its token and opens it in the browser.
 
 Editor previews are written into same-origin `about:blank` iframes with `document.write`. They do not use
 `srcdoc` or `blob:` URLs, which some WebKit hosts (for example Tauri WKWebView) never load. An e2e test
