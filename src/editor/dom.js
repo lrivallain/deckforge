@@ -1,0 +1,133 @@
+// Tiny DOM helpers for the editor (no framework).
+
+export function h(tag, props = {}, ...children) {
+  const el = document.createElement(tag);
+  for (const [key, value] of Object.entries(props || {})) {
+    if (value === undefined || value === null || value === false) continue;
+    if (key === "class") el.className = value;
+    else if (key === "style" && typeof value === "object") Object.assign(el.style, value);
+    else if (key === "dataset") Object.assign(el.dataset, value);
+    else if (key.startsWith("on") && typeof value === "function") el.addEventListener(key.slice(2).toLowerCase(), value);
+    else if (key === "html") el.innerHTML = value;
+    else if (value === true) el.setAttribute(key, "");
+    else if (key in el && !key.includes("-") && key !== "list" && key !== "form") el[key] = value;
+    else el.setAttribute(key, String(value));
+  }
+  append(el, children);
+  return el;
+}
+
+function append(el, children) {
+  for (const child of children.flat(Infinity)) {
+    if (child === null || child === undefined || child === false) continue;
+    el.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+}
+
+export function clear(el) {
+  while (el.firstChild) el.firstChild.remove();
+  return el;
+}
+
+const ICON_PATHS = {
+  plus: "M12 5v14M5 12h14",
+  copy: "M8 8h11v11H8zM5 16V5h11",
+  trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3",
+  eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
+  eyeOff: "M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.3 4M6.6 6.6C3.9 8.4 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2",
+  undo: "M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3",
+  redo: "M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3",
+  play: "M7 4l13 8-13 8z",
+  sparkles: "M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8zM18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z",
+  code: "M8 7l-5 5 5 5M16 7l5 5-5 5",
+  settings: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z",
+  close: "M6 6l12 12M18 6L6 18",
+  up: "M12 19V5M6 11l6-6 6 6",
+  down: "M12 5v14M6 13l6 6 6-6",
+  grip: "M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01",
+  send: "M4 12l16-8-6 16-2-7z",
+  stop: "M7 7h10v10H7z",
+  check: "M5 12.5l4.5 4.5L19 7",
+  alert: "M12 3l9.5 17h-19zM12 10v4.5M12 17.5h.01",
+  external: "M14 4h6v6M20 4l-9 9M18 14v6H4V6h6",
+  chevron: "M9 6l6 6-6 6",
+  palette: "M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1-.8-1.3-.8-2.2 0-.9.7-1.3 1.6-1.3H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3zM7.5 12h.01M9.5 8h.01M14.5 8h.01",
+  layout: "M4 4h16v16H4zM4 10h16M10 10v10",
+};
+
+export function icon(name, size = 18) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("width", String(size));
+  svg.setAttribute("height", String(size));
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("class", "ui-icon");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", ICON_PATHS[name] || "");
+  svg.append(path);
+  return svg;
+}
+
+export function debounce(fn, ms) {
+  let timer;
+  const wrapped = (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+  wrapped.flush = (...args) => {
+    clearTimeout(timer);
+    fn(...args);
+  };
+  wrapped.cancel = () => clearTimeout(timer);
+  return wrapped;
+}
+
+let toastHost;
+export function toast(message, { action, onAction, kind = "info", timeout = 4000 } = {}) {
+  if (!toastHost) {
+    toastHost = h("div", { class: "toasts", role: "status", "aria-live": "polite" });
+    document.body.append(toastHost);
+  }
+  const node = h("div", { class: `toast toast-${kind}` }, h("span", {}, message));
+  if (action) {
+    node.append(h("button", { type: "button", class: "btn btn-link", onClick: () => { onAction?.(); node.remove(); } }, action));
+  }
+  toastHost.append(node);
+  setTimeout(() => node.classList.add("leaving"), timeout);
+  setTimeout(() => node.remove(), timeout + 300);
+  return node;
+}
+
+/** Fit a 1280×720 iframe into its container by scaling. */
+export function fitFrame(container, frame, { width = 1280, height = 720 } = {}) {
+  const rect = container.getBoundingClientRect();
+  const scale = Math.min(rect.width / width, rect.height / height);
+  frame.style.transform = `scale(${scale})`;
+  frame.style.width = `${width}px`;
+  frame.style.height = `${height}px`;
+  return scale;
+}
+
+/** Update an iframe document smoothly: swap <body> when the <head> is unchanged. */
+export function writeFrame(frame, html) {
+  const headMatch = /<head>([\s\S]*?)<\/head>/.exec(html);
+  const bodyMatch = /<body>([\s\S]*?)<\/body>/.exec(html);
+  const head = headMatch ? headMatch[1] : "";
+  const doc = frame.contentDocument;
+  if (frame.dataset.ready === "1" && frame._head === head && doc && doc.body && bodyMatch) {
+    if (frame._body !== bodyMatch[1]) {
+      doc.body.innerHTML = bodyMatch[1];
+      frame._body = bodyMatch[1];
+      frame.dispatchEvent(new CustomEvent("frame-updated"));
+    }
+    return;
+  }
+  frame._head = head;
+  frame._body = bodyMatch ? bodyMatch[1] : "";
+  frame.dataset.ready = "0";
+  frame.addEventListener("load", () => {
+    frame.dataset.ready = "1";
+    frame.dispatchEvent(new CustomEvent("frame-updated"));
+  }, { once: true });
+  frame.srcdoc = html;
+}

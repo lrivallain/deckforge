@@ -193,6 +193,7 @@ export function parseTemplate(source, { name, scope = "builtin", path = null } =
     label: meta.label || templateName,
     description: String(meta.description || ""),
     category: meta.category || "content",
+    order: Number.isFinite(Number(meta.order)) ? Number(meta.order) : 50,
     classes: String(meta.class || "").split(/\s+/).filter(Boolean),
     slots,
     html,
@@ -294,7 +295,8 @@ function formatValue(value, type, { inTag, edit, path }) {
       html = textToHtml(typeof value === "object" ? "" : value);
   }
   if (edit && path) {
-    return `<span class="df-slot" data-df-slot="${escapeAttr(path)}" data-df-type="${type === "richtext" ? "richtext" : "text"}">${html}</span>`;
+    // A custom element keeps template selectors such as `.label span` unaffected.
+    return `<df-slot class="df-slot" data-df-slot="${escapeAttr(path)}" data-df-type="${type === "richtext" ? "richtext" : "text"}">${html}</df-slot>`;
   }
   return html;
 }

@@ -140,7 +140,7 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
 .df-frame .slide {
   width: 1280px; height: 720px; margin: 0; border: 0; border-radius: 0; box-shadow: none;
 }
-.df-edit .df-slot { border-radius: 3px; transition: box-shadow .12s ease, background-color .12s ease; }
+.df-edit .df-slot { border-radius: 3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: box-shadow .12s ease, background-color .12s ease; }
 .df-edit .df-slot:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--df-primary) 35%, transparent); cursor: text; }
 .df-edit .df-slot:focus { outline: none; box-shadow: 0 0 0 2px var(--df-primary); background: color-mix(in srgb, var(--df-primary-soft) 55%, transparent); }
 .df-edit .df-slot:empty::before { content: "\2026"; color: var(--df-muted); opacity: .6; }

@@ -39,6 +39,7 @@ export class DeckStore extends EventEmitter {
     this.templates = t.templates;
     this.themes = th.themes;
     this.registryErrors = [...t.errors, ...th.errors];
+    this.registryVersion = (this.registryVersion || 0) + 1;
   }
 
   loadDeck() {
@@ -52,8 +53,23 @@ export class DeckStore extends EventEmitter {
     return { templates: this.templates, themes: this.themes };
   }
 
+  /** Small state payload broadcast on every change. */
+  lightSnapshot() {
+    return {
+      version: this.version,
+      registryVersion: this.registryVersion,
+      deck: this.deck,
+      canUndo: this.undoStack.length > 0,
+      canRedo: this.redoStack.length > 0,
+      undoLabel: this.undoStack.at(-1)?.label ?? null,
+      redoLabel: this.redoStack.at(-1)?.label ?? null,
+      busy: Boolean(this.group),
+    };
+  }
+
   snapshot() {
     return {
+      ...this.lightSnapshot(),
       version: this.version,
       deck: this.deck,
       deckPath: this.deckPath,
@@ -63,9 +79,9 @@ export class DeckStore extends EventEmitter {
       canRedo: this.redoStack.length > 0,
       undoLabel: this.undoStack.at(-1)?.label ?? null,
       redoLabel: this.redoStack.at(-1)?.label ?? null,
-      templates: Object.values(this.templates).map((t) => ({
-        name: t.name, label: t.label, description: t.description, category: t.category, scope: t.scope, source: t.source,
-      })),
+      templates: Object.values(this.templates)
+        .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+        .map((t) => ({ name: t.name, label: t.label, description: t.description, category: t.category, scope: t.scope, source: t.source })),
       themes: Object.values(this.themes).map((t) => ({ name: t.name, label: t.label, description: t.description, scope: t.scope, css: t.css, palette: t.palette })),
       registryErrors: this.registryErrors.map((e) => ({ path: path.relative(this.deckDir, e.path) || e.path, message: e.message })),
       configDir: configDir(),

@@ -143,7 +143,7 @@ export async function startServer({
     const frame = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const res of clients) res.write(frame);
   };
-  store.on("change", (info) => broadcast("deck", { ...info, state: store.snapshot() }));
+  store.on("change", (info) => broadcast("deck", { ...info, state: store.lightSnapshot() }));
   store.on("built", (info) => broadcast("built", info));
   store.on("warning", (info) => broadcast("warning", info));
   agent?.on("event", (event) => broadcast("agent", event));
