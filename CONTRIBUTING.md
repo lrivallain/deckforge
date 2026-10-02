@@ -40,8 +40,7 @@ CI also checks that the committed build output is up to date. After you change `
 
 ```bash
 npm run build
-node bin/deckforge.js build examples/starter
-node bin/deckforge.js build examples/aurora
+for deck in examples/*/; do node bin/deckforge.js build "$deck"; done
 ```
 
 ## Documentation

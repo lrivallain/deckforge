@@ -14,8 +14,24 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Copilot: continue the editor's conversation in Copilot CLI or the GitHub Copilot app. The drawer shows the session ID, and **Continue in Copilot** releases the session and gives a `copilot --resume` command or opens `ghapp://sessions/<id>`. The editor resumes its last conversation for each deck.
 - `deckforge mcp [<deck>]`: a stdio MCP server with the deck tools. With a running `deckforge edit`, its changes appear live and can be undone. Without a deck it uses the `deck.yaml` of the Copilot session's folder. `deckforge mcp --install`, or **Add the deck tools to Copilot** in the editor, registers it in `~/.copilot/mcp-config.json`.
 
+- Offline technical decks ([#20](https://github.com/lrivallain/deckforge/issues/20)):
+  - `number` slots and data-driven chart templates: `bars` (horizontal or vertical, hatched projected part), `donut`,
+    `compare-bars`, `kpis` and `table`. Bar lengths, segments and totals are computed from the values when the deck is
+    rendered (`{{@pct.f}}`, `{{@share.f}}`, `{{@start.f}}`, `{{items.@sum.f}}`…), with a generated `aria-label` and
+    screen-reader table. The inspector edits numbers with a number field.
+  - Technical templates: `timeline`, `options-matrix`, `risk-register`, `decision`, `funnel` and `checklist`.
+  - Starter decks: `deckforge new <dir> --example architecture-review | postmortem | assessment | decision-record`.
+  - Per-slide `sources:`, listed in the speaker notes and on a generated Sources appendix slide (`meta.sourcesSlide`).
+  - `deckforge build --check-offline` fails on any `http(s)` resource and adds a network-blocking CSP to inline decks;
+    `--strip-notes` leaves the speaker notes out. Inline decks embed the theme's own font files.
+  - `deckforge diff <a> <b>`: a per-slide summary of the changes for pull request reviews.
+  - Guides: Technical decks, Share offline, and Decks in git and CI (with a GitHub Actions workflow).
+- Validation warns about card fields a template doesn't declare, usually a value with an unquoted comma.
+- PowerPoint export: `repeating-linear-gradient` backgrounds (hatching) become vector pictures.
+
 ### Fixed
 
+- `zoom` template: the highlighted response title uses the theme's small-text accent colour, for 4.5:1 contrast.
 - Editor: the page no longer scrolls past the app, which used to push the toolbar out of view.
 - Editor: the URL printed by `deckforge edit` now opens from hosts that start navigations on another site, such as the GitHub Copilot app's built-in browser. The token cookie is `SameSite=Lax` instead of `Strict`.
 - `npm run dev` no longer fails at random with "Option '--token' argument is ambiguous": tokens never start with `-`, and the token is passed as `--token=<t>`.

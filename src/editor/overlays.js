@@ -574,7 +574,7 @@ export function createOverlayLayer({ frame, getScale, onRejected, focusStage }) 
     const slide = selectedSlide();
     const d = doc();
     if (!slide || !d?.body) return [];
-    const texts = [...d.querySelectorAll(".slide-inner df-slot")].filter((el) => el.textContent.trim() && !el.hasAttribute("data-df-placeholder"));
+    const texts = [...d.querySelectorAll(".slide-inner df-slot")].filter((el) => !el.closest(".sr-only") && el.textContent.trim() && !el.hasAttribute("data-df-placeholder"));
     const rects = texts.map((el) => ({ slot: el.dataset.dfSlot, rects: [...el.getClientRects()] }));
     const out = [];
     for (const o of slide.overlays || []) {

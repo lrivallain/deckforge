@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en" data-theme="build">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="deckforge 0.1.0">
+  <title>Data centre exit - assessment</title>
+  <meta name="description" content="Agree the scope, the target cost and the first migration wave">
+  <style id="df-runtime">
+/*! deckforge | MIT License | https://github.com/lrivallain/deckforge */
+*{box-sizing:border-box}html{background:var(--df-chrome, var(--df-bg))}body{margin:0;background:var(--df-chrome, var(--df-bg));color:var(--df-ink);font-family:var(--df-font-body)}h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}a{color:var(--df-primary);text-underline-offset:.15em}button,select{font:inherit}button,a,select{touch-action:manipulation}:focus-visible{outline:3px solid var(--df-primary);outline-offset:4px}.stage{padding:20px}.slide{position:relative;width:min(1280px,100%);aspect-ratio:16 / 9;container-type:inline-size;margin:0 auto 24px;overflow:hidden;background:var(--df-paper);border:1px solid var(--df-line);border-radius:var(--df-radius-slide);box-shadow:var(--df-shadow-slide)}.slide-inner{position:absolute;inset:0;padding:var(--df-space-padding);display:flex;flex-direction:column;gap:var(--df-space-gap)}.header{display:flex;align-items:flex-end;justify-content:space-between;gap:2cqw}.header>div{min-width:0}.eyebrow{font:400 1.25cqw / 1.4 var(--df-font-mono);color:var(--df-primary);letter-spacing:.13em;text-transform:uppercase;margin-bottom:.6cqw}h1{font:800 3.4cqw / 1.1 var(--df-font-heading);letter-spacing:-.02em}h1 .old{display:block;font-size:2cqw;font-weight:600;color:var(--df-muted);margin-bottom:.3cqw}.blue,.primary{color:var(--df-primary)}.amber,.accent{color:var(--df-accent)}.muted{color:var(--df-muted)}.ok{color:var(--df-ok)}.mono{font-family:var(--df-font-mono)}.nowrap{white-space:nowrap}.subtitle{flex:0 0 24cqw;color:var(--df-muted);font-size:1.65cqw;line-height:1.4;text-align:right}h2,h3{font:600 1.95cqw / 1.2 var(--df-font-heading)}.icon{flex:none;width:2.1cqw;height:2.1cqw;stroke:var(--df-primary);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;fill:none}.pill{align-self:flex-start;font:400 1.2cqw var(--df-font-mono);color:var(--df-primary);border:1px solid var(--df-primary-line);border-radius:var(--df-radius-pill);background:var(--df-paper);padding:.3cqw .75cqw}.arrow{align-self:center;text-align:center;font-size:2.3cqw;color:var(--df-primary)}.card{background:var(--df-node);border:1px solid var(--df-line);border-radius:var(--df-radius-card);padding:1.2cqw 1.4cqw}.card.focus{border-color:var(--df-primary-line);background:var(--df-primary-soft)}.card.highlight{border-color:var(--df-accent-line);background:var(--df-accent-soft)}.outcome{display:flex;align-items:center;gap:1cqw;padding:.8cqw 1.2cqw;background:var(--df-primary-soft);border:1px solid var(--df-primary-line);border-radius:var(--df-radius-card);font-size:1.65cqw;line-height:1.35}.outcome strong{font-weight:600;white-space:nowrap}.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:2cqw;font:400 1.1cqw / 1.4 var(--df-font-mono);color:var(--df-muted);text-transform:uppercase}.foot .num{color:var(--df-primary);white-space:nowrap}.series-0{--series: var(--df-primary)}.series-1{--series: var(--df-accent)}.series-2{--series: var(--df-ok)}.series-3{--series: var(--df-muted)}.series-4{--series: var(--df-primary-line)}.series-5{--series: var(--df-accent-line)}.series-6{--series: var(--df-ink)}.series-7{--series: var(--df-line)}.swatch{display:inline-block;flex:none;width:1.1cqw;height:1.1cqw;border-radius:3px;background:var(--series, var(--df-primary))}.source{font:400 1.1cqw / 1.4 var(--df-font-mono);color:var(--df-muted)}.df-missing{margin:auto;text-align:center;display:grid;gap:1cqw;color:var(--df-muted)}.df-img{display:block;width:100%;height:100%;min-width:0;min-height:0}.media{position:relative;overflow:hidden;min-height:0;margin:0;background:var(--df-node);border:1px solid var(--df-line);border-radius:var(--df-radius-frame)}.media>.df-img,.media>.df-img-empty{position:absolute;inset:0}.media-caption{font:400 1.2cqw / 1.4 var(--df-font-mono);color:var(--df-muted);letter-spacing:.04em}.df-overlay{position:absolute;inset:0;z-index:5;pointer-events:none}.df-ov{position:absolute;box-sizing:border-box;pointer-events:auto;min-width:0;min-height:0}.df-ov-image{overflow:hidden;border-radius:var(--df-radius-small)}.df-ov-text{display:flex;flex-direction:column;justify-content:center;overflow:hidden;color:var(--df-ink)}.df-text-body{font:400 1.8cqw / 1.4 var(--df-font-body)}.df-text-heading{font:600 2.4cqw / 1.2 var(--df-font-heading)}.df-text-title{font:800 3.4cqw / 1.1 var(--df-font-heading);letter-spacing:-.02em}.df-text-caption{font:400 1.35cqw / 1.4 var(--df-font-body);color:var(--df-muted)}.df-text-label{font:400 1.25cqw / 1.4 var(--df-font-mono);letter-spacing:.13em;text-transform:uppercase}.df-align-left{text-align:left}.df-align-center{text-align:center}.df-align-right{text-align:right}.df-color-ink{color:var(--df-ink)}.df-color-muted{color:var(--df-muted)}.df-color-primary{color:var(--df-primary)}.df-color-accent{color:var(--df-accent-text, var(--df-accent))}.df-ov-callout{display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding:.9cqw 1.3cqw;font:400 1.65cqw / 1.35 var(--df-font-body);color:var(--df-ink);border:1px solid var(--df-primary-line);background:var(--df-primary-soft);border-radius:var(--df-radius-card)}.df-ov-callout.df-tone-accent{border-color:var(--df-accent-line);background:var(--df-accent-soft)}.df-ov-callout.df-tone-neutral{border-color:var(--df-line);background:var(--df-node)}.df-ov-arrow{--df-stroke: .3cqw}.df-ov-arrow.df-weight-thin{--df-stroke: .18cqw}.df-ov-arrow.df-weight-bold{--df-stroke: .5cqw}.df-ov-arrow.df-color-accent{color:var(--df-accent)}.df-ah-shaft{position:absolute;left:0;right:0;top:50%;border-top:var(--df-stroke) solid currentColor;transform:translateY(-50%)}.df-line-dashed .df-ah-shaft{border-top-style:dashed}.df-ah{position:absolute;top:50%;width:calc(var(--df-stroke) * 4 + .5cqw);height:calc(var(--df-stroke) * 3.4 + .5cqw);background:currentColor;transform:translateY(-50%)}.df-ah-end{right:0;clip-path:polygon(0 0,100% 50%,0 100%)}.df-ah-start{left:0;clip-path:polygon(100% 0,0 50%,100% 100%)}.df-ov-arrow:has(.df-ah-end) .df-ah-shaft{right:calc(var(--df-stroke) * 2)}.df-ov-arrow:has(.df-ah-start) .df-ah-shaft{left:calc(var(--df-stroke) * 2)}.df-ov-shape{border:2px solid transparent;border-radius:var(--df-radius-card)}.df-shape-rect{border-radius:0}.df-shape-ellipse{border-radius:50%}.df-shape-pill{border-radius:var(--df-radius-pill)}.df-fill-primary{background:var(--df-primary-soft)}.df-fill-accent{background:var(--df-accent-soft)}.df-fill-neutral{background:var(--df-node)}.df-fill-paper{background:var(--df-paper)}.df-stroke-primary{border-color:var(--df-primary)}.df-stroke-accent{border-color:var(--df-accent)}.df-stroke-line{border-color:var(--df-line)}.df-stroke-dashed{border-color:var(--df-dashed);border-style:dashed}.presenting .stage{height:calc(100dvh - 64px);display:flex;align-items:center;justify-content:center}.presenting .slide{width:min(100%,calc((100dvh - 104px) * 16 / 9));flex:none;margin:0}.presenting.show-notes .stage{height:calc(78dvh - 64px)}.presenting.show-notes .slide{width:min(100%,calc((100dvh - 104px - 22dvh) * 16 / 9))}.notes-panel{height:22dvh;overflow:auto;padding:14px 24px;background:var(--df-paper);border-top:1px solid var(--df-line);font-size:16px;line-height:1.5;color:var(--df-ink)}.notes-panel p+p{margin-top:.6em}.notes-panel .empty{color:var(--df-muted);font-style:italic}.controls{min-height:64px;padding:10px 20px;gap:10px;align-items:center;justify-content:center;background:var(--df-paper);border-top:1px solid var(--df-line);font-size:14px;flex-wrap:wrap}.controls:not([hidden]){display:flex}.controls button,.controls select,.controls a{min-height:40px;border:1px solid var(--df-muted);border-radius:7px;background:var(--df-paper);color:var(--df-ink);padding:6px 12px}.controls a{display:inline-flex;align-items:center;text-decoration:none}.controls button{cursor:pointer}.controls button:disabled{cursor:default;color:var(--df-muted);border-color:var(--df-line)}.controls button[aria-pressed=true]{color:var(--df-paper);background:var(--df-primary);border-color:var(--df-primary)}.controls-sep{width:1px;height:28px;background:var(--df-line)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.no-script{margin:16px;color:var(--df-muted)}:fullscreen{background:var(--df-chrome, var(--df-bg))}@keyframes df-enter{0%{opacity:0;transform:translateY(var(--df-motion-distance))}to{opacity:1;transform:none}}.presenting:not(.static) .entered .reveal{animation:df-enter var(--df-motion-duration) var(--df-motion-easing) both;animation-delay:var(--delay, 0s)}.static .reveal{animation:none!important;opacity:1!important;transform:none!important}@media(max-width:560px){.controls{padding:8px;gap:6px;font-size:12px}.controls button,.controls select,.controls a{padding:6px}.controls select{max-width:40vw}.controls-sep{display:none}}@media(prefers-reduced-motion:reduce){.reveal{animation:none!important;opacity:1!important;transform:none!important}}@page{size:13.333333in 7.5in;margin:0}@media print{html,body{margin:0;background:#fff;print-color-adjust:exact;-webkit-print-color-adjust:exact}.stage,.presenting .stage,.presenting.show-notes .stage{display:block;height:auto;padding:0}.slide,.presenting .slide,.presenting.show-notes .slide,.slide[hidden]{display:block!important;width:min(100%,calc(100vh * 16 / 9))!important;height:auto!important;aspect-ratio:16 / 9;margin:0 auto;border:0;border-radius:0;box-shadow:none;break-after:page;break-inside:avoid}.slide:last-of-type{break-after:auto}.controls,.no-script,.notes-panel,.slide-notes{display:none!important}.reveal{animation:none!important;opacity:1!important;transform:none!important}}.df-frame,.df-frame body{background:var(--df-paper);overflow:hidden}.df-frame .slide{width:1280px;height:720px;margin:0;border:0;border-radius:0;box-shadow:none}.df-edit .df-slot{border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:box-shadow .12s ease,background-color .12s ease}.df-edit .df-slot:hover{box-shadow:0 0 0 2px color-mix(in srgb,var(--df-primary) 35%,transparent);cursor:text}.df-edit .df-slot:focus{outline:none;box-shadow:0 0 0 2px var(--df-primary);background:color-mix(in srgb,var(--df-primary-soft) 55%,transparent)}.df-edit .df-slot:empty:before{content:"\2026";color:var(--df-muted);opacity:.6}.df-edit .df-slot.df-selected{box-shadow:0 0 0 2px var(--df-accent)}.df-edit .df-img-empty{display:grid;place-items:center;min-height:6cqw;width:100%;height:100%;padding:1cqw;text-align:center;font:400 1.2cqw / 1.4 var(--df-font-mono);color:var(--df-muted);background:var(--df-node);border:1.5px dashed var(--df-dashed);border-radius:inherit;cursor:pointer}.df-edit .df-img-empty.df-drop,.df-edit [data-df-image].df-drop{outline:3px solid var(--df-primary);outline-offset:-3px}.df-edit .df-ov{cursor:move;-webkit-user-select:none;user-select:none}.df-edit .df-ov:hover{outline:1.5px dashed color-mix(in srgb,var(--df-primary) 55%,transparent);outline-offset:1px}.df-edit .df-gesture,.df-edit .df-gesture *{-webkit-user-select:none!important;user-select:none!important}.df-edit .df-reorderable:hover{outline:1px dashed color-mix(in srgb,var(--df-primary) 35%,transparent);outline-offset:2px}.df-edit .df-ov-empty{display:grid;place-items:center;width:100%;height:100%;font:400 1.2cqw var(--df-font-mono);color:var(--df-muted);border:1.5px dashed var(--df-dashed)}.df-edit .df-reorderable.df-dragging{opacity:.45}.df-edit .df-slot[data-df-placeholder]{opacity:.5;font-style:italic;outline:1px dashed color-mix(in srgb,var(--df-muted) 60%,transparent);outline-offset:2px}
+
+</style>
+  <style id="df-theme">
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 800; font-style: normal; font-display: swap; src: local("Bricolage Grotesque ExtraBold Regular"), local("BricolageGrotesqueExtraBold-Regular"); }
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 600; font-style: normal; font-display: swap; src: local("Bricolage Grotesque SemiBold Regular"), local("BricolageGrotesqueSemiBold-Regular"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 400; font-style: normal; font-display: swap; src: local("Instrument Sans Regular"), local("InstrumentSans-Regular"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 600; font-style: normal; font-display: swap; src: local("Instrument Sans SemiBold Regular"), local("InstrumentSansSemiBold-Regular"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap; src: local("IBM Plex Mono Regular"), local("IBMPlexMono-Regular"); }
+:root {
+  color-scheme: light;
+  --df-bg: #EDF1F7;
+  --df-paper: #FFFFFF;
+  --df-line: #E2E8F2;
+  --df-ink: #16202F;
+  --df-muted: #53617A;
+  --df-node: #F7F9FC;
+  --df-primary: #0F6CBD;
+  --df-primary-soft: #EAF3FC;
+  --df-primary-line: #BBD7F0;
+  --df-accent: #C2620A;
+  --df-accent-soft: #FFF4E4;
+  --df-accent-line: #F0C078;
+  --df-frame: #FFFCF5;
+  --df-ok: #1F9D6B;
+  --df-dashed: #53617A;
+  --df-accent-text: #A8550A;
+  --df-chrome: #EDF1F7;
+  --df-primary-text: #0F6CBD;
+  --df-font-heading: "Bricolage Grotesque", "Trebuchet MS", "Segoe UI", sans-serif;
+  --df-font-body: "Instrument Sans", "Segoe UI", Arial, sans-serif;
+  --df-font-mono: "IBM Plex Mono", Consolas, monospace;
+  --df-radius-slide: 12px;
+  --df-radius-card: 10px;
+  --df-radius-panel: 12px;
+  --df-radius-frame: 14px;
+  --df-radius-small: 8px;
+  --df-radius-pill: 99px;
+  --df-space-padding: 3cqw 4cqw 2cqw;
+  --df-space-gap: 1.3cqw;
+  --df-space-grid: 1.1cqw;
+  --df-motion-duration: .55s;
+  --df-motion-easing: ease;
+  --df-motion-distance: 8px;
+  --df-motion-stagger: .15s;
+  --df-shadow-slide: 0 24px 60px rgb(22 32 47 / 10%);
+}
+  </style>
+  <style id="df-templates">
+/* template: title */
+.df-t-title .slide-inner {justify-content: center; padding-right: 30cqw;}
+.df-t-title .title-body {display: flex; flex-direction: column; gap: 1.4cqw;}
+.df-t-title h1 {font-size: 5cqw; line-height: 1.05;}
+.df-t-title h1 .old {font-size: 2.6cqw; margin-bottom: .6cqw;}
+.df-t-title .lead {font-size: 2cqw; line-height: 1.4; color: var(--df-muted); max-width: 52cqw;}
+.df-t-title .title-meta {position: absolute; left: 4cqw; right: 4cqw; bottom: 2.4cqw; display: flex; justify-content: space-between; font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .08em; text-transform: uppercase; border-top: 1px solid var(--df-line); padding-top: 1.2cqw;}
+.df-t-title .motif {position: absolute; right: 4cqw; top: 50%; transform: translateY(-58%); width: 22cqw; height: 26cqw;}
+.df-t-title .visual {position: absolute; right: 4cqw; top: calc(50% - 15.5cqw); width: 24cqw; height: 27cqw;}
+.df-t-title .m {position: absolute; border-radius: var(--df-radius-frame);}
+.df-t-title .m1 {inset: 0 6cqw 9cqw 0; background: var(--df-primary-soft); border: 1px solid var(--df-primary-line);}
+.df-t-title .m2 {inset: 7cqw 0 2cqw 7cqw; background: var(--df-paper); border: 1.5px dashed var(--df-dashed);}
+.df-t-title .m3 {width: 9cqw; height: 4.6cqw; right: 2cqw; bottom: 0; background: var(--df-accent-soft); border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-pill);}
+/* template: funnel */
+.df-t-funnel .funnel {flex: 1; min-height: 0; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; gap: .9cqw;}
+.df-t-funnel .step {display: grid; grid-template-columns: 15cqw minmax(0, 1fr) 24cqw; align-items: center; gap: 1.6cqw;}
+.df-t-funnel .label {font: 600 1.75cqw / 1.2 var(--df-font-heading); text-align: right;}
+.df-t-funnel .track {display: flex; justify-content: center; min-width: 0; height: 4.4cqw;}
+.df-t-funnel .bar {flex: none; width: var(--size); min-width: 1px; height: 100%; display: grid; place-items: center; background: var(--df-primary-soft); border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-small);}
+.df-t-funnel .final .bar {background: var(--df-primary); border-color: var(--df-primary); color: var(--df-paper);}
+.df-t-funnel .value {font: 700 2cqw / 1 var(--df-font-heading); white-space: nowrap; padding: 0 .4cqw;}
+.df-t-funnel .note {font-size: 1.4cqw; line-height: 1.35; color: var(--df-muted);}
+/* template: donut */
+.df-t-donut .donut-wrap {flex: 1; min-height: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 5cqw; padding: 0 3cqw;}
+.df-t-donut .donut {position: relative; width: 27cqw; aspect-ratio: 1;}
+.df-t-donut .donut svg {display: block; width: 100%; height: 100%;}
+.df-t-donut .ring {fill: none; stroke: var(--df-line); stroke-width: 6;}
+.df-t-donut .segment {fill: none; stroke: var(--series); stroke-width: 6;}
+.df-t-donut .centre {position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;}
+.df-t-donut .centre strong {font: 800 4.6cqw / 1 var(--df-font-heading); letter-spacing: -.04em;}
+.df-t-donut .centre span {font: 400 1.3cqw / 1.3 var(--df-font-mono); color: var(--df-muted); max-width: 14cqw;}
+.df-t-donut .legend {list-style: none; margin: 0; padding: 0; display: grid; gap: .4cqw;}
+.df-t-donut .legend li {display: grid; grid-template-columns: auto minmax(0, 1fr) auto 7cqw; align-items: center; gap: 1.2cqw; padding: .9cqw 0; border-bottom: 1px solid var(--df-line);}
+.df-t-donut .legend .swatch {width: 1.4cqw; height: 1.4cqw;}
+.df-t-donut .legend .label {font-size: 1.8cqw;}
+.df-t-donut .legend .value {font: 700 1.9cqw / 1 var(--df-font-heading); white-space: nowrap; font-variant-numeric: tabular-nums;}
+.df-t-donut .legend .unit {font: 400 1.2cqw var(--df-font-mono); color: var(--df-muted);}
+.df-t-donut .legend .pct {font: 400 1.5cqw var(--df-font-mono); color: var(--df-muted); text-align: right; font-variant-numeric: tabular-nums;}
+/* template: table */
+.df-t-table .table-wrap {flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;}
+.df-t-table .data {width: 100%; border-collapse: collapse; font-size: 1.75cqw; line-height: 1.25;}
+.df-t-table .data th, .df-t-table .data td {padding: .85cqw 1.2cqw; border-bottom: 1px solid var(--df-line); text-align: left;}
+.df-t-table .data thead th {font: 400 1.2cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink);}
+.df-t-table .data tbody th {font-weight: 600;}
+.df-t-table .data .num {text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;}
+.df-t-table .data tbody tr.focus {background: var(--df-primary-soft);}
+.df-t-table .data tbody tr.focus th {color: var(--df-primary);}
+.df-t-table .data tfoot th, .df-t-table .data tfoot td {font-weight: 700; border-top: 2px solid var(--df-ink); border-bottom: 0;}
+/* template: compare-bars */
+.df-t-compare-bars .compare-wrap {flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 3cqw;}
+.df-t-compare-bars .compare {display: flex; flex-direction: column; gap: 2.4cqw;}
+.df-t-compare-bars .row {display: grid; grid-template-columns: 17cqw minmax(0, 1fr); align-items: center; gap: 2cqw;}
+.df-t-compare-bars .head {display: flex; flex-direction: column; gap: .3cqw; text-align: right;}
+.df-t-compare-bars .name {font: 400 1.3cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .1em;}
+.df-t-compare-bars .total {font: 800 3.6cqw / 1 var(--df-font-heading); letter-spacing: -.03em; white-space: nowrap;}
+.df-t-compare-bars .target .total {color: var(--df-primary);}
+.df-t-compare-bars .unit {font: 400 1.3cqw var(--df-font-mono); letter-spacing: 0; color: var(--df-muted);}
+.df-t-compare-bars .track {display: flex; min-width: 0; height: 6cqw; gap: 0;}
+.df-t-compare-bars .segment {flex: none; width: var(--size); height: 100%; background: var(--series); border-right: 2px solid var(--df-paper);}
+.df-t-compare-bars .segment:first-child {border-radius: var(--df-radius-small) 0 0 var(--df-radius-small);}
+.df-t-compare-bars .legend {list-style: none; margin: 0; padding: 0 0 0 19cqw; display: flex; flex-wrap: wrap; gap: .8cqw 2.4cqw;}
+.df-t-compare-bars .legend li {display: flex; align-items: center; gap: .7cqw; font-size: 1.5cqw;}
+.df-t-compare-bars .legend .values {font: 400 1.25cqw var(--df-font-mono); color: var(--df-muted); white-space: nowrap;}
+/* template: risk-register */
+.df-t-risk-register .register-wrap {flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;}
+.df-t-risk-register .register {width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 1.5cqw; line-height: 1.3;}
+.df-t-risk-register .register th, .df-t-risk-register .register td {padding: .9cqw 1cqw; border-bottom: 1px solid var(--df-line); text-align: left; vertical-align: top;}
+.df-t-risk-register .register thead th {font: 400 1.15cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink); vertical-align: bottom;}
+.df-t-risk-register .register .risk {width: 30%;}
+.df-t-risk-register .register .mitigation {width: 32%;}
+.df-t-risk-register .register tbody th {font-weight: 600;}
+.df-t-risk-register .register .owner {color: var(--df-muted);}
+.df-t-risk-register .level {display: inline-block; padding: .2cqw .7cqw; border-radius: var(--df-radius-pill); border: 1px solid var(--df-line); font: 400 1.2cqw / 1.4 var(--df-font-mono); white-space: nowrap;}
+.df-t-risk-register .level[data-level="critical" i] {background: var(--df-accent-soft); border: 2px solid var(--df-accent); color: var(--df-accent-text, var(--df-ink)); font-weight: 700;}
+.df-t-risk-register .level[data-level="high" i] {background: var(--df-accent-soft); border-color: var(--df-accent-line); color: var(--df-accent-text, var(--df-accent));}
+.df-t-risk-register .level[data-level="medium" i] {background: var(--df-primary-soft); border-color: var(--df-primary-line); color: var(--df-primary);}
+.df-t-risk-register .level[data-level="low" i] {background: var(--df-node); color: var(--df-muted);}
+/* template: timeline */
+.df-t-timeline .timeline {flex: 1; min-height: 0; list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-content: center; position: relative;}
+.df-t-timeline .event {position: relative; display: flex; flex-direction: column; gap: .9cqw; padding: 0 1.2cqw 0 0;}
+.df-t-timeline .event::before {content: ""; position: absolute; left: 0; right: 0; top: calc(2.2cqw + .9cqw + .8cqw); height: 2px; background: var(--df-primary-line);}
+.df-t-timeline .event:last-child::before {right: auto; width: 1.6cqw;}
+.df-t-timeline .time {font: 400 1.5cqw / 1.4 var(--df-font-mono); color: var(--df-muted); height: 2.2cqw; white-space: nowrap;}
+.df-t-timeline .dot {position: relative; width: 1.6cqw; height: 1.6cqw; border-radius: 50%; background: var(--df-paper); border: 2px solid var(--df-primary);}
+.df-t-timeline .event h2 {font-size: 2cqw;}
+.df-t-timeline .text {font-size: 1.5cqw; line-height: 1.4; color: var(--df-muted);}
+.df-t-timeline .focus .dot {background: var(--df-accent); border-color: var(--df-accent);}
+.df-t-timeline .focus .time {color: var(--df-accent-text, var(--df-accent));}
+/* template: checklist */
+.df-t-checklist .checklist-wrap {flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;}
+.df-t-checklist .checklist {width: 100%; border-collapse: collapse; font-size: 1.85cqw; line-height: 1.3;}
+.df-t-checklist .checklist th, .df-t-checklist .checklist td {padding: 1cqw 1.2cqw; border-bottom: 1px solid var(--df-line); text-align: left;}
+.df-t-checklist .checklist thead th {font: 400 1.15cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink);}
+.df-t-checklist .checklist tbody th {font-weight: 500;}
+.df-t-checklist .checklist .check {width: 4cqw;}
+.df-t-checklist .checklist .owner, .df-t-checklist .checklist .due {width: 18%; color: var(--df-muted); white-space: nowrap;}
+.df-t-checklist .checklist .due {width: 10%; font: 400 1.4cqw var(--df-font-mono);}
+.df-t-checklist .box {display: grid; place-items: center; width: 2.2cqw; height: 2.2cqw; border: 2px solid var(--df-primary); border-radius: var(--df-radius-small);}
+.df-t-checklist .done .box {background: var(--df-ok); border-color: var(--df-ok);}
+.df-t-checklist .done .box::after {content: "✓"; color: var(--df-paper); font: 700 1.5cqw / 1 var(--df-font-body);}
+.df-t-checklist .done th {color: var(--df-muted);}
+/* template: sources */
+.df-t-sources .entries {flex: 1; min-height: 0; list-style: none; margin: 0; padding: 0; column-gap: 3cqw; font-size: 1.45cqw; line-height: 1.35;}
+.df-t-sources .entries:has(> li:nth-child(9)) {columns: 2; font-size: 1.2cqw;}
+.df-t-sources .entries li {display: grid; grid-template-columns: 3cqw minmax(0, 26cqw) minmax(0, 1fr); gap: 1.4cqw; padding: .7cqw 0; border-bottom: 1px solid var(--df-line); break-inside: avoid;}
+.df-t-sources .entries:has(> li:nth-child(9)) li {grid-template-columns: 2.6cqw minmax(0, 11cqw) minmax(0, 1fr);}
+.df-t-sources .num {font-family: var(--df-font-mono); color: var(--df-primary);}
+.df-t-sources .where {color: var(--df-muted);}
+.df-t-sources .what {overflow-wrap: anywhere;}
+  </style>
+</head>
+<body>
+  <noscript><p class="no-script">All slides are shown below. Use the browser's print command for a PDF.</p></noscript>
+  <main class="stage" aria-label="Data centre exit - assessment">
+<section class="slide df-t-title" id="slide-title" data-slide-id="title" data-template="title" data-title="Leave the Paris data centre. Start with 64 servers." aria-labelledby="title-title">
+  <div class="slide-inner">
+<div class="title-body">
+  <p class="eyebrow reveal">Assessment</p>
+  <h1 id="title-title" class="reveal">Leave the Paris data centre. <span class="blue">Start with 64 servers.</span></h1>
+  <p class="lead reveal">Current state, target state, the cost comparison, the risks and the next steps.</p>
+</div>
+<div class="motif" aria-hidden="true">
+  <span class="m m1"></span><span class="m m2"></span><span class="m m3"></span>
+</div>
+<footer class="title-meta reveal">
+  <span>Cloud programme</span>
+  <span>Steering committee · Q4</span>
+</footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Every chart in this deck is computed from the numbers in deck.yaml.<br>Update the figures and sources together; the Sources appendix is generated from each slide&#39;s sources field.</p></aside>
+</section>
+<section class="slide df-t-funnel" id="slide-scope" data-slide-id="scope" data-template="funnel" data-title="From 412 servers to a first wave of 64" aria-labelledby="scope-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Current state</p><h1 id="scope-title">From 412 servers to <span class="blue">a first wave of 64</span></h1></div>
+  <p class="subtitle">Paris data centre.</p>
+</header>
+<ol class="funnel" aria-label="From 412 servers to a first wave of 64: Inventory 412 servers, In use 318 servers, Supported OS 241 servers, First wave 64 servers">
+  <li class="step reveal">
+    <span class="label">Inventory</span>
+    <span class="track"><span class="bar" data-value="412" style="--size: 100%"><span class="value">412</span></span></span>
+    <span class="note">Every server in the CMDB export</span>
+  </li><li class="step reveal">
+    <span class="label">In use</span>
+    <span class="track"><span class="bar" data-value="318" style="--size: 77.184%"><span class="value">318</span></span></span>
+    <span class="note">−94 idle for 90 days: decommission</span>
+  </li><li class="step reveal">
+    <span class="label">Supported OS</span>
+    <span class="track"><span class="bar" data-value="241" style="--size: 58.495%"><span class="value">241</span></span></span>
+    <span class="note">−77 on end-of-life systems: upgrade first</span>
+  </li><li class="step reveal final">
+    <span class="label">First wave</span>
+    <span class="track"><span class="bar" data-value="64" style="--size: 15.534%"><span class="value">64</span></span></span>
+    <span class="note">Stateless tiers with a named owner</span>
+  </li>
+</ol>
+<p class="source reveal">Source: CMDB export and 90-day utilisation report</p>
+<footer class="foot"><span>Data centre exit / assessment</span><span class="num">02 / 09</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p class="notes-sources">Sources: CMDB export, 1 September; Utilisation report, 90 days</p></aside>
+</section>
+<section class="slide df-t-donut" id="slide-spend" data-slide-id="spend" data-template="donut" data-title="Hardware and licences are two thirds of the bill" aria-labelledby="spend-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Current cost</p><h1 id="spend-title">Hardware and licences <span class="blue">are two thirds of the bill</span></h1></div>
+  <p class="subtitle">Annual run cost of the data centre.</p>
+</header>
+<div class="donut-wrap">
+  <figure class="donut reveal" role="img" aria-label="Hardware and licences are two thirds of the bill: Hardware and support 410 k€ (39%); Licences 290 k€ (28%); Facilities and power 180 k€ (17%); Operations staff 120 k€ (11%); Network 50 k€ (4.8%)">
+    <svg viewBox="0 0 42 42" aria-hidden="true">
+      <circle class="ring" cx="21" cy="21" r="15.9155"></circle>
+      <g transform="rotate(-90 21 21)"><circle class="segment series-0" cx="21" cy="21" r="15.9155" data-share="39.048" stroke-dasharray="39.048 100" stroke-dashoffset="-0"></circle><circle class="segment series-1" cx="21" cy="21" r="15.9155" data-share="27.619" stroke-dasharray="27.619 100" stroke-dashoffset="-39.048"></circle><circle class="segment series-2" cx="21" cy="21" r="15.9155" data-share="17.143" stroke-dasharray="17.143 100" stroke-dashoffset="-66.667"></circle><circle class="segment series-3" cx="21" cy="21" r="15.9155" data-share="11.429" stroke-dasharray="11.429 100" stroke-dashoffset="-83.81"></circle><circle class="segment series-4" cx="21" cy="21" r="15.9155" data-share="4.762" stroke-dasharray="4.762 100" stroke-dashoffset="-95.238"></circle></g>
+    </svg>
+    <figcaption class="centre"><strong>1,050</strong><span>k€ per year</span></figcaption>
+  </figure>
+  <ul class="legend">
+    <li class="series-0 reveal"><span class="swatch" aria-hidden="true"></span><span class="label">Hardware and support</span><span class="value">410 <span class="unit">k€</span></span><span class="pct">39%</span></li><li class="series-1 reveal"><span class="swatch" aria-hidden="true"></span><span class="label">Licences</span><span class="value">290 <span class="unit">k€</span></span><span class="pct">28%</span></li><li class="series-2 reveal"><span class="swatch" aria-hidden="true"></span><span class="label">Facilities and power</span><span class="value">180 <span class="unit">k€</span></span><span class="pct">17%</span></li><li class="series-3 reveal"><span class="swatch" aria-hidden="true"></span><span class="label">Operations staff</span><span class="value">120 <span class="unit">k€</span></span><span class="pct">11%</span></li><li class="series-4 reveal"><span class="swatch" aria-hidden="true"></span><span class="label">Network</span><span class="value">50 <span class="unit">k€</span></span><span class="pct">4.8%</span></li>
+  </ul>
+</div>
+<table class="sr-only">
+  <caption>Hardware and licences are two thirds of the bill</caption>
+  <tbody><tr><th scope="row">Hardware and support</th><td>410 k€</td><td>39%</td></tr><tr><th scope="row">Licences</th><td>290 k€</td><td>28%</td></tr><tr><th scope="row">Facilities and power</th><td>180 k€</td><td>17%</td></tr><tr><th scope="row">Operations staff</th><td>120 k€</td><td>11%</td></tr><tr><th scope="row">Network</th><td>50 k€</td><td>4.8%</td></tr></tbody>
+</table>
+<p class="source reveal">Source: finance cost centre 4410, FY2026</p>
+<footer class="foot"><span>Data centre exit / assessment</span><span class="num">03 / 09</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p class="notes-sources">Sources: Finance cost centre 4410, FY2026</p></aside>
+</section>
+<section class="slide df-t-table" id="slide-workloads" data-slide-id="workloads" data-template="table" data-title="Three workloads hold 90% of the spend" aria-labelledby="workloads-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Cost by workload</p><h1 id="workloads-title">Three workloads hold <span class="blue">90% of the spend</span></h1></div>
+  <p class="subtitle">Monthly cost in k€.</p>
+</header>
+<div class="table-wrap reveal">
+  <table class="data">
+    <caption class="sr-only">Three workloads hold 90% of the spend</caption>
+    <thead><tr><th scope="col">Workload</th><th scope="col" class="num">Compute</th><th scope="col" class="num">Storage</th><th scope="col" class="num">Network</th><th scope="col" class="num">Licences</th></tr></thead>
+    <tbody>
+      <tr class="focus"><th scope="row">Customer portal</th><td class="num">18.4</td><td class="num">3.1</td><td class="num">1.2</td><td class="num">4</td></tr>
+      <tr><th scope="row">Data platform</th><td class="num">12.9</td><td class="num">9.6</td><td class="num">0.8</td><td class="num">6.5</td></tr>
+      <tr><th scope="row">Integration hub</th><td class="num">7.2</td><td class="num">0.9</td><td class="num">2.4</td><td class="num">1.5</td></tr>
+      <tr><th scope="row">Internal tools</th><td class="num">2.8</td><td class="num">0.6</td><td class="num">0.2</td><td class="num">0</td></tr>
+      <tr><th scope="row">Batch jobs</th><td class="num">2.1</td><td class="num">1.4</td><td class="num">0.1</td><td class="num">0</td></tr>
+      
+    </tbody>
+    <tfoot><tr><th scope="row">Total</th><td class="num">43.4</td><td class="num">15.6</td><td class="num">4.7</td><td class="num">12</td></tr></tfoot>
+  </table>
+</div>
+<p class="source reveal">Source: cost allocation model v3</p>
+<footer class="foot"><span>Data centre exit / assessment</span><span class="num">04 / 09</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>The total row is computed from the values, so it always adds up.</p><p class="notes-sources">Sources: Cost allocation model v3</p></aside>
+</section>
+<section class="slide df-t-compare-bars" id="slide-target" data-slide-id="target" data-template="compare-bars" data-title="Managed services cut the run cost by 35%" aria-labelledby="target-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Target state</p><h1 id="target-title">Managed services cut <span class="blue">the run cost by 35%</span></h1></div>
+  <p class="subtitle">Monthly run cost in k€, after wave 3.</p>
+</header>
+<div class="compare-wrap">
+<figure class="compare reveal" role="img" aria-label="Managed services cut the run cost by 35%: Today 86 k€ (Compute 42, Databases 18, Storage 14, Operations 12); Target 56 k€ (Compute 24, Databases 15, Storage 11, Operations 6)">
+  <div class="row">
+    <p class="head"><span class="name">Today</span><span class="total">86 <span class="unit">k€</span></span></p>
+    <div class="track"><span class="segment series-0" data-value="42" style="--size: 48.837%"></span><span class="segment series-1" data-value="18" style="--size: 20.93%"></span><span class="segment series-2" data-value="14" style="--size: 16.279%"></span><span class="segment series-3" data-value="12" style="--size: 13.953%"></span></div>
+  </div>
+  <div class="row target">
+    <p class="head"><span class="name">Target</span><span class="total">56 <span class="unit">k€</span></span></p>
+    <div class="track"><span class="segment series-0" data-value="24" style="--size: 27.907%"></span><span class="segment series-1" data-value="15" style="--size: 17.442%"></span><span class="segment series-2" data-value="11" style="--size: 12.791%"></span><span class="segment series-3" data-value="6" style="--size: 6.977%"></span></div>
+  </div>
+</figure>
+<ul class="legend reveal">
+  <li class="series-0"><span class="swatch" aria-hidden="true"></span><span class="label">Compute</span><span class="values">42 → 24</span></li><li class="series-1"><span class="swatch" aria-hidden="true"></span><span class="label">Databases</span><span class="values">18 → 15</span></li><li class="series-2"><span class="swatch" aria-hidden="true"></span><span class="label">Storage</span><span class="values">14 → 11</span></li><li class="series-3"><span class="swatch" aria-hidden="true"></span><span class="label">Operations</span><span class="values">12 → 6</span></li>
+</ul>
+</div>
+<table class="sr-only">
+  <caption>Managed services cut the run cost by 35%</caption>
+  <thead><tr><td></td><th scope="col">Today</th><th scope="col">Target</th></tr></thead>
+  <tbody><tr><th scope="row">Compute</th><td>42 k€</td><td>24 k€</td></tr><tr><th scope="row">Databases</th><td>18 k€</td><td>15 k€</td></tr><tr><th scope="row">Storage</th><td>14 k€</td><td>11 k€</td></tr><tr><th scope="row">Operations</th><td>12 k€</td><td>6 k€</td></tr></tbody>
+  <tfoot><tr><th scope="row">Total</th><td>86 k€</td><td>56 k€</td></tr></tfoot>
+</table>
+<p class="source reveal">Source: cloud pricing calculator, list prices</p>
+<footer class="foot"><span>Data centre exit / assessment</span><span class="num">05 / 09</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p class="notes-sources">Sources: Cloud pricing calculator (https://example.com/pricing)</p></aside>
+</section>
+<section class="slide df-t-risk-register" id="slide-risks" data-slide-id="risks" data-template="risk-register" data-title="Four risks, one needs a decision today" aria-labelledby="risks-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Risks</p><h1 id="risks-title">Four risks, <span class="amber">one needs a decision today</span></h1></div>
+  <p class="subtitle">Reviewed with service owners.</p>
+</header>
+<div class="register-wrap reveal">
+  <table class="register">
+    <caption class="sr-only">Four risks, one needs a decision today</caption>
+    <thead><tr><th scope="col" class="risk">Risk</th><th scope="col">Impact</th><th scope="col">Likelihood</th><th scope="col">Owner</th><th scope="col" class="mitigation">Mitigation</th></tr></thead>
+    <tbody>
+      <tr><th scope="row" class="risk">Data loss during the database cut-over</th><td><span class="level" data-level="Critical">Critical</span></td><td><span class="level" data-level="Low">Low</span></td><td class="owner">DBA team</td><td class="mitigation">Rehearse twice; keep the source read-only for 48 h.</td></tr>
+      <tr><th scope="row" class="risk">Licence costs double on the new platform</th><td><span class="level" data-level="High">High</span></td><td><span class="level" data-level="Medium">Medium</span></td><td class="owner">Procurement</td><td class="mitigation">Negotiate before the pilot ends.</td></tr>
+      <tr><th scope="row" class="risk">Team lacks cloud operations experience</th><td><span class="level" data-level="Medium">Medium</span></td><td><span class="level" data-level="High">High</span></td><td class="owner">Platform lead</td><td class="mitigation">Pair with the vendor for the first three waves.</td></tr>
+      <tr><th scope="row" class="risk">Data centre contract renews in June</th><td><span class="level" data-level="High">High</span></td><td><span class="level" data-level="Low">Low</span></td><td class="owner">Programme lead</td><td class="mitigation">Give notice now for a 12-month exit.</td></tr>
+      
+    </tbody>
+  </table>
+</div>
+<footer class="foot"><span>Data centre exit / assessment</span><span class="num">06 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-timeline" id="slide-plan" data-slide-id="plan" data-template="timeline" data-title="Three waves, out by next autumn" aria-labelledby="plan-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Next steps</p><h1 id="plan-title">Three waves, <span class="blue">out by next autumn</span></h1></div>
+  <p class="subtitle">Plan for approval.</p>
+</header>
+<ol class="timeline">
+  <li class="event reveal"><p class="time">Oct</p><span class="dot" aria-hidden="true"></span><h2>Landing zone</h2><p class="text">Network, identity and guardrails in place.</p></li><li class="event focus reveal"><p class="time">Nov</p><span class="dot" aria-hidden="true"></span><h2>Wave 1</h2><p class="text">64 stateless servers.</p></li><li class="event reveal"><p class="time">Feb</p><span class="dot" aria-hidden="true"></span><h2>Wave 2</h2><p class="text">Databases and the data platform.</p></li><li class="event reveal"><p class="time">May</p><span class="dot" aria-hidden="true"></span><h2>Wave 3</h2><p class="text">Integration hub and batch jobs.</p></li><li class="event focus reveal"><p class="time">Sep</p><span class="dot" aria-hidden="true"></span><h2>Exit</h2><p class="text">Hardware returned and contract closed.</p></li>
+</ol>
+
+<footer class="foot"><span>Data centre exit / assessment</span><span class="num">07 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-checklist" id="slide-decide" data-slide-id="decide" data-template="checklist" data-title="Three decisions for this committee" aria-labelledby="decide-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Decisions</p><h1 id="decide-title">Three decisions <span class="blue">for this committee</span></h1></div>
+  <p class="subtitle">Needed to start wave 1 in November.</p>
+</header>
+<div class="checklist-wrap reveal">
+  <table class="checklist">
+    <caption class="sr-only">Three decisions for this committee</caption>
+    <thead><tr><th scope="col" class="check"><span class="sr-only">Done</span></th><th scope="col"></th><th scope="col">Owner</th><th scope="col">Due</th></tr></thead>
+    <tbody>
+      <tr><td class="check"><span class="box" role="img" aria-label="Open"></span></td><th scope="row">Approve the wave 1 scope of 64 servers</th><td class="owner">Steering committee</td><td class="due">Today</td></tr>
+      <tr><td class="check"><span class="box" role="img" aria-label="Open"></span></td><th scope="row">Give notice on the data centre contract</th><td class="owner">Procurement</td><td class="due">31 Oct</td></tr>
+      <tr><td class="check"><span class="box" role="img" aria-label="Open"></span></td><th scope="row">Fund the landing zone and vendor pairing</th><td class="owner">Finance</td><td class="due">31 Oct</td></tr>
+      
+    </tbody>
+  </table>
+</div>
+<footer class="foot"><span>Data centre exit / assessment</span><span class="num">08 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-sources" id="slide-sources" data-slide-id="sources" data-template="sources" data-title="Sources" aria-labelledby="sources-title">
+  <div class="slide-inner">
+<header class="reveal">
+  
+  <h1 id="sources-title">Sources</h1>
+</header>
+<ol class="entries reveal">
+  <li><span class="num">02</span><span class="where">From 412 servers to a first wave of 64</span><span class="what">CMDB export, 1 September</span></li><li><span class="num"></span><span class="where"></span><span class="what">Utilisation report, 90 days</span></li><li><span class="num">03</span><span class="where">Hardware and licences are two thirds of the bill</span><span class="what">Finance cost centre 4410, FY2026</span></li><li><span class="num">04</span><span class="where">Three workloads hold 90% of the spend</span><span class="what">Cost allocation model v3</span></li><li><span class="num">05</span><span class="where">Managed services cut the run cost by 35%</span><span class="what"><a href="https://example.com/pricing" target="_blank" rel="noopener noreferrer">Cloud pricing calculator</a></span></li>
+</ol>
+<footer class="foot"><span>Data centre exit / assessment</span><span class="num">09 / 09</span></footer>
+  </div>
+</section>
+  </main>
+  <nav class="controls" aria-label="Slide controls" hidden>
+  <button id="df-previous" type="button" aria-label="Previous slide">Previous</button>
+  <label class="sr-only" for="df-slide-select">Choose a slide</label>
+  <select id="df-slide-select"></select>
+  <button id="df-next" type="button" aria-label="Next slide">Next</button>
+  <span class="controls-sep" aria-hidden="true"></span>
+  <button id="df-static" type="button" aria-pressed="false" title="Disable animations (S)">Static</button>
+  <button id="df-notes" type="button" aria-pressed="false" title="Show speaker notes (N)">Notes</button>
+  <button id="df-presenter" type="button" title="Open presenter view (P)">Presenter</button>
+  <button id="df-fullscreen" type="button" aria-pressed="false" title="Fullscreen (F)">Fullscreen</button>
+  <span id="df-announcement" class="sr-only" role="status" aria-live="polite"></span>
+</nav>
+  <script data-df-runtime>
+/*! deckforge | MIT License | https://github.com/lrivallain/deckforge */
+(()=>{(function(){"use strict";let u=document.documentElement,r=Array.from(document.querySelectorAll(".stage > .slide")),f=document.querySelector(".controls");if(!r.length||!f)return;let d=e=>document.getElementById(e),y=d("df-previous"),x=d("df-next"),p=d("df-slide-select"),v=d("df-static"),w=d("df-notes"),P=d("df-presenter"),b=d("df-fullscreen"),m=d("df-announcement"),c=C(),o=0,s=null,E=null,l=null;function C(){let e=document.querySelector('meta[name="deckforge-editor"]'),t=e&&e.getAttribute("content");if(!t||!/^\/(?!\/)/.test(t))return null;let n=document.createElement("a");return n.id="df-edit",n.href=t,n.title="Edit this slide (E)",n.textContent="Edit",n.dataset.base=t,f.insertBefore(n,m),n}let D=parseFloat(getComputedStyle(u).getPropertyValue("--df-motion-stagger"))||.15;for(let e of r){let t=0;for(let n of e.querySelectorAll(".reveal")){let i=n.getAttribute("data-df-order"),M=i!==null&&/^\d+$/.test(i)?Number(i):t++;n.style.getPropertyValue("--delay")||n.style.setProperty("--delay",`${(M*D).toFixed(2)}s`)}}r.forEach((e,t)=>{let n=document.createElement("option");n.value=String(t),n.textContent=`${t+1} / ${r.length} - ${e.dataset.title||"Slide"}`,p.append(n)});function k(){let e=/^#([1-9]\d*)$/.exec(location.hash);if(e){let n=Number(e[1]);return Number.isSafeInteger(n)&&n<=r.length?n-1:0}let t=/^#slide-([\w-]+)$/.exec(location.hash);if(t){let n=r.findIndex(i=>i.dataset.slideId===t[1]);if(n>=0)return n}return 0}function L(e){let t=r[e]&&r[e].querySelector(".slide-notes");return t?t.innerHTML:""}function S(){if(!l)return;let e=L(o);l.innerHTML=e||'<p class="empty">No speaker notes for this slide.</p>'}function g(e){if(e)for(let t of e.querySelectorAll('img[loading="lazy"]'))t.loading="eager"}function h(){r.forEach(g)}if(document.readyState==="complete"?setTimeout(h,200):addEventListener("load",()=>setTimeout(h,200)),addEventListener("beforeprint",h),window.matchMedia){let e=window.matchMedia("print");e.addEventListener&&e.addEventListener("change",t=>t.matches&&h())}function a(e){if(o=Math.max(0,Math.min(r.length-1,e)),g(r[o]),g(r[o+1]),g(r[o-1]),r.forEach((t,n)=>{t.hidden=n!==o,t.classList.remove("entered")}),r[o].offsetWidth,r[o].classList.add("entered"),y.disabled=o===0,x.disabled=o===r.length-1,p.value=String(o),m.textContent=`Slide ${o+1} of ${r.length}: ${r[o].dataset.title||""}`,location.hash!==`#${o+1}`&&history.replaceState(null,"",`#${o+1}`),c){let t=r[o].dataset.slideId;c.href=t?`${c.dataset.base.split("#")[0]}#slide-${t}`:c.dataset.base}S(),F()}function $(){let e=u.classList.toggle("static");v.setAttribute("aria-pressed",String(e))}function A(){let e=u.classList.toggle("show-notes");w.setAttribute("aria-pressed",String(e)),e?(l=document.createElement("section"),l.className="notes-panel",l.setAttribute("aria-label","Speaker notes"),f.before(l),S()):l&&(l.remove(),l=null)}let q=`
+    body{margin:0;font:16px/1.5 system-ui,sans-serif;color:#16202F;background:#F7F9FC;display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+    header,footer{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 20px;background:#fff;border-bottom:1px solid #E2E8F2}
+    footer{border-top:1px solid #E2E8F2;border-bottom:0}
+    h1{font-size:20px;margin:0}
+    .meta{color:#53617A;font-variant-numeric:tabular-nums}
+    main{overflow:auto;padding:20px 24px;font-size:22px;line-height:1.5}
+    main p{margin:0 0 .7em}
+    .empty{color:#53617A;font-style:italic}
+    button{font:inherit;min-height:40px;padding:6px 14px;border:1px solid #53617A;border-radius:7px;background:#fff;cursor:pointer}
+    button:disabled{color:#53617A;border-color:#E2E8F2;cursor:default}
+    :focus-visible{outline:3px solid #0F6CBD;outline-offset:3px}`;function F(){if(!s||s.closed)return;let e=s.document,t=e.getElementById("p-title");t&&(t.textContent=`${o+1} / ${r.length} \u2014 ${r[o].dataset.title||""}`,e.getElementById("p-notes").innerHTML=L(o)||'<p class="empty">No speaker notes for this slide.</p>',e.getElementById("p-next").textContent=o<r.length-1?`Next: ${r[o+1].dataset.title||""}`:"End of deck",e.getElementById("p-prev-btn").disabled=o===0,e.getElementById("p-next-btn").disabled=o===r.length-1)}function B(){if(s&&!s.closed){s.focus();return}if(s=window.open("","deckforge-presenter","popup,width=960,height=640"),!s){m.textContent="The presenter window was blocked. Allow pop-ups for this page, or use Notes.";return}E=E||Date.now();let e=s.document;e.open(),e.write(`<!doctype html><html lang="${u.lang||"en"}"><head><meta charset="utf-8"><title>Presenter \u2014 ${document.title.replace(/</g,"&lt;")}</title><style>${q}</style></head><body>
+      <header><h1 id="p-title" aria-live="polite"></h1><span class="meta" id="p-clock"></span></header>
+      <main id="p-notes" aria-label="Speaker notes"></main>
+      <footer><span class="meta" id="p-next"></span><span><button id="p-prev-btn" type="button">Previous</button> <button id="p-next-btn" type="button">Next</button></span></footer>
+    </body></html>`),e.close(),e.getElementById("p-prev-btn").addEventListener("click",()=>a(o-1)),e.getElementById("p-next-btn").addEventListener("click",()=>a(o+1)),e.addEventListener("keydown",N);let t=()=>{if(!s||s.closed)return;let n=Math.floor((Date.now()-E)/1e3),i=e.getElementById("p-clock");i&&(i.textContent=`Elapsed ${String(Math.floor(n/60)).padStart(2,"0")}:${String(n%60).padStart(2,"0")}`),s.setTimeout(t,1e3)};t(),F()}async function I(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else throw new Error("unsupported")}catch{m.textContent="Fullscreen is not available in this browser or was denied."}}document.addEventListener("fullscreenchange",()=>{b.setAttribute("aria-pressed",String(!!document.fullscreenElement))});function N(e){if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;let t=e.target;if(t&&typeof t.closest=="function"){let i=t.ownerDocument!==document?"input, select, textarea, [contenteditable]":"a, button, input, select, textarea, [contenteditable]";if(t.closest(i))return}let n;switch(e.key){case"ArrowRight":case"PageDown":case" ":n=o+1;break;case"ArrowLeft":case"PageUp":n=o-1;break;case"Home":n=0;break;case"End":n=r.length-1;break;case"s":case"S":e.preventDefault(),$();return;case"n":case"N":e.preventDefault(),A();return;case"p":case"P":e.preventDefault(),B();return;case"f":case"F":e.preventDefault(),I();return;case"e":case"E":if(!c)return;e.preventDefault(),location.href=c.href;return;default:return}e.preventDefault(),a(n)}y.addEventListener("click",()=>a(o-1)),x.addEventListener("click",()=>a(o+1)),p.addEventListener("change",()=>a(Number(p.value))),v.addEventListener("click",$),w.addEventListener("click",A),P.addEventListener("click",B),b.addEventListener("click",I),document.documentElement.requestFullscreen||(b.hidden=!0),addEventListener("hashchange",()=>a(k())),addEventListener("keydown",N),addEventListener("beforeprint",()=>r.forEach(e=>e.classList.add("entered"))),addEventListener("pagehide",()=>{s&&!s.closed&&s.close()}),window.deckforge={go:e=>a(e),next:()=>a(o+1),previous:()=>a(o-1),get current(){return o},get count(){return r.length}},u.classList.add("presenting"),f.hidden=!1,a(k())})();})();
+
+</script>
+</body>
+</html>

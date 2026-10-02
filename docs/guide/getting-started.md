@@ -41,6 +41,7 @@ deckforge build my-talk --runtime inline                    # one self-contained
 |---|---|
 | `deckforge new my-talk --example` | The **Build** specimen: diagram-led slides with the `build` theme |
 | `deckforge new my-talk --example aurora` | The **Aurora** deck: dark theme with the Essentials templates |
+| `deckforge new my-talk --example postmortem` | A technical starter, one file to share offline: also `architecture-review`, `assessment` and `decision-record`. See [Technical decks](technical-decks) |
 
 ![The Aurora example deck](/screenshots/aurora-cover.png){.shot}
 

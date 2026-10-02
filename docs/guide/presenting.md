@@ -68,7 +68,8 @@ deckforge build my-talk --runtime inline --out ~/Desktop/talk.html
 ```
 
 ::: tip Share one file
-Use `inline` to send a deck by email or chat. It opens offline from any folder.
+Use `inline` to send a deck by email or chat. It opens offline from any folder. Add `--check-offline` to prove it
+loads nothing from the network, and `--strip-notes` to leave the speaker notes out: see [Share offline](offline).
 :::
 
 ## Preview while you write

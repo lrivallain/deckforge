@@ -1,0 +1,55 @@
+---
+name: kpis
+label: Key figures
+description: >-
+  Three or four key figures on cards, each with a label, an optional note
+  (trend, target or period) and a tone: good, warn or focus. Real, sourced
+  figures only.
+category: data
+order: 4
+slots:
+  eyebrow: { type: text, max: 40, sample: Quarter in review }
+  title: { type: richtext, max: 60, required: true, sample: 'Reliability up, <span class="amber">cost still above target</span>' }
+  subtitle: { type: text, max: 60, sample: Q3 against the Q2 baseline. }
+  kpis:
+    type: cards
+    max: 4
+    fields:
+      value: { type: text, max: 9 }
+      label: { type: text, max: 40 }
+      note: { type: text, max: 48, description: "Trend, target or period" }
+      tone: { type: text, max: 5, description: "good, warn or focus (optional)" }
+    sample:
+      - { value: 99.95%, label: Availability, note: "Target 99.9% · met", tone: good }
+      - { value: "−38%", label: Incidents per month, note: "From 13 to 8", tone: good }
+      - { value: 112 k€, label: Monthly run cost, note: "Target 95 k€", tone: warn }
+      - { value: 14 d, label: Lead time to production, note: "From 31 days", tone: focus }
+  source: { type: text, max: 90, sample: "Source: illustrative figures" }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="kpis">
+  {{#each kpis}}<article class="kpi reveal" data-tone="{{tone}}"><p class="value">{{value}}</p><p class="label">{{label}}</p>{{#if note}}<p class="note">{{note}}</p>{{/if}}</article>{{/each}}
+</div>
+{{#if source}}<p class="source reveal">{{source}}</p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.kpis { flex: 1; min-height: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1.6cqw; align-content: center; }
+.kpi {
+  --tone: var(--df-line); display: flex; flex-direction: column; gap: .9cqw; padding: 2cqw 1.8cqw;
+  background: var(--df-node); border: 1px solid var(--df-line); border-top: .5cqw solid var(--tone); border-radius: var(--df-radius-card);
+}
+.kpi[data-tone="good" i] { --tone: var(--df-ok); }
+.kpi[data-tone="warn" i] { --tone: var(--df-accent); }
+.kpi[data-tone="focus" i] { --tone: var(--df-primary); background: var(--df-primary-soft); border-color: var(--df-primary-line); border-top-color: var(--tone); }
+.value { font: 800 5cqw / 1 var(--df-font-heading); letter-spacing: -.04em; white-space: nowrap; }
+.kpi[data-tone="warn" i] .value { color: var(--df-accent-text, var(--df-accent)); }
+.kpi[data-tone="focus" i] .value { color: var(--df-primary); }
+.label { font: 600 1.8cqw / 1.25 var(--df-font-body); }
+.note { font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted); }
+.kpi[data-tone="good" i] .note::before { content: "▲ "; color: var(--df-ok); }
+.kpi[data-tone="warn" i] .note::before { content: "▼ "; color: var(--df-accent); }
+</style>

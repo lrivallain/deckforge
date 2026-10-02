@@ -1,0 +1,63 @@
+---
+name: risk-register
+label: Risk register
+description: >-
+  Up to six risks with impact, likelihood, owner and mitigation. Write impact
+  and likelihood as high, medium or low (critical for impact) to colour them.
+category: technical
+order: 3
+slots:
+  eyebrow: { type: text, max: 40, sample: Risks }
+  title: { type: richtext, max: 60, required: true, sample: 'Four risks, <span class="amber">one needs a decision today</span>' }
+  subtitle: { type: text, max: 60, sample: Reviewed with service owners. }
+  riskHeader: { type: text, max: 16, sample: Risk }
+  impactHeader: { type: text, max: 12, sample: Impact }
+  likelihoodHeader: { type: text, max: 12, sample: Likelihood }
+  ownerHeader: { type: text, max: 12, sample: Owner }
+  mitigationHeader: { type: text, max: 16, sample: Mitigation }
+  risks:
+    type: cards
+    max: 6
+    fields:
+      risk: { type: text, max: 60 }
+      impact: { type: text, max: 10, description: "critical, high, medium or low" }
+      likelihood: { type: text, max: 10, description: "high, medium or low" }
+      owner: { type: text, max: 22 }
+      mitigation: { type: text, max: 80 }
+    sample:
+      - { risk: Data loss during the database cut-over, impact: Critical, likelihood: Low, owner: DBA team, mitigation: Rehearse twice; keep the source read-only for 48 h. }
+      - { risk: Licence costs double on the new platform, impact: High, likelihood: Medium, owner: Procurement, mitigation: Negotiate before the pilot ends. }
+      - { risk: Team lacks Kubernetes experience, impact: Medium, likelihood: High, owner: Platform lead, mitigation: Pair with the vendor for the first three releases. }
+      - { risk: Batch window overruns, impact: Low, likelihood: Medium, owner: Ops on-call, mitigation: Move two jobs to the weekend. }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="register-wrap reveal">
+  <table class="register">
+    <caption class="sr-only">{{slide.title}}</caption>
+    <thead><tr><th scope="col" class="risk">{{riskHeader}}</th><th scope="col">{{impactHeader}}</th><th scope="col">{{likelihoodHeader}}</th><th scope="col">{{ownerHeader}}</th><th scope="col" class="mitigation">{{mitigationHeader}}</th></tr></thead>
+    <tbody>
+      {{#each risks}}<tr><th scope="row" class="risk">{{risk}}</th><td><span class="level" data-level="{{impact}}">{{impact}}</span></td><td><span class="level" data-level="{{likelihood}}">{{likelihood}}</span></td><td class="owner">{{owner}}</td><td class="mitigation">{{mitigation}}</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{> foot}}
+
+<style scoped>
+.register-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+.register { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 1.5cqw; line-height: 1.3; }
+.register th, .register td { padding: .9cqw 1cqw; border-bottom: 1px solid var(--df-line); text-align: left; vertical-align: top; }
+.register thead th { font: 400 1.15cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink); vertical-align: bottom; }
+.register .risk { width: 30%; }
+.register .mitigation { width: 32%; }
+.register tbody th { font-weight: 600; }
+.register .owner { color: var(--df-muted); }
+.level { display: inline-block; padding: .2cqw .7cqw; border-radius: var(--df-radius-pill); border: 1px solid var(--df-line); font: 400 1.2cqw / 1.4 var(--df-font-mono); white-space: nowrap; }
+.level[data-level="critical" i] { background: var(--df-accent-soft); border: 2px solid var(--df-accent); color: var(--df-accent-text, var(--df-ink)); font-weight: 700; }
+.level[data-level="high" i] { background: var(--df-accent-soft); border-color: var(--df-accent-line); color: var(--df-accent-text, var(--df-accent)); }
+.level[data-level="medium" i] { background: var(--df-primary-soft); border-color: var(--df-primary-line); color: var(--df-primary); }
+.level[data-level="low" i] { background: var(--df-node); color: var(--df-muted); }
+</style>
