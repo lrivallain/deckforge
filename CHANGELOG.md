@@ -5,6 +5,14 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Editor: drag an edge to resize the slide rail, the inspector or the Copilot panel. You can also use the keyboard, and double-click restores the default width. The widths persist, and rail thumbnails scale with the rail.
+
+### Fixed
+
+- Editor: the page no longer scrolls past the app, which used to push the toolbar out of view.
+
 ## [0.1.0]
 
 First public version. Add the release date to this heading when you tag it.

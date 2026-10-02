@@ -15,6 +15,8 @@ This command opens the editor in your browser. Every change saves `deck.yaml` an
 | **Inspector** (right) | The template, a form for every slot with character counters, speaker notes, footer and visibility |
 | **Top bar** | Undo/redo, theme, **Templates**, **Deck** settings, **Present** and **Copilot** |
 
+Drag the edge of the slide rail, the inspector or the Copilot panel to resize it. The editor remembers the widths. Double-click an edge to restore the default width.
+
 ## Images
 
 Drop or paste a picture on the slide, or use the image control in the inspector.
@@ -48,6 +50,7 @@ Use **Insert** to add an image, text, callout, arrow or shape on top of the temp
 | <kbd>Delete</kbd> | Delete the slide or overlay |
 | Arrow keys · <kbd>Shift</kbd> + arrows | Nudge an overlay by 1 px · 10 px |
 | <kbd>⌘/Ctrl</kbd> <kbd>]</kbd> / <kbd>[</kbd> | Bring an overlay forward / send it backward |
+| <kbd>←</kbd> / <kbd>→</kbd> on a focused panel edge (<kbd>Shift</kbd> for bigger steps) | Resize the panel |
 
 ## Reorder items
 

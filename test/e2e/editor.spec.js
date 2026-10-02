@@ -226,6 +226,75 @@ test("Copilot improves a text field and the change can be cancelled (mocked SDK)
   await expect(page.locator(".ai-field:has([data-testid=chat-input])")).toHaveCount(0);
 });
 
+test("slides, inspector and Copilot panels are resizable and remember their width", async ({ page }) => {
+  const width = (sel) => page.locator(sel).first().evaluate((el) => Math.round(el.getBoundingClientRect().width));
+  const drag = async (panel, dx) => {
+    const box = await page.locator(`.panel-resizer[data-panel="${panel}"]`).boundingBox();
+    const x = box.x + box.width / 2, y = box.y + box.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx / 2, y);
+    await page.mouse.move(x + dx, y);
+    await page.mouse.up();
+  };
+  const rail0 = await width(".rail");
+  const insp0 = await width(".inspector");
+  const stage0 = await width(".stage-frame-wrap");
+  const thumb0 = await width(".rail-item .thumb");
+
+  await drag("rail", 100);
+  await expect.poll(() => width(".rail")).toBe(rail0 + 100);
+  await expect.poll(() => width(".rail-item .thumb")).toBe(thumb0 + 100);
+  // The thumbnail frame is rescaled to fill the wider thumbnail.
+  await expect.poll(() => width(".rail-item .thumb-frame")).toBeGreaterThan(thumb0 + 90);
+  await drag("inspector", -80);
+  await expect.poll(() => width(".inspector")).toBe(insp0 + 80);
+  await expect.poll(() => width(".stage-frame-wrap")).toBeLessThan(stage0);
+
+  // Keyboard: arrows move the splitter, the value is exposed to assistive tech.
+  const handle = page.locator('.panel-resizer[data-panel="inspector"]');
+  await expect(handle).toHaveAttribute("role", "separator");
+  await handle.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => width(".inspector")).toBe(insp0 + 64);
+  await expect(handle).toHaveAttribute("aria-valuenow", String(insp0 + 64));
+
+  // Widths survive a reload; double-click restores the default.
+  await page.reload();
+  await expect(page.locator(".rail-item")).toHaveCount(4);
+  await expect.poll(() => width(".rail")).toBe(rail0 + 100);
+  await expect.poll(() => width(".inspector")).toBe(insp0 + 64);
+  await page.locator('.panel-resizer[data-panel="rail"]').dblclick();
+  await expect.poll(() => width(".rail")).toBe(rail0);
+
+  // The stage keeps some room however far a panel is dragged.
+  await drag("rail", 2000);
+  await expect.poll(() => width(".rail")).toBe(480);
+  await expect.poll(() => width(".stage")).toBeGreaterThanOrEqual(360);
+
+  // Copilot panel.
+  await page.getByTestId("toggle-chat").click();
+  await expect(page.locator(".chat")).toBeVisible();
+  const chat0 = await width(".chat");
+  await drag("chat", -60);
+  await expect.poll(() => width(".chat")).toBe(chat0 + 60);
+  expect(await page.evaluate(() => document.scrollingElement.scrollHeight - document.scrollingElement.clientHeight)).toBe(0);
+});
+
+test("the app shell never makes the page itself scrollable", async ({ page }) => {
+  const pageScroll = () => page.evaluate(() => {
+    const root = document.scrollingElement;
+    return { overflow: root.scrollHeight - root.clientHeight, y: window.scrollY };
+  });
+  expect(await pageScroll()).toEqual({ overflow: 0, y: 0 });
+  // Reaching the end of the long inspector must not scroll the window.
+  await page.locator(".notes-input").focus();
+  await page.locator(".inspector-body").hover();
+  await page.mouse.wheel(0, 5000);
+  await expect(page.locator(".topbar")).toBeInViewport();
+  expect(await pageScroll()).toEqual({ overflow: 0, y: 0 });
+});
+
 test("editor has no serious accessibility violations", async ({ page }) => {
   const results = await new AxeBuilder({ page }).exclude("iframe").withTags(["wcag2a", "wcag2aa"]).analyze();
   const serious = results.violations.filter((v) => ["serious", "critical"].includes(v.impact));

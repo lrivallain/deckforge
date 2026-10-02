@@ -5,8 +5,6 @@ import { isHighlighted, select, slideDocument, state, slidePosition } from "./st
 import { op, opQuiet, removeSlide } from "./actions.js";
 import { slideTitle } from "../core/deck.js";
 
-const THUMB_WIDTH = 188;
-
 export function createRail({ onAddSlide }) {
   const items = new Map();
   const count = h("span", { class: "rail-count" });
@@ -18,13 +16,19 @@ export function createRail({ onAddSlide }) {
     h("div", { class: "rail-foot" }, addButton),
   );
 
+  // Thumbnails follow the rail width (it is resizable): scale the 1280px frames to fit.
+  function fitThumbs() {
+    const thumb = list.querySelector(".thumb");
+    if (thumb?.clientWidth) list.style.setProperty("--thumb-scale", String(thumb.clientWidth / 1280));
+  }
+  new ResizeObserver(fitThumbs).observe(list);
+
   let dragId = null;
   const indicator = h("li", { class: "drop-indicator", "aria-hidden": "true" });
 
   function makeItem(slide) {
     const frame = h("iframe", { class: "thumb-frame", tabindex: "-1", "aria-hidden": "true", title: "" });
     const thumb = h("div", { class: "thumb" }, frame);
-    frame.style.transform = `scale(${THUMB_WIDTH / 1280})`;
     const num = h("span", { class: "rail-num" });
     const title = h("span", { class: "rail-title" });
     const badge = h("span", { class: "badge badge-muted rail-hidden-badge" }, "Hidden");
@@ -177,6 +181,7 @@ export function createRail({ onAddSlide }) {
         if (writeFrame(item.frame, html)) item.html = html;
       }
     });
+    fitThumbs();
     const selected = items.get(state.selectedId);
     if (selected && !isInView(selected.li)) selected.li.scrollIntoView({ block: "nearest" });
   }
