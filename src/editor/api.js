@@ -1,8 +1,9 @@
 // HTTP + SSE client for the deckforge editor server.
 
-async function request(method, url, body) {
+async function request(method, url, body, { signal } = {}) {
   const res = await fetch(url, {
     method,
+    signal,
     headers: body !== undefined ? { "Content-Type": "application/json" } : {},
     body: body !== undefined ? JSON.stringify(body) : undefined,
     credentials: "same-origin",
@@ -51,6 +52,7 @@ export const api = {
   agentAbort: () => request("POST", "/api/agent/abort", {}),
   agentReset: () => request("POST", "/api/agent/reset", {}),
   agentStatus: () => request("GET", "/api/agent"),
+  improve: (payload, { signal } = {}) => request("POST", "/api/agent/improve", payload, { signal }),
 };
 
 export function connectEvents(handlers) {

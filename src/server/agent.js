@@ -8,11 +8,35 @@ import { slideTitle } from "../core/deck.js";
 import { applyOp, OpError } from "../core/ops.js";
 import { slideImageSources } from "../core/image.js";
 import { OVERLAY_KINDS, OVERLAY_OPTIONS } from "../core/overlay.js";
-import { systemPrompt } from "./prompt.js";
+import { improvePrompt, improveSystemPrompt, systemPrompt } from "./prompt.js";
 import { listAssets, resolveAsset } from "./assets.js";
 
 const TURN_TIMEOUT_MS = 5 * 60 * 1000;
+const IMPROVE_TIMEOUT_MS = 90 * 1000;
+export const MAX_IMPROVE_CHARS = 8000;
+const MAX_IMPROVE_CONCURRENCY = 3;
 export const AUTH_HINT = "Sign in with `gh auth login` (GitHub CLI) or `copilot` → `/login` (Copilot CLI), then retry. A GitHub Copilot subscription is required.";
+
+async function quietly(fn) {
+  try {
+    await fn();
+  } catch {
+    /* ignore */
+  }
+}
+
+const isAuthError = (err) => Boolean(err?.auth) || /auth|login|token|credential|unauthori[sz]ed|401|not signed/i.test(err?.message || "");
+
+/** Strip what models wrap around a "text only" answer: code fences, quotes, a leading label. */
+export function cleanImproved(answer) {
+  let text = String(answer ?? "").trim();
+  const fence = /^```[\w-]*\n([\s\S]*?)\n?```$/.exec(text);
+  if (fence) text = fence[1].trim();
+  text = text.replace(/^<<<\s*\n?|\n?\s*>>>$/g, "").trim();
+  const quoted = /^(["“«'])([\s\S]*)(["”»'])$/.exec(text);
+  if (quoted && !quoted[2].includes(quoted[1])) text = quoted[2].trim();
+  return text;
+}
 
 const obj = (properties, required = []) => ({ type: "object", properties, required, additionalProperties: false });
 const ID = { type: "string", description: "Slide id" };
@@ -139,6 +163,7 @@ export class AgentController extends EventEmitter {
     this.session = null;
     this.turn = null;
     this.history = [];
+    this.improving = 0;
   }
 
   status() {
@@ -217,16 +242,36 @@ export class AgentController extends EventEmitter {
     return this.starting;
   }
 
+  /** One SDK client serves the chat session and the one-shot "improve" sessions. */
+  ensureClient() {
+    if (this.client) return Promise.resolve(this.client);
+    this.clientStarting ??= this.startClient().finally(() => {
+      this.clientStarting = null;
+    });
+    return this.clientStarting;
+  }
+
+  async startClient() {
+    const client = await this.factory.createClient({ cwd: this.store.deckDir });
+    if (typeof client.getAuthStatus === "function") {
+      const auth = await client.getAuthStatus().catch(() => null);
+      if (auth && auth.isAuthenticated === false) {
+        try {
+          await client.stop?.();
+        } catch {
+          /* ignore */
+        }
+        throw Object.assign(new Error(`Not signed in to GitHub Copilot. ${auth.statusMessage || ""}`.trim()), { auth: true });
+      }
+    }
+    this.client = client;
+    return client;
+  }
+
   async startSession() {
     this.setState("starting");
     try {
-      this.client = await this.factory.createClient({ cwd: this.store.deckDir });
-      if (typeof this.client.getAuthStatus === "function") {
-        const auth = await this.client.getAuthStatus().catch(() => null);
-        if (auth && auth.isAuthenticated === false) {
-          throw Object.assign(new Error(`Not signed in to GitHub Copilot. ${auth.statusMessage || ""}`.trim()), { auth: true });
-        }
-      }
+      await this.ensureClient();
       const tools = this.buildTools();
       const names = new Set(tools.map((t) => t.name));
       this.session = await this.client.createSession({
@@ -252,11 +297,64 @@ export class AgentController extends EventEmitter {
       this.setState("idle");
       return this.session;
     } catch (err) {
-      const auth = err.auth || /auth|login|token|credential|unauthori[sz]ed|401|not signed/i.test(err.message);
+      const auth = isAuthError(err);
       this.session = null;
-      await this.disposeClient();
+      // Keep the client while improvements are still using it.
+      if (!this.improving) await this.disposeClient();
       this.setState("error", { message: err.message, auth });
       throw err;
+    }
+  }
+
+  /**
+   * Rewrite one text field with Copilot and return the new text. Uses a
+   * short-lived session without tools: it never touches the deck, the undo
+   * history or the chat conversation; the editor applies the result.
+   */
+  async improve({ text, label, description, max, richtext = false, kind, slideId } = {}) {
+    text = String(text ?? "");
+    if (!text.trim()) throw new OpError("Nothing to improve: the field is empty");
+    if (text.length > MAX_IMPROVE_CHARS) throw new OpError(`The text is too long to improve (over ${MAX_IMPROVE_CHARS} characters)`);
+    if (this.improving >= MAX_IMPROVE_CONCURRENCY) throw Object.assign(new OpError("Copilot is already improving other fields. Try again in a moment."), { status: 429 });
+    const slide = slideId ? this.store.deck.slides.find((s) => s.id === slideId) : null;
+    const maxLength = Number.isFinite(Number(max)) && Number(max) > 0 ? Math.floor(Number(max)) : null;
+    this.improving += 1;
+    let client;
+    let session;
+    try {
+      client = await this.ensureClient();
+      session = await client.createSession({
+        model: process.env.DECKFORGE_MODEL || undefined,
+        tools: [],
+        availableTools: [],
+        workingDirectory: this.store.deckDir,
+        systemMessage: { mode: "replace", content: improveSystemPrompt(this.store.deck.meta) },
+        onPermissionRequest: () => ({ kind: "reject", feedback: "Reply with the rewritten text only; no tools are available." }),
+      });
+      const prompt = improvePrompt({ text, label: String(label || "").slice(0, 120), description: String(description || "").slice(0, 500), max: maxLength, richtext: Boolean(richtext), kind: String(kind || "").slice(0, 40), slide });
+      let reply;
+      try {
+        reply = await session.sendAndWait({ prompt }, IMPROVE_TIMEOUT_MS);
+      } catch (err) {
+        await quietly(() => session.abort?.());
+        if (/timeout|timed out/i.test(err.message)) throw new Error("Copilot took too long to answer", { cause: err });
+        throw err;
+      }
+      const improved = cleanImproved(reply?.data?.content);
+      if (!improved) throw new Error("Copilot returned an empty answer");
+      return { text: improved };
+    } catch (err) {
+      if (err.name === "OpError" || err.status) throw err;
+      const auth = isAuthError(err);
+      throw Object.assign(new Error(err.message), { status: auth ? 503 : 502, details: auth ? { auth: true, hint: AUTH_HINT } : undefined });
+    } finally {
+      this.improving -= 1;
+      if (session) {
+        const id = session.sessionId;
+        await quietly(() => session.disconnect?.());
+        // One-shot sessions are not worth keeping on disk.
+        if (id) await quietly(() => client?.deleteSession?.(id));
+      }
     }
   }
 

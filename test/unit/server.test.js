@@ -5,7 +5,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { startServer, resolveInside, protectDeckHtml } from "../../src/server/http.js";
 import { DeckStore } from "../../src/server/store.js";
-import { AgentController, deckToolSpecs } from "../../src/server/agent.js";
+import { AgentController, cleanImproved, deckToolSpecs, MAX_IMPROVE_CHARS } from "../../src/server/agent.js";
 import { systemPrompt } from "../../src/server/prompt.js";
 import * as mockSdk from "../fixtures/mock-sdk.js";
 
@@ -201,6 +201,19 @@ describe("HTTP server", () => {
     expect((await bad.json()).error).toMatch(/No slide/);
   });
 
+  it("improves a text field over the API", async () => {
+    await start();
+    const post = (body, headers = {}) => req("/api/agent/improve", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
+    expect((await post({ text: "Hi" })).status).toBe(401);
+    expect((await post({ text: "Hi" }, auth({ origin: "https://evil.example" }))).status).toBe(403);
+    const ok = await post({ text: "Make it better", label: "Notes", slideId: "zoom" }, auth());
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ text: "Improved: Make it better" });
+    const empty = await post({ text: "" }, auth());
+    expect(empty.status).toBe(400);
+    expect(app.store.undoStack.length).toBe(0);
+  });
+
   it("serves the deck folder without path traversal or dot-files", async () => {
     await start();
     expect((await req("/deck/deck.html", { headers: auth() })).status).toBe(200);
@@ -355,6 +368,63 @@ describe("AgentController", () => {
     const result = await tool.handler({ id: "zoom" });
     expect(result.resultType).toBe("failure");
     expect(store.deck.slides.length).toBe(4);
+  });
+
+  it("improves one field with a tool-less one-shot session", async () => {
+    agent = new AgentController({ store, factory: mockSdk });
+    const events = collect(agent);
+    const before = JSON.stringify(store.deck);
+    const result = await agent.improve({ text: "Some  headline", label: "Headline", description: "Slide headline", max: 80, richtext: true, kind: "slide text", slideId: "zoom" });
+    expect(result).toEqual({ text: "Improved: Some  headline" });
+    const config = globalThis.__deckforgeMockImproveSession.config;
+    expect(config.tools).toEqual([]);
+    expect(config.availableTools).toEqual([]);
+    expect(config.systemMessage.mode).toBe("replace");
+    expect(config.systemMessage.content).toContain("audience: People preparing diagram-led talks");
+    expect(config.onPermissionRequest({ kind: "shell" }).kind).toBe("reject");
+    // The deck, the undo history, the chat and its session are untouched; the one-shot session is deleted.
+    expect(JSON.stringify(store.deck)).toBe(before);
+    expect(store.undoStack.length).toBe(0);
+    expect(agent.session).toBeNull();
+    expect(agent.history).toEqual([]);
+    expect(events.filter((e) => e.type !== "status")).toEqual([]);
+    expect(agent.client.deleted).toEqual([globalThis.__deckforgeMockImproveSession.sessionId]);
+    expect(agent.improving).toBe(0);
+  });
+
+  it("validates improve requests and reports failures", async () => {
+    agent = new AgentController({ store, factory: mockSdk });
+    await expect(agent.improve({ text: "   " })).rejects.toThrow(/empty/);
+    await expect(agent.improve({ text: "x".repeat(MAX_IMPROVE_CHARS + 1) })).rejects.toThrow(/too long/);
+    await expect(agent.improve({ text: "#error model down" })).rejects.toMatchObject({ message: "model down", status: 502 });
+    expect(agent.improving).toBe(0);
+  });
+
+  it("reports sign-in problems when improving", async () => {
+    process.env.DECKFORGE_MOCK_AUTH = "fail";
+    agent = new AgentController({ store, factory: mockSdk });
+    const err = await agent.improve({ text: "Hello" }).catch((e) => e);
+    expect(err.status).toBe(503);
+    expect(err.details).toMatchObject({ auth: true, hint: expect.stringMatching(/gh auth login/) });
+  });
+
+  it("limits concurrent improvements", async () => {
+    let release;
+    const gate = new Promise((r) => (release = r));
+    const slow = { createClient: async () => { await gate; return mockSdk.createClient(); } };
+    agent = new AgentController({ store, factory: slow });
+    const running = [1, 2, 3].map((n) => agent.improve({ text: `t${n}` }));
+    await expect(agent.improve({ text: "t4" })).rejects.toMatchObject({ status: 429 });
+    release();
+    expect((await Promise.all(running)).map((r) => r.text)).toEqual(["Improved: t1", "Improved: t2", "Improved: t3"]);
+  });
+
+  it("cleans the wrappers models put around a rewrite", () => {
+    expect(cleanImproved("```\nBetter text\n```")).toBe("Better text");
+    expect(cleanImproved("“Better text”")).toBe("Better text");
+    expect(cleanImproved('"Say "hi" now"')).toBe('"Say "hi" now"');
+    expect(cleanImproved("<<<\nBetter\n>>>")).toBe("Better");
+    expect(cleanImproved("  <strong>Keep</strong> tags ")).toBe("<strong>Keep</strong> tags");
   });
 
   it("builds a grounded system prompt", () => {

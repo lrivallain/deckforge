@@ -352,6 +352,12 @@ signed in, the drawer shows how to sign in.
   short headlines, no invented facts…), the template catalogue and `meta.brief`.
 - **Undo.** Changes apply directly, and slides Copilot changed are highlighted in the rail. A turn is a single
   undo step ("Undo these changes").
+- **Improve a field.** Content text areas (slot text, list items, card fields, speaker notes, overlay text,
+  image alt text and the brief's goal) have a small ✨ button. One click asks Copilot to rewrite that text
+  for clarity and concision. It keeps the language and the richtext tags, respects the slot's maximum
+  length and does not add facts. The button then shows a cancel icon that restores the previous text.
+  Typing by hand removes that option. These rewrites use a short-lived session with no tools
+  (`POST /api/agent/improve`) and do not appear in the chat.
 - **Model.** Set `DECKFORGE_MODEL=<model>` to pick a model. By default, deckforge uses the Copilot default model.
 
 ### Security model

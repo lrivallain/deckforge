@@ -10,6 +10,7 @@ import { stripTags } from "../core/html.js";
 import { imageControl } from "./image-control.js";
 import { layersSection, overlayPanel } from "./inspector-overlays.js";
 import { makeSortable } from "./reorder.js";
+import { aiImprove, syncImproveFields } from "./improve.js";
 
 function humanize(name) {
   return name.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[-_]/g, " ").replace(/^./, (c) => c.toUpperCase());
@@ -90,7 +91,12 @@ export function createInspector({ onFieldFocus }) {
       if (document.activeElement !== textarea) textarea.value = v ?? "";
       counter?.update(v);
     });
-    let control = textarea;
+    const label = humanize(path.split(".").pop());
+    const improvable = aiImprove(textarea, {
+      key: `${slideId}:${path}`,
+      context: () => ({ label, description: slot.description, max: slot.max, richtext, kind: "slide text", slideId }),
+    });
+    let control = improvable;
     if (richtext) {
       const wrap = (before, after) => () => {
         const { selectionStart: s, selectionEnd: e, value: v } = textarea;
@@ -109,10 +115,10 @@ export function createInspector({ onFieldFocus }) {
           tool("Before", "Muted ‘old state’ line", wrap('<span class="old">', "</span>"), "tool-old"),
           tool("Link", "Link", wrap('<a href="https://">', "</a>")),
         ),
-        textarea,
+        improvable,
       );
     }
-    return field(humanize(path.split(".").pop()), control, { hint: slot.description, counter, id, path });
+    return field(label, control, { hint: slot.description, counter, id, path });
   }
 
   function booleanControl(slot, value, path, slideId) {
@@ -178,6 +184,7 @@ export function createInspector({ onFieldFocus }) {
       path,
       required: slot.required,
       description: slot.description,
+      slideId,
       onChange: (patch, opts = {}) => {
         const current = selectedSlide()?.data && path.split(".").reduce((node, key) => (node == null ? undefined : node[key]), selectedSlide().data);
         // Patch individual fields of an existing image object; otherwise write the whole value.
@@ -198,7 +205,11 @@ export function createInspector({ onFieldFocus }) {
       input.addEventListener("input", () => sendLater(slideId, `${path}.${index}`, input.value));
       input.addEventListener("focus", () => onFieldFocus?.(`${path}.${index}`));
       setters.set(`${path}.${index}`, (v) => { if (document.activeElement !== input) input.value = v ?? ""; });
-      return h("li", { class: "list-row" }, dragHandle(`${humanize(path)} item ${index + 1}`), input, itemTools(list, index, commit));
+      const improvable = aiImprove(input, {
+        key: `${slideId}:${path}.${index}`,
+        context: () => ({ label: `${humanize(path.split(".").pop())} item`, description: slot.description, max: slot.maxLength, richtext: slot.of === "richtext", kind: "list item", slideId }),
+      });
+      return h("li", { class: "list-row" }, dragHandle(`${humanize(path)} item ${index + 1}`), improvable, itemTools(list, index, commit));
     });
     const full = slot.max && list.length >= slot.max;
     const ol = h("ol", { class: "list-rows" }, rows);
@@ -304,7 +315,11 @@ export function createInspector({ onFieldFocus }) {
     const notes = h("textarea", { id: notesId, class: "input notes-input", rows: 5, value: slide.notes || "", placeholder: "What to say on this slide; sources for factual claims.", dataset: { path: "@notes" } });
     notes.addEventListener("input", debounce(() => opQuiet("update_slide", { id: slide.id, notes: notes.value }, { coalesce: `${slide.id}:@notes`, label: "Edit notes" }), 400));
     setters.set("@notes", (v) => { if (document.activeElement !== notes) notes.value = v ?? ""; });
-    body.append(section("Speaker notes", h("label", { for: notesId, class: "sr-only" }, "Speaker notes"), notes));
+    const improvableNotes = aiImprove(notes, {
+      key: `${slide.id}:@notes`,
+      context: () => ({ label: "Speaker notes", description: "What the presenter says on this slide (2–4 short sentences), plus sources for factual claims.", kind: "speaker notes", slideId: slide.id }),
+    });
+    body.append(section("Speaker notes", h("label", { for: notesId, class: "sr-only" }, "Speaker notes"), improvableNotes));
 
     const navId = nextId();
     const footId = nextId();
@@ -331,6 +346,7 @@ export function createInspector({ onFieldFocus }) {
         if (overlay) set(overlay);
       } else set(get(path));
     }
+    syncImproveFields(body);
   }
 
   function update(info = {}) {
