@@ -110,6 +110,35 @@ test("prints every slide on its own page without chrome", async ({ page }) => {
   expect(pages).toBe(4);
 });
 
+test("printed slides fit smaller paper and print margins", async ({ page }) => {
+  await page.goto(url(local, "#2"));
+  await page.emulateMedia({ media: "print" });
+  // Printable areas of A4 portrait, Letter landscape and the 16:9 page with 0.5in margins.
+  for (const size of [{ width: 698, height: 1027 }, { width: 960, height: 720 }, { width: 1184, height: 624 }]) {
+    await page.setViewportSize(size);
+    const boxes = await page.locator(".stage > .slide").evaluateAll((els) => els.map((el) => {
+      const r = el.getBoundingClientRect();
+      const inner = el.querySelector(".slide-inner");
+      return { width: r.width, height: r.height, left: r.left, overflow: inner.scrollWidth > inner.clientWidth + 1 || inner.scrollHeight > inner.clientHeight + 1 };
+    }));
+    for (const box of boxes) {
+      expect(box.width).toBeLessThanOrEqual(size.width + 0.5);
+      expect(box.height).toBeLessThanOrEqual(size.height + 0.5);
+      expect(Math.max(box.width / size.width, box.height / size.height)).toBeGreaterThan(0.99);
+      expect(box.width / box.height).toBeCloseTo(16 / 9, 2);
+      expect(box.left).toBeGreaterThanOrEqual(0);
+      expect(box.overflow).toBe(false);
+    }
+  }
+  test.skip(test.info().project.name !== "chromium", "page.pdf() is Chromium-only");
+  for (const paper of ["A4 portrait", "letter landscape", "13.333333in 7.5in"]) {
+    await page.addStyleTag({ content: `@page { size: ${paper}; margin: 0.5in; }` });
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+    const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+    expect(pages, paper).toBe(4);
+  }
+});
+
 test("speaker notes panel and presenter window", async ({ page }) => {
   await page.goto(url(local));
   await page.keyboard.press("n");
