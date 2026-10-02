@@ -99,6 +99,16 @@ textarea.notes-input, textarea.chat-input { resize: vertical; }
 .switch:checked { background: var(--ui-accent); }
 .switch:checked::after { transform: translateX(14px); }
 
+/* ------------------------------------------------------------ panel splitters */
+.panel-resizer { position: absolute; top: 0; bottom: 0; z-index: 20; width: 9px; cursor: col-resize; touch-action: none; }
+.panel-resizer-right { right: -5px; }
+.panel-resizer-left { left: -5px; }
+.panel-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 3px; border-radius: 3px; background: transparent; transition: background-color .15s ease; }
+.panel-resizer:hover::after, .panel-resizer.is-active::after, .panel-resizer:focus-visible::after { background: var(--ui-accent); }
+.panel-resizer:focus-visible { outline: none; }
+body.is-resizing { cursor: col-resize; user-select: none; }
+body.is-resizing iframe { pointer-events: none; }
+
 /* ------------------------------------------------------------ layout */
 .df-app { display: grid; grid-template-rows: var(--top-h) minmax(0, 1fr); height: 100vh; }
 .topbar {
@@ -127,7 +137,7 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .panel-head h2 { font-size: 12px; font-weight: 650; color: var(--ui-muted); text-transform: uppercase; letter-spacing: .07em; display: inline-flex; align-items: center; gap: 6px; flex: 1; }
 
 /* ------------------------------------------------------------ rail */
-.rail { display: flex; flex-direction: column; min-height: 0; background: var(--ui-panel); border-right: 1px solid var(--ui-line); }
+.rail { position: relative; display: flex; flex-direction: column; min-height: 0; background: var(--ui-panel); border-right: 1px solid var(--ui-line); }
 .rail-count { font-size: 12px; color: var(--ui-faint); }
 .rail-list { list-style: none; margin: 0; padding: 4px 12px 12px; overflow-y: auto; flex: 1; display: grid; gap: 8px; align-content: start; }
 .rail-item {
@@ -154,10 +164,10 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .stash-note strong { color: var(--ui-ink); font-weight: 600; }
 .rail-item.is-hidden .rail-hidden-badge { display: inline-flex; }
 .thumb {
-  position: relative; display: block; width: 188px; height: 105.75px; overflow: hidden; border-radius: 7px;
+  position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 7px;
   border: 1px solid var(--ui-line); background: #fff; box-shadow: var(--ui-shadow);
 }
-.thumb-frame { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; border: 0; transform-origin: 0 0; pointer-events: none; background: #fff; }
+.thumb-frame { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; border: 0; transform: scale(var(--thumb-scale, .1453)); transform-origin: 0 0; pointer-events: none; background: #fff; }
 .rail-actions {
   position: absolute; right: 12px; bottom: 12px; display: flex; gap: 2px; padding: 2px; border-radius: 9px;
   background: rgb(255 255 255 / 94%); box-shadow: var(--ui-shadow); opacity: 0; transition: opacity .15s ease;
@@ -182,7 +192,7 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .stage-empty { margin: auto; text-align: center; display: grid; gap: 6px; }
 
 /* ------------------------------------------------------------ inspector */
-.inspector { display: flex; flex-direction: column; min-height: 0; background: var(--ui-panel); border-left: 1px solid var(--ui-line); }
+.inspector { position: relative; display: flex; flex-direction: column; min-height: 0; background: var(--ui-panel); border-left: 1px solid var(--ui-line); }
 /* position: relative keeps absolute children (e.g. .sr-only labels) clipped here instead of stretching the page. */
 .inspector-body { position: relative; overflow-y: auto; padding: 0 16px 24px; flex: 1; }
 .insp-section { padding: 12px 0 18px; border-bottom: 1px solid var(--ui-line); display: grid; gap: 14px; }
@@ -243,7 +253,7 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .notes-input { min-height: 110px; }
 
 /* ------------------------------------------------------------ chat */
-.chat { display: flex; flex-direction: column; min-height: 0; background: var(--ui-panel); border-left: 1px solid var(--ui-line); }
+.chat { position: relative; display: flex; flex-direction: column; min-height: 0; background: var(--ui-panel); border-left: 1px solid var(--ui-line); }
 .chat[hidden] { display: none; }
 .chat .panel-head h2 { color: var(--ui-copilot); }
 .chat-status { font-size: 12px; color: var(--ui-copilot); }
