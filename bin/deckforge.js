@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// deckforge CLI: new | build | templates | edit | serve | skill
+// deckforge CLI: new | build | templates | edit | serve | mcp | skill
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -21,6 +21,8 @@ Usage
   deckforge templates [deck.yaml|dir] [--json]
   deckforge edit <deck.yaml|dir> [--port 0] [--token <t>] [--runtime …] [--no-open]
   deckforge serve <deck.yaml|dir> [--port 0] [--no-open]
+  deckforge mcp [deck.yaml|dir]
+  deckforge mcp --install [--force] [--dest <mcp-config.json>]
   deckforge skill install-copilot [--force] [--dest <skills dir>] [--replace-build-presentation]
 
 Commands
@@ -30,6 +32,11 @@ Commands
   templates  List the templates (with their slots), themes and icons a deck can use
   edit       Start the local editor (127.0.0.1 only, random port and per-run token)
   serve      Serve the built deck read-only, rebuilding and reloading on change
+  mcp        Run a stdio MCP server with the deck tools for Copilot CLI / the Copilot app
+             (without a deck: the deck.yaml of the Copilot session's folder). Changes go
+             through a running "deckforge edit" of that deck when there is one.
+             --install registers it for every Copilot session in
+             $COPILOT_HOME/mcp-config.json (default ~/.copilot/mcp-config.json)
   skill      install-copilot: install the deckforge GitHub Copilot skill into
              $COPILOT_HOME/skills (default ~/.copilot/skills)
 
@@ -121,6 +128,7 @@ const { values, positionals } = parseArgs({
     json: { type: "boolean" },
     dest: { type: "string" },
     "replace-build-presentation": { type: "boolean" },
+    install: { type: "boolean" },
   },
 });
 
@@ -231,6 +239,25 @@ switch (command) {
     } catch (err) {
       fail(err.message);
     }
+    break;
+  }
+  case "mcp": {
+    if (values.install) {
+      const { installGlobalMcp, mcpConfigFile } = await import("../src/server/copilot-link.js");
+      try {
+        const result = installGlobalMcp({ file: values.dest ? path.resolve(values.dest) : mcpConfigFile(), force: values.force });
+        console.log(`${result.updated ? "Updated" : "Added"} the deckforge MCP server in ${result.file}`);
+        console.log("Copilot sessions (CLI and app) started in a deck folder now have the deck tools.");
+        console.log("Start a new Copilot session to load it (check with /mcp).");
+      } catch (err) {
+        fail(err.message);
+      }
+      break;
+    }
+    // stdout carries the MCP protocol: never print anything else to it.
+    const file = target ? resolveDeck(target) : null;
+    const { runMcpServer } = await import("../src/server/mcp.js");
+    await runMcpServer({ deckPath: file });
     break;
   }
   case "edit":

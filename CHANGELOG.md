@@ -8,6 +8,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Editor: drag an edge to resize the slide rail, the inspector or the Copilot panel. You can also use the keyboard, and double-click restores the default width. The widths persist, and rail thumbnails scale with the rail.
+- Copilot: continue the editor's conversation in Copilot CLI or the GitHub Copilot app. The drawer shows the session ID, and **Continue in Copilot** releases the session and gives a `copilot --resume` command or opens `ghapp://sessions/<id>`. The editor resumes its last conversation for each deck.
+- `deckforge mcp [<deck>]`: a stdio MCP server with the deck tools. With a running `deckforge edit`, its changes appear live and can be undone. Without a deck it uses the `deck.yaml` of the Copilot session's folder. `deckforge mcp --install`, or **Add the deck tools to Copilot** in the editor, registers it in `~/.copilot/mcp-config.json`.
 
 ### Fixed
 

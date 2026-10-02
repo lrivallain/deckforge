@@ -29,6 +29,7 @@
 - **Themes and templates.** It ships with 4 themes and 20 templates, from one-idea slides to diagrams, and you can add your own.
 - **Live editor.** Edit text in place, use a typed inspector, add images and overlays, and undo any change. Saves automatically.
 - **GitHub Copilot inside.** Ask for changes to one slide or the whole deck. Copilot can only use deck tools.
+  Continue the same conversation in Copilot CLI or the Copilot app (`deckforge mcp`) and watch its edits in the editor as they happen.
 - **One static file.** Speaker notes, a presenter window and print to PDF. No network requests by default.
 
 ## Install
