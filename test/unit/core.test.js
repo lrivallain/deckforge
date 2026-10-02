@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { parseTheme, ThemeError } from "../../src/core/theme.js";
 import { normalizeDeck, parseDeckYaml, stringifyDeck, validateDeck, DeckError } from "../../src/core/deck.js";
 import { applyOp, OpError } from "../../src/core/ops.js";
-import { renderDeck, VERSION, cdnBase } from "../../src/core/render.js";
+import { renderDeck, renderSlideDocument, VERSION, cdnBase } from "../../src/core/render.js";
 import { loadTemplates, loadThemes } from "../../src/server/registry.js";
 import { sampleData } from "../../src/core/template.js";
 
@@ -153,6 +153,66 @@ describe("ops", () => {
     expect(() => applyOp(base, "nope", {}, ctx)).toThrow(/Unknown operation/);
     expect(() => applyOp(base, "update_slide", { id: "zz" }, ctx)).toThrow(/No slide/);
     expect(() => applyOp(base, "add_slide", { template: "zz" }, ctx)).toThrow(/Unknown template/);
+  });
+});
+
+describe("template switches", () => {
+  const ctx = { templates, themes };
+  const example = () => parseDeckYaml(fs.readFileSync(path.join(root, "examples/starter/deck.yaml"), "utf8"));
+
+  it("round-trips concept-map → title → concept-map without losing content", () => {
+    const original = example();
+    const toTitle = applyOp(original, "set_template", { id: "concept", template: "title" }, ctx);
+    const slide = toTitle.deck.slides[0];
+    expect(slide.data.title).toBe(original.slides[0].data.title);
+    expect(Object.keys(slide.stash)).toEqual(["audiences", "boundary", "boundaryNote", "lanes", "capabilitiesLabel", "capabilities", "takeawayLabel", "takeaway"]);
+    expect(slide.placeholders).toEqual(["presenter", "details"]);
+    // Persisted through deck.yaml.
+    const reloaded = parseDeckYaml(stringifyDeck(toTitle.deck));
+    expect(reloaded.slides[0].stash).toEqual(slide.stash);
+    expect(reloaded.slides[0].placeholders).toEqual(["presenter", "details"]);
+    const back = applyOp(reloaded, "set_template", { id: "concept", template: "concept-map" }, ctx).deck.slides[0];
+    expect(back.data).toEqual(original.slides[0].data);
+    expect(back.stash).toBeUndefined();
+    expect(back.placeholders).toBeUndefined();
+  });
+
+  it("keeps edits made on the intermediate template", () => {
+    let { deck } = applyOp(example(), "set_template", { id: "concept", template: "title" }, ctx);
+    ({ deck } = applyOp(deck, "update_slide", { id: "concept", set: { title: "New headline", presenter: "Ada" } }, ctx));
+    expect(deck.slides[0].placeholders).toEqual(["details"]);
+    ({ deck } = applyOp(deck, "set_template", { id: "concept", template: "concept-map" }, ctx));
+    expect(deck.slides[0].data.title).toBe("New headline");
+    expect(deck.slides[0].data.lanes[0].title).toBe("Prepare");
+    expect(deck.slides[0].stash).toEqual({ presenter: "Ada" });
+    ({ deck } = applyOp(deck, "set_template", { id: "concept", template: "title" }, ctx));
+    expect(deck.slides[0].data.presenter).toBe("Ada");
+  });
+
+  it("clears a navigation title that only named the old layout and labels the change", () => {
+    const { deck, result } = applyOp(example(), "set_template", { id: "concept", template: "title" }, ctx);
+    expect(deck.slides[0].title).toBeUndefined();
+    expect(result.label).toBe("Slide 1: Concept map → Title");
+    const kept = applyOp(example(), "set_template", { id: "zoom", template: "bullets" }, ctx);
+    expect(kept.deck.slides[3].title).toBe("Problem to response");
+  });
+
+  it("never publishes sample placeholders and flags required ones", () => {
+    let { deck } = applyOp(example(), "set_template", { id: "concept", template: "title" }, ctx);
+    let html = renderDeck(deck, { templates, theme: themes.build });
+    expect(html).not.toContain("Presenter name");
+    expect(html).not.toContain("Event or date");
+    expect(html).toContain('data-title="From isolated tasks. To a shared workflow."');
+    ({ deck } = applyOp(deck, "add_slide", { template: "quote", id: "q" }, ctx));
+    expect(deck.slides.at(-1).placeholders).toEqual(["eyebrow", "quote", "author", "role"]);
+    html = renderDeck(deck, { templates, theme: themes.build });
+    expect(html).not.toContain("The best review");
+    expect(validateDeck(deck, { templates, themes })).toContainEqual({ level: "warning", slide: "q", slot: "quote", message: '"quote" still shows sample text (not published)' });
+    ({ deck } = applyOp(deck, "add_slide", { template: "quote", id: "q2", data: { quote: "Real words." } }, ctx));
+    expect(deck.slides.at(-1).placeholders).toEqual(["eyebrow", "author", "role"]);
+    // The editor preview still shows samples, marked as placeholders.
+    const preview = renderSlideDocument(deck, deck.slides.at(-2), { templates, theme: themes.build, viewerCssHref: "x.css", edit: true });
+    expect(preview).toMatch(/data-df-slot="quote" data-df-type="richtext" data-df-placeholder>The best review/);
   });
 });
 

@@ -102,6 +102,7 @@ test("prints every slide on its own page without chrome", async ({ page }) => {
   await page.emulateMedia({ media: "print" });
   for (const slide of await page.locator(".stage > .slide").all()) await expect(slide).toBeVisible();
   await expect(page.locator(".controls")).toBeHidden();
+  test.skip(test.info().project.name !== "chromium", "page.pdf() is Chromium-only");
   const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
   const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
   expect(pages).toBe(4);
@@ -141,6 +142,7 @@ test("viewer has no detectable accessibility violations", async ({ page }) => {
 test("matches build-presentation starter.html pixel for pixel (when available)", async ({ browser }) => {
   const starter = path.join(os.homedir(), ".copilot/skills/build-presentation/assets/starter.html");
   test.skip(!fs.existsSync(starter), "starter.html reference not installed");
+  test.skip(test.info().project.name !== "chromium", "pixel comparison runs once, in Chromium");
   const context = await browser.newContext({ viewport: { width: 1320, height: 800 }, reducedMotion: "reduce" });
   const a = await context.newPage();
   const b = await context.newPage();

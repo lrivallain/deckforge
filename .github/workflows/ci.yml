@@ -32,7 +32,7 @@ jobs:
           node bin/deckforge.js build examples/starter
           git diff --exit-code -- dist examples
       - run: npm test
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright test
         env:
           CI: "1"

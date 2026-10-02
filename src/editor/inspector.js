@@ -35,7 +35,7 @@ export function createInspector({ onFieldFocus }) {
 
   function structureKey(slide) {
     const shape = (value) => (Array.isArray(value) ? `[${value.map(shape).join(",")}]` : value && typeof value === "object" ? `{${Object.keys(value).map((k) => `${k}:${shape(value[k])}`).join(",")}}` : "");
-    return `${slide.id}|${slide.template}|${shape(slide.data)}|${state.registryVersion}`;
+    return `${slide.id}|${slide.template}|${shape(slide.data)}|${(slide.placeholders || []).join(",")}|${Object.keys(slide.stash || {}).join(",")}|${state.registryVersion}`;
   }
 
   // ------------------------------------------------------------ field builders
@@ -218,7 +218,7 @@ export function createInspector({ onFieldFocus }) {
 
   async function changeTemplate(slide) {
     const name = await pickTemplate({ title: "Change template", current: slide.template, confirmLabel: "Apply template" });
-    if (name && name !== slide.template) opQuiet("set_template", { id: slide.id, template: name }, { label: "Change template" });
+    if (name && name !== slide.template) opQuiet("set_template", { id: slide.id, template: name });
   }
 
   function render() {
@@ -243,8 +243,20 @@ export function createInspector({ onFieldFocus }) {
         issues.length || unknown.length
           ? h("ul", { class: "issues" }, [...issues.map((i) => h("li", {}, icon("alert", 14), i.message)), ...unknown.map((k) => h("li", {}, icon("alert", 14), `“${k}” is not used by this template`))])
           : null,
+        slide.placeholders?.length
+          ? h("p", { class: "muted small" }, "Fields marked “Sample” show the template's example text in the editor only; it is not published until you edit it.")
+          : null,
         Object.entries(template.slots).map(([key, slot]) => control(slot, slide.data?.[key], key, slide.id)),
+        slide.stash && Object.keys(slide.stash).length
+          ? h("div", { class: "stash-note", "data-testid": "stash-note" },
+            h("strong", {}, "Kept from a previous layout"),
+            h("span", {}, `${Object.keys(slide.stash).join(", ")} — not shown by this template, restored if you switch back.`))
+          : null,
       ));
+      for (const key of slide.placeholders || []) {
+        const label = body.querySelector(`.field[data-path="${CSS.escape(key)}"] > .field-label`);
+        label?.append(h("span", { class: "badge badge-sample", title: "Template sample text, not published" }, "Sample"));
+      }
     }
     const notesId = nextId();
     const notes = h("textarea", { id: notesId, class: "input notes-input", rows: 5, value: slide.notes || "", placeholder: "What to say on this slide; sources for factual claims.", dataset: { path: "@notes" } });

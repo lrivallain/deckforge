@@ -1,6 +1,6 @@
 // Center stage: live 16:9 preview of the selected slide with inline editing.
 
-import { h, fitFrame, writeFrame, debounce } from "./dom.js";
+import { h, fitFrame, frameIsCurrent, writeFrame, debounce } from "./dom.js";
 import { selectedSlide, slideDocument, state, slidePosition } from "./state.js";
 import { opQuiet } from "./actions.js";
 import { sanitizeRichText } from "../core/html.js";
@@ -24,8 +24,14 @@ export function createStage({ onSlotFocus }) {
   let currentId = null;
   let editing = null; // { el, path, slideId }
   let selectedPath = null;
+  let pendingWrite = false;
 
   const resize = () => {
+    // The stage may have been hidden/re-attached: make sure the frame shows the slide.
+    if (pendingWrite || (currentId && !frameIsCurrent(frame))) {
+      const slide = selectedSlide();
+      if (slide) pendingWrite = !writeFrame(frame, slideDocument(slide, { edit: true }));
+    }
     const scale = fitFrame(canvas, frame);
     wrap.style.width = `${1280 * scale}px`;
     wrap.style.height = `${720 * scale}px`;
@@ -40,9 +46,12 @@ export function createStage({ onSlotFocus }) {
   function wire() {
     const doc = frame.contentDocument;
     if (!doc) return;
-    doc.addEventListener("click", (e) => {
-      if (e.target.closest("a")) e.preventDefault();
-    });
+    if (!doc.__dfWired) {
+      doc.__dfWired = true;
+      doc.addEventListener("click", (e) => {
+        if (e.target.closest("a")) e.preventDefault();
+      });
+    }
     for (const el of doc.querySelectorAll(".df-slot")) {
       const type = el.dataset.dfType;
       const path = el.dataset.dfSlot;
@@ -54,6 +63,14 @@ export function createStage({ onSlotFocus }) {
       let original = null;
       el.addEventListener("focus", () => {
         original = el.innerHTML;
+        // Sample text: select it so typing replaces it.
+        if (el.hasAttribute("data-df-placeholder")) {
+          const range = doc.createRange();
+          range.selectNodeContents(el);
+          const selection = doc.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
         editing = { el, path, slideId: currentId };
         onSlotFocus?.(path);
       });
@@ -109,6 +126,7 @@ export function createStage({ onSlotFocus }) {
     if (sameSlide && editing && info.source === "user" && !info.selection) return;
     if (sameSlide && editing && frame.contentDocument?.activeElement === editing.el && info.source === "user") return;
     writeFrame(frame, slideDocument(slide, { edit: true }));
+    pendingWrite = !frameIsCurrent(frame);
     requestAnimationFrame(resize);
   }
 

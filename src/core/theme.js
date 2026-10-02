@@ -8,7 +8,7 @@ export const PALETTE_KEYS = [
   "primary", "primary-soft", "primary-line",
   "accent", "accent-soft", "accent-line",
 ];
-const OPTIONAL_PALETTE = { frame: null, ok: "#1F9D6B", dashed: null, chrome: null };
+const OPTIONAL_PALETTE = { frame: null, ok: "#1F9D6B", dashed: null, chrome: null, "accent-text": null, "primary-text": null };
 const DEFAULT_RADII = { slide: "12px", card: "10px", panel: "12px", frame: "14px", small: "8px", pill: "99px" };
 const DEFAULT_SPACING = { padding: "3cqw 4cqw 2cqw", gap: "1.3cqw", grid: "1.1cqw" };
 const DEFAULT_MOTION = { duration: ".55s", easing: "ease", distance: "8px", stagger: ".15s" };
@@ -81,6 +81,9 @@ export function normalizeTheme(raw, { name, scope = "builtin", path = null } = {
   palette.frame ??= palette["accent-soft"];
   palette.dashed ??= palette.muted;
   palette.chrome ??= palette.bg;
+  // Small text in accent colours must still reach 4.5:1 (WCAG AA).
+  palette["accent-text"] ??= palette.accent;
+  palette["primary-text"] ??= palette.primary;
 
   const fonts = {};
   for (const role of FONT_ROLES) {

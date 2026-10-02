@@ -34,7 +34,7 @@ export function deckToolSpecs() {
     },
     {
       name: "add_slide",
-      description: "Insert a new slide using a template. Missing slots are filled with the template's sample content, so always provide real data for every visible slot.",
+      description: "Insert a new slide using a template. Slots you do not provide show the template's sample text as editor-only placeholders (listed in the slide's `placeholders`, never published), so provide real data for every slot that should appear.",
       parameters: obj({
         template: { type: "string" },
         data: { type: "object", additionalProperties: true },
@@ -53,7 +53,7 @@ export function deckToolSpecs() {
     { name: "set_hidden", description: "Hide or show a slide (hidden slides are skipped in the presentation).", parameters: obj({ id: ID, hidden: { type: "boolean" } }, ["id", "hidden"]) },
     {
       name: "set_template",
-      description: "Change a slide's template. Compatible slot values are kept; provide `data` for the new template's slots.",
+      description: "Change a slide's template. Compatible slot values are kept; values the new template does not use are kept in the slide's `stash` and restored if it switches back. Provide `data` for new slots, otherwise they become editor-only sample placeholders.",
       parameters: obj({ id: ID, template: { type: "string" }, data: { type: "object", additionalProperties: true } }, ["id", "template"]),
     },
     { name: "set_theme", description: "Switch the deck theme.", parameters: obj({ theme: { type: "string" } }, ["theme"]) },

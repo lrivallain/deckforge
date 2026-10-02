@@ -17,6 +17,7 @@ palette:
   accent: "#C2620A"
   accent-soft: "#FFF4E4"
   accent-line: "#F0C078"
+  accent-text: "#A8550A"   # amber for small text (4.5:1 on white); accent stays the skill token
   frame: "#FFFCF5"
   dashed: "#53617A"
   ok: "#1F9D6B"

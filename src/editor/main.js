@@ -2,7 +2,7 @@
 
 import { h, icon, toast } from "./dom.js";
 import { api, connectEvents } from "./api.js";
-import { applySnapshot, notify, select, selectedSlide, state, subscribe, markChanged } from "./state.js";
+import { applySnapshot, loadViewerCss, notify, select, selectedSlide, state, subscribe, markChanged } from "./state.js";
 import { createRail } from "./rail.js";
 import { createStage } from "./stage.js";
 import { createInspector } from "./inspector.js";
@@ -82,7 +82,7 @@ async function main() {
   const app = document.getElementById("app");
   let snapshot;
   try {
-    snapshot = await api.state();
+    [snapshot] = await Promise.all([api.state(), loadViewerCss()]);
   } catch (err) {
     app.replaceChildren(h("div", { class: "fatal" }, h("h1", {}, "Cannot reach the deckforge server"), h("p", {}, err.status === 401 ? "Open the editor with the URL printed by `deckforge edit` (it includes the access token)." : err.message)));
     return;
@@ -135,6 +135,10 @@ async function main() {
         applySnapshot(event.state, { ...event, removedIndex });
       }
       if (event.source === "disk" && event.op === "reload") toast("deck.yaml changed on disk — reloaded", { action: "Undo", onAction: undo });
+      if (event.op === "set_template" && event.label) {
+        if (event.source === "agent") toast(`Copilot changed the layout · ${event.label}`, { timeout: 6000 });
+        else toast(event.label, { action: "Undo", onAction: undo, timeout: 6000 });
+      }
     },
     built: (info) => {
       state.lastBuild = info;

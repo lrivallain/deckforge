@@ -97,6 +97,8 @@ export class DeckStore extends EventEmitter {
     }
     const before = this.deck;
     const { deck, changed, result } = applyOp(before, name, args, this.ctx);
+    // Ops that describe themselves (e.g. "Slide 1: Concept map → Title") name the undo entry.
+    label = result?.label || label || name;
     this.deck = deck;
     this.version++;
     const now = Date.now();
@@ -108,11 +110,11 @@ export class DeckStore extends EventEmitter {
         top.after = deck;
         top.at = now;
       } else {
-        this.pushUndo({ before, after: deck, label: label || name, source, coalesce, at: now });
+        this.pushUndo({ before, after: deck, label, source, coalesce, at: now });
       }
     }
     this.persist();
-    this.emitChange({ changed, source, op: name });
+    this.emitChange({ changed, source, op: name, label });
     return result;
   }
 

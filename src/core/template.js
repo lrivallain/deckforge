@@ -270,7 +270,7 @@ function linkParts(value) {
   return { label: String(value.label ?? value.href ?? ""), href: String(value.href ?? "") };
 }
 
-function formatValue(value, type, { inTag, edit, path }) {
+function formatValue(value, type, { inTag, edit, path, placeholder }) {
   if (value === undefined || value === null) value = "";
   if (inTag) {
     if (type === "link") return escapeAttr(isSafeUrl(linkParts(value).href) ? linkParts(value).href : "");
@@ -302,7 +302,7 @@ function formatValue(value, type, { inTag, edit, path }) {
   }
   if (edit && path) {
     // A custom element keeps template selectors such as `.label span` unaffected.
-    return `<df-slot class="df-slot" data-df-slot="${escapeAttr(path)}" data-df-type="${type === "richtext" ? "richtext" : "text"}">${html}</df-slot>`;
+    return `<df-slot class="df-slot" data-df-slot="${escapeAttr(path)}" data-df-type="${type === "richtext" ? "richtext" : "text"}"${placeholder ? " data-df-placeholder" : ""}>${html}</df-slot>`;
   }
   return html;
 }
@@ -360,7 +360,8 @@ function renderNodes(nodes, frames, options, out) {
       case "value": {
         const { value, type, path } = lookup(node.path, frames);
         const editable = options.edit && path && !path.startsWith("slide.") && !path.startsWith("deck.");
-        out.push(formatValue(value, type, { inTag: node.inTag, edit: editable, path }));
+        const placeholder = Boolean(editable && options.placeholders?.has(path.split(".")[0]));
+        out.push(formatValue(value, type, { inTag: node.inTag, edit: editable, path, placeholder }));
         break;
       }
       case "partial": {
@@ -426,7 +427,7 @@ export function renderTemplate(template, data, ctx = {}) {
     path: "",
   };
   const frames = [builtins, { fields: template.slots, value: data || {}, path: "" }];
-  renderNodes(template.ast.children, frames, { edit: Boolean(ctx.edit) }, out);
+  renderNodes(template.ast.children, frames, { edit: Boolean(ctx.edit), placeholders: ctx.placeholders }, out);
   return out.join("");
 }
 

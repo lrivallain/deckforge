@@ -1,6 +1,6 @@
 // Slide rail: thumbnails, selection, drag-and-drop reorder, add/duplicate/hide/delete.
 
-import { h, icon, writeFrame } from "./dom.js";
+import { frameIsCurrent, h, icon, writeFrame } from "./dom.js";
 import { isHighlighted, select, slideDocument, state, slidePosition } from "./state.js";
 import { op, opQuiet, removeSlide } from "./actions.js";
 import { slideTitle } from "../core/deck.js";
@@ -28,6 +28,7 @@ export function createRail({ onAddSlide }) {
     const num = h("span", { class: "rail-num" });
     const title = h("span", { class: "rail-title" });
     const badge = h("span", { class: "badge badge-muted rail-hidden-badge" }, "Hidden");
+    const layout = h("span", { class: "rail-layout" });
     const hideBtn = h("button", { type: "button", class: "icon-btn", "data-action": "hide" });
     const actions = h("div", { class: "rail-actions" },
       h("button", { type: "button", class: "icon-btn", title: "Duplicate slide", "aria-label": "Duplicate slide", "data-action": "duplicate", onClick: (e) => { e.stopPropagation(); duplicate(item.id); } }, icon("copy", 15)),
@@ -59,10 +60,11 @@ export function createRail({ onAddSlide }) {
       },
     },
       h("div", { class: "rail-meta" }, num, title, badge),
+      layout,
       thumb,
       actions,
     );
-    const item = { id: slide.id, li, frame, num, title, hideBtn, html: "" };
+    const item = { id: slide.id, li, frame, num, title, layout, hideBtn, html: "" };
     return item;
   }
 
@@ -134,19 +136,28 @@ export function createRail({ onAddSlide }) {
     if (!state.deck) return;
     const slides = state.deck.slides;
     count.textContent = `${slides.filter((s) => !s.hidden).length}/${slides.length}`;
-    const seen = new Set();
-    slides.forEach((slide) => {
+    const seen = new Set(slides.map((s) => s.id));
+    for (const [id, item] of items) {
+      if (!seen.has(id)) {
+        item.li.remove();
+        items.delete(id);
+      }
+    }
+    slides.forEach((slide, index0) => {
       let item = items.get(slide.id);
       if (!item) {
         item = makeItem(slide);
         items.set(slide.id, item);
       }
-      seen.add(slide.id);
       const { index } = slidePosition(slide);
       item.num.textContent = slide.hidden ? "–" : String(index + 1);
       const title = slideTitle(slide, state.templates[slide.template]);
       item.title.textContent = title;
-      item.li.setAttribute("aria-label", `Slide ${slide.hidden ? "(hidden)" : index + 1}: ${title}`);
+      // A custom navigation title can hide a layout change: show the template too.
+      const templateLabel = state.templates[slide.template]?.label || slide.template;
+      item.layout.textContent = slide.title ? templateLabel : "";
+      item.layout.hidden = !slide.title;
+      item.li.setAttribute("aria-label", `Slide ${slide.hidden ? "(hidden)" : index + 1}: ${title} (${templateLabel})`);
       item.li.classList.toggle("is-hidden", slide.hidden);
       item.li.classList.toggle("is-selected", slide.id === state.selectedId);
       item.li.setAttribute("aria-current", slide.id === state.selectedId ? "true" : "false");
@@ -155,19 +166,17 @@ export function createRail({ onAddSlide }) {
       item.hideBtn.replaceChildren(icon(slide.hidden ? "eye" : "eyeOff", 15));
       item.hideBtn.title = slide.hidden ? "Show slide" : "Hide slide";
       item.hideBtn.setAttribute("aria-label", item.hideBtn.title);
+      // Only move nodes that are out of order: moving an iframe resets its document.
+      const expected = index0 === 0 ? list.firstElementChild : items.get(slides[index0 - 1].id)?.li.nextElementSibling;
+      if (expected !== item.li) {
+        if (index0 === 0) list.prepend(item.li);
+        else items.get(slides[index0 - 1].id).li.after(item.li);
+      }
       const html = slideDocument(slide);
-      if (html !== item.html) {
-        item.html = html;
-        writeFrame(item.frame, html);
+      if (html !== item.html || !frameIsCurrent(item.frame)) {
+        if (writeFrame(item.frame, html)) item.html = html;
       }
-      list.append(item.li);
     });
-    for (const [id, item] of items) {
-      if (!seen.has(id)) {
-        item.li.remove();
-        items.delete(id);
-      }
-    }
     const selected = items.get(state.selectedId);
     if (selected && !isInView(selected.li)) selected.li.scrollIntoView({ block: "nearest" });
   }

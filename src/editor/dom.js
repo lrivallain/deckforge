@@ -108,26 +108,43 @@ export function fitFrame(container, frame, { width = 1280, height = 720 } = {}) 
   return scale;
 }
 
-/** Update an iframe document smoothly: swap <body> when the <head> is unchanged. */
+/**
+ * Render an HTML document into a same-origin about:blank iframe.
+ *
+ * We write the document with document.open/write/close instead of `srcdoc`
+ * or blob: URLs, which some WebKit hosts (e.g. Tauri WKWebView) never load.
+ * When only the <body> changed we swap it in place to avoid flicker and keep
+ * listeners. Re-inserting an iframe in the DOM resets it to an empty
+ * about:blank document; that is detected and the frame is rewritten.
+ */
 export function writeFrame(frame, html) {
+  const doc = frame.contentDocument;
+  if (!doc) return false; // not attached yet; call again once in the DOM
   const headMatch = /<head>([\s\S]*?)<\/head>/.exec(html);
   const bodyMatch = /<body>([\s\S]*?)<\/body>/.exec(html);
   const head = headMatch ? headMatch[1] : "";
-  const doc = frame.contentDocument;
-  if (frame.dataset.ready === "1" && frame._head === head && doc && doc.body && bodyMatch) {
-    if (frame._body !== bodyMatch[1]) {
-      doc.body.innerHTML = bodyMatch[1];
-      frame._body = bodyMatch[1];
+  const body = bodyMatch ? bodyMatch[1] : "";
+  const sameDocument = frame._doc === doc && doc.body;
+  if (sameDocument && frame._head === head && bodyMatch) {
+    if (frame._body !== body) {
+      doc.body.innerHTML = body;
+      frame._body = body;
       frame.dispatchEvent(new CustomEvent("frame-updated"));
     }
-    return;
+    return true;
   }
+  doc.open();
+  doc.write(html);
+  doc.close();
+  frame._doc = frame.contentDocument;
   frame._head = head;
-  frame._body = bodyMatch ? bodyMatch[1] : "";
-  frame.dataset.ready = "0";
-  frame.addEventListener("load", () => {
-    frame.dataset.ready = "1";
-    frame.dispatchEvent(new CustomEvent("frame-updated"));
-  }, { once: true });
-  frame.srcdoc = html;
+  frame._body = body;
+  frame.dataset.ready = "1";
+  frame.dispatchEvent(new CustomEvent("frame-updated"));
+  return true;
+}
+
+/** True when the frame still shows the document last written by writeFrame. */
+export function frameIsCurrent(frame) {
+  return Boolean(frame.contentDocument && frame._doc === frame.contentDocument && frame.contentDocument.body?.firstElementChild);
 }

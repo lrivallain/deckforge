@@ -145,3 +145,5 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
 .df-edit .df-slot:focus { outline: none; box-shadow: 0 0 0 2px var(--df-primary); background: color-mix(in srgb, var(--df-primary-soft) 55%, transparent); }
 .df-edit .df-slot:empty::before { content: "\2026"; color: var(--df-muted); opacity: .6; }
 .df-edit .df-slot.df-selected { box-shadow: 0 0 0 2px var(--df-accent); }
+/* Template sample text: shown while editing, never published. */
+.df-edit .df-slot[data-df-placeholder] { opacity: .5; font-style: italic; outline: 1px dashed color-mix(in srgb, var(--df-muted) 60%, transparent); outline-offset: 2px; }

@@ -35,6 +35,8 @@ export function stringifyDeck(deck) {
       if (slide.hidden) out.hidden = true;
       if (slide.footer) out.footer = slide.footer;
       out.data = slide.data || {};
+      if (slide.placeholders?.length) out.placeholders = slide.placeholders;
+      if (slide.stash && Object.keys(slide.stash).length) out.stash = slide.stash;
       if (slide.notes) out.notes = slide.notes;
       return out;
     }),
@@ -79,6 +81,13 @@ export function normalizeSlide(raw, existingIds = []) {
   };
   if (raw.title) slide.title = String(raw.title);
   if (raw.footer) slide.footer = String(raw.footer);
+  // Slots filled with template sample text: shown in the editor only.
+  if (Array.isArray(raw.placeholders)) {
+    const keys = raw.placeholders.map(String).filter((k) => Object.hasOwn(slide.data, k));
+    if (keys.length) slide.placeholders = [...new Set(keys)];
+  }
+  // Content of slots the current template does not use (kept across template switches).
+  if (raw.stash && typeof raw.stash === "object" && !Array.isArray(raw.stash) && Object.keys(raw.stash).length) slide.stash = raw.stash;
   return slide;
 }
 
@@ -111,11 +120,21 @@ export function normalizeDeck(raw) {
   return { meta, slides };
 }
 
+/** Slot values that are real content (sample placeholders removed). */
+export function publishedData(slide) {
+  if (!slide.placeholders?.length) return slide.data || {};
+  const data = { ...slide.data };
+  for (const key of slide.placeholders) delete data[key];
+  return data;
+}
+
 export function slideTitle(slide, template) {
   if (slide.title) return slide.title;
-  const data = slide.data || {};
+  // Never derive a title from template sample text.
+  const data = publishedData(slide);
   for (const key of ["title", "headline", "heading", "quote"]) {
-    if (typeof data[key] === "string" && data[key].trim()) return stripTags(data[key]).slice(0, 80);
+    // Separate adjacent elements (e.g. "<span>From X.</span><span>To Y.</span>").
+    if (typeof data[key] === "string" && data[key].trim()) return stripTags(data[key].replace(/>\s*</g, "> <")).slice(0, 80);
   }
   return template?.label || slide.template;
 }
@@ -135,7 +154,11 @@ export function validateDeck(deck, { templates = {}, themes = {} } = {}) {
     for (const key of Object.keys(slide.data || {})) {
       if (!(key in template.slots)) issues.push({ level: "warning", slide: slide.id, message: `Slot "${key}" is not defined by template "${slide.template}"` });
     }
-    for (const issue of checkSlotLimits(template, slide.data)) issues.push({ ...issue, slide: slide.id });
+    const placeholders = new Set(slide.placeholders || []);
+    for (const issue of checkSlotLimits(template, publishedData(slide))) issues.push({ ...issue, slide: slide.id });
+    for (const key of placeholders) {
+      if (template.slots[key]?.required) issues.push({ level: "warning", slide: slide.id, slot: key, message: `"${key}" still shows sample text (not published)` });
+    }
   }
   return issues;
 }

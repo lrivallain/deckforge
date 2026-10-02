@@ -75,6 +75,14 @@ describe("DeckStore", () => {
     expect(store.deck.slides.length).toBe(4);
   });
 
+  it("names template changes in the undo history and change events", () => {
+    const events = [];
+    store.on("change", (e) => events.push(e));
+    store.apply("set_template", { id: "concept", template: "title" }, { label: "Change template" });
+    expect(store.undoStack.at(-1).label).toBe("Slide 1: Concept map → Title");
+    expect(events.at(-1)).toMatchObject({ op: "set_template", label: "Slide 1: Concept map → Title" });
+  });
+
   it("refuses user edits while an agent turn is open", () => {
     store.beginGroup("Agent: busy", "agent");
     store.apply("set_hidden", { id: "zoom", hidden: true }, { source: "agent" });

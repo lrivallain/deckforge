@@ -4,6 +4,17 @@ import { parseTemplate } from "../core/template.js";
 import { renderSlideDocument, visibleSlides } from "../core/render.js";
 
 export const VIEWER_CSS = "/assets/deckforge.viewer.css";
+let viewerCssText = null;
+
+/** Fetch the viewer stylesheet once; previews inline it so they style synchronously. */
+export async function loadViewerCss() {
+  try {
+    const res = await fetch(VIEWER_CSS, { credentials: "same-origin" });
+    if (res.ok) viewerCssText = await res.text();
+  } catch {
+    viewerCssText = null;
+  }
+}
 
 export const state = {
   version: 0,
@@ -114,7 +125,7 @@ export function slidePosition(slide) {
 
 export function slideDocument(slide, { edit = false, theme = currentTheme(), deck = state.deck, templates = state.templates } = {}) {
   const { index, total } = deck === state.deck ? slidePosition(slide) : { index: 0, total: 1 };
-  return renderSlideDocument(deck, slide, { templates, theme, viewerCssHref: VIEWER_CSS, edit, index, total });
+  return renderSlideDocument(deck, slide, { templates, theme, viewerCssHref: VIEWER_CSS, viewerCss: viewerCssText, edit, index, total });
 }
 
 export function markChanged(ids) {

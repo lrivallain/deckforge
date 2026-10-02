@@ -2,7 +2,7 @@
 
 import { escapeAttr, escapeHtml, textToHtml } from "./html.js";
 import { renderTemplate } from "./template.js";
-import { slideTitle } from "./deck.js";
+import { publishedData, slideTitle } from "./deck.js";
 
 export const VERSION = "0.1.0";
 export const CDN_BASE = "https://cdn.jsdelivr.net/gh/lrivallain/deckforge";
@@ -27,12 +27,13 @@ function missingTemplate(name) {
 }
 
 /** Render one slide <section>. */
-export function renderSlide(deck, slide, { index, total, templates, edit = false }) {
+export function renderSlide(deck, slide, { index, total, templates, edit = false, includePlaceholders = false }) {
   const template = templates[slide.template] || missingTemplate(slide.template);
   const titleId = `${slide.id}-title`;
   const title = slideTitle(slide, templates[slide.template]);
   const ctx = {
     edit,
+    placeholders: new Set(includePlaceholders ? slide.placeholders || [] : []),
     slide: {
       id: slide.id,
       index: String(index),
@@ -53,7 +54,8 @@ export function renderSlide(deck, slide, { index, total, templates, edit = false
   };
   let inner;
   try {
-    inner = template.ast ? renderTemplate(template, slide.data, ctx) : template.render();
+    // Sample text is an editor-only placeholder: never publish it.
+    inner = template.ast ? renderTemplate(template, includePlaceholders ? slide.data : publishedData(slide), ctx) : template.render();
   } catch (err) {
     inner = `<div class="df-missing"><p class="eyebrow">Render error</p><h1>${escapeHtml(err.message)}</h1></div>`;
   }
@@ -155,19 +157,19 @@ ${sections}
  * Render a standalone document showing one slide at its 1280×720 reference
  * size (used by the editor preview, thumbnails and the template editor).
  */
-export function renderSlideDocument(deck, slide, { templates, theme, viewerCssHref, edit = false, index = 0, total = 1, extraHead = "" }) {
+export function renderSlideDocument(deck, slide, { templates, theme, viewerCssHref, viewerCss, edit = false, index = 0, total = 1, extraHead = "" }) {
   const template = templates[slide.template];
   return `<!doctype html>
 <html lang="${escapeAttr(deck.meta.lang)}" class="df-frame${edit ? " df-edit" : ""}">
 <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="${escapeAttr(viewerCssHref)}">
+  ${viewerCss != null ? `<style>${safeInlineStyle(viewerCss)}</style>` : `<link rel="stylesheet" href="${escapeAttr(viewerCssHref)}">`}
   <style>${safeInlineStyle(theme?.css ?? "")}</style>
   <style>${safeInlineStyle(template?.scopedCss ?? "")}</style>
   ${extraHead}
 </head>
 <body>
-${renderSlide(deck, slide, { index, total, templates, edit })}
+${renderSlide(deck, slide, { index, total, templates, edit, includePlaceholders: true })}
 </body>
 </html>`;
 }

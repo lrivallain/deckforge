@@ -65,18 +65,62 @@ function setPath(target, path, value) {
   } else node[key] = value;
 }
 
-/** Keep data keys compatible with a (new) template. */
-function adaptData(data, template) {
-  const out = {};
+function hasContent(value) {
+  if (typeof value === "string") return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value).length > 0;
+  return false; // booleans are layout switches, never placeholder content
+}
+
+function compatible(slot, value) {
+  if (value === undefined || value === null) return false;
+  if (slot.type === "list" || slot.type === "cards") return Array.isArray(value);
+  if (slot.type === "boolean") return typeof value === "boolean";
+  if (slot.type === "link") return typeof value === "string" || (typeof value === "object" && !Array.isArray(value));
+  return typeof value === "string";
+}
+
+/**
+ * Fill a slide's data for a template. Real content is taken from `provided`,
+ * then the current data, then the stash; slots without content get the
+ * template sample marked as placeholder. Real values the template does not
+ * use are kept in `slide.stash` so switching back restores them.
+ */
+function fitToTemplate(slide, template, provided = {}) {
+  const placeholders = new Set(slide.placeholders || []);
+  const pool = { ...(slide.stash || {}) };
+  for (const [key, value] of Object.entries(slide.data || {})) if (!placeholders.has(key)) pool[key] = value;
+  Object.assign(pool, provided);
   const sample = sampleData(template);
+  const data = {};
+  const nextPlaceholders = [];
   for (const [key, slot] of Object.entries(template.slots)) {
-    const value = data?.[key];
-    const ok =
-      value !== undefined &&
-      ((slot.type === "list" || slot.type === "cards") ? Array.isArray(value) : slot.type === "boolean" ? typeof value === "boolean" : typeof value === "string" || (slot.type === "link" && typeof value === "object"));
-    out[key] = ok ? value : sample[key];
+    if (compatible(slot, pool[key])) {
+      data[key] = pool[key];
+      delete pool[key];
+    } else {
+      data[key] = sample[key];
+      if (hasContent(sample[key])) nextPlaceholders.push(key);
+    }
   }
-  return out;
+  for (const key of Object.keys(pool)) if (!hasContent(pool[key]) && typeof pool[key] !== "boolean") delete pool[key];
+  slide.data = data;
+  if (nextPlaceholders.length) slide.placeholders = nextPlaceholders;
+  else delete slide.placeholders;
+  if (Object.keys(pool).length) slide.stash = pool;
+  else delete slide.stash;
+  return slide;
+}
+
+function realize(slide, keys) {
+  if (!slide.placeholders) return;
+  const touched = new Set(keys);
+  slide.placeholders = slide.placeholders.filter((k) => !touched.has(k));
+  if (!slide.placeholders.length) delete slide.placeholders;
+}
+
+function slideLabel(deck, slide) {
+  return `Slide ${deck.slides.indexOf(slide) + 1}`;
 }
 
 export const OPS = {
@@ -85,12 +129,16 @@ export const OPS = {
     const slide = next.slides[findIndex(next, id)];
     if (data !== undefined) {
       if (!data || typeof data !== "object" || Array.isArray(data)) throw new OpError("data must be an object of slot values");
-      slide.data = replace ? cleanData(data) : { ...slide.data, ...cleanData(data) };
+      const clean = cleanData(data);
+      slide.data = replace ? clean : { ...slide.data, ...clean };
       for (const [key, value] of Object.entries(slide.data)) if (value === null) delete slide.data[key];
+      if (replace) delete slide.placeholders;
+      else realize(slide, Object.keys(clean));
     }
     if (set !== undefined) {
       if (!set || typeof set !== "object") throw new OpError("set must map slot paths to values");
       for (const [path, value] of Object.entries(set)) setPath(slide.data, path, cleanData(value));
+      realize(slide, Object.keys(set).map((path) => String(path).split(".")[0]));
     }
     if (notes !== undefined) slide.notes = String(notes ?? "");
     if (title !== undefined) {
@@ -108,9 +156,10 @@ export const OPS = {
     const tpl = requireTemplate(ctx, template);
     const next = clone(deck);
     const slide = normalizeSlide(
-      { id: id || makeSlideId(next.slides.map((s) => s.id), title || template), template, data: data ? { ...sampleData(tpl), ...cleanData(data) } : sampleData(tpl), notes, title },
+      { id: id || makeSlideId(next.slides.map((s) => s.id), title || template), template, data: {}, notes, title },
       next.slides.map((s) => s.id),
     );
+    fitToTemplate(slide, tpl, data ? cleanData(data) : {});
     let position = next.slides.length;
     if (after !== undefined && after !== null) position = findIndex(next, after) + 1;
     else if (Number.isInteger(index)) position = Math.max(0, Math.min(next.slides.length, index));
@@ -155,9 +204,14 @@ export const OPS = {
     const tpl = requireTemplate(ctx, template);
     const next = clone(deck);
     const slide = next.slides[findIndex(next, id)];
+    const from = slide.template;
+    const fromLabel = ctx.templates?.[from]?.label || from;
+    // A navigation title equal to the old template's label described the layout, not the content.
+    if (slide.title && slide.title === fromLabel) delete slide.title;
     slide.template = template;
-    slide.data = adaptData(data ? { ...slide.data, ...cleanData(data) } : slide.data, tpl);
-    return { deck: next, changed: [id], result: { id, template } };
+    fitToTemplate(slide, tpl, data ? cleanData(data) : {});
+    const label = `${slideLabel(next, slide)}: ${fromLabel} → ${tpl.label}`;
+    return { deck: next, changed: [id], result: { id, template, from, label, stashed: Object.keys(slide.stash || {}) } };
   },
 
   set_theme(deck, { theme }, ctx) {

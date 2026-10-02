@@ -98,6 +98,16 @@ slides:
         - { icon: pen, title: Creators, text: Prepare the work }
 ```
 
+Two optional per-slide fields are managed by the editor:
+
+- `placeholders`: slots that still contain the template's sample text, for example after adding a slide
+  or switching templates. The editor shows them as dimmed "Sample" placeholders. They are **never
+  published** in `deck.html`, and a required slot left as a placeholder is reported as an issue.
+  Editing a slot makes it real content.
+- `stash`: content of slots the current template does not use. When you switch templates, nothing is
+  lost: switching back to a template with those slots restores them. A navigation `title` that only
+  repeated the old template's name is dropped, so the title follows the headline.
+
 The editor rewrites `deck.yaml` on every change, so YAML comments are not preserved.
 External edits, for example from your text editor, are picked up live and can be undone.
 
@@ -116,7 +126,8 @@ deckforge looks up themes in this order:
 name: my-theme
 label: My theme
 palette:            # required: bg paper line ink muted node primary primary-soft primary-line accent accent-soft accent-line
-  bg: "#EDF1F7"     # optional: frame (boundary fill), dashed (dashed borders), ok, chrome (viewer surround)
+  bg: "#EDF1F7"     # optional: frame (boundary fill), dashed (dashed borders), ok, chrome (viewer surround),
+                    #   accent-text / primary-text (darker shades for small text, 4.5:1 contrast)
   paper: "#FFFFFF"
   # …
 fonts:
@@ -242,7 +253,9 @@ The viewer also supports these:
   Each item has buttons to duplicate, hide/show and delete the slide.
 - **Preview.** Click any text to edit it in place. Enter commits, Shift+Enter adds a line break and Esc reverts.
 - **Inspector.** Template picker with live thumbnails, typed slot form (counters show the `max`
-  limits), speaker notes, navigation title, footer override and visibility.
+  limits), speaker notes, navigation title, footer override and visibility. Template changes are
+  named in the undo history and in a toast, for example "Slide 1: Concept map → Title · Undo". Copilot's template
+  changes are announced the same way.
 - **Top bar.** Undo/redo (⌘/Ctrl+Z, ⇧⌘Z), theme switcher, **Templates** (template editor),
   **Deck** (metadata, brief, runtime), **Present** (opens the generated viewer) and **Copilot** (⌘/Ctrl+K).
 - Every change autosaves `deck.yaml` and rebuilds `deck.html`.
@@ -281,10 +294,14 @@ signed in, the drawer shows how to sign in.
 npm ci                  # behind a private mirror, keep the lockfile URLs as generated
 npm run build           # esbuild → dist/deckforge.{viewer,editor}.{js,css}
 npm test                # vitest unit tests (core, server, agent with a mocked SDK, CLI)
-npm run test:e2e        # Playwright: viewer a11y/print/no-JS, editor flows, agent (mocked SDK)
+npm run test:e2e        # Playwright (Chromium + WebKit): viewer a11y/print/no-JS, editor flows, agent (mocked SDK)
 npm run lint
 npm run dev             # rebuild on change + `deckforge edit` on a scratch copy of the example (port 4370)
 ```
+
+Editor previews are written into same-origin `about:blank` iframes with `document.write`. They do not use
+`srcdoc` or `blob:` URLs, which some WebKit hosts (for example Tauri WKWebView) never load. An e2e test
+disables `srcdoc` to guard this.
 
 `dist/` and `examples/starter/deck.html` are committed, because the CDN serves them from Git tags.
 CI checks that they are up to date. The e2e tests mock the Copilot SDK with

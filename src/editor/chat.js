@@ -181,7 +181,9 @@ export function createChat() {
       case "tool": {
         const id = event.result?.id || event.args?.id;
         const slide = state.deck?.slides.find((s) => s.id === id);
-        const label = `${TOOL_LABELS[event.name] || event.name}${slide ? ` · ${slideTitle(slide, state.templates[slide.template])}` : ""}`;
+        const label = event.result?.label
+          ? `${TOOL_LABELS[event.name] || event.name} · ${event.result.label}`
+          : `${TOOL_LABELS[event.name] || event.name}${slide ? ` · ${slideTitle(slide, state.templates[slide.template])}` : ""}`;
         (turnTools || log).append(h("span", { class: "tool-chip" }, icon("check", 12), label));
         if (id) markChanged([id]);
         notify({ highlights: true });
