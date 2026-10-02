@@ -306,8 +306,11 @@ export async function startServer({
         if (!safeEqual(url.searchParams.get("token"), token)) return send(res, 401, "Invalid token");
         url.searchParams.delete("token");
         const location = url.pathname + (url.search || "") + (url.hash || "");
+        // Lax, not Strict: hosts such as the GitHub Copilot app's webview open the
+        // URL from another site, and a Strict cookie would be dropped on this
+        // redirect. Writes stay guarded by the Origin check and JSON-only bodies.
         res.writeHead(302, {
-          "Set-Cookie": `${cookieName()}=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/`,
+          "Set-Cookie": `${cookieName()}=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/`,
           Location: location,
           "Cache-Control": "no-store",
         });

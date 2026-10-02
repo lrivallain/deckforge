@@ -141,7 +141,7 @@ describe("HTTP server", () => {
     const res = await req(`/?token=${app.token}`);
     expect(res.status).toBe(302);
     const cookie = res.headers.get("set-cookie");
-    expect(cookie).toMatch(new RegExp(`^df_token_${app.port}=.+; HttpOnly; SameSite=Strict; Path=/`));
+    expect(cookie).toMatch(new RegExp(`^df_token_${app.port}=.+; HttpOnly; SameSite=Lax; Path=/`));
     const page = await req("/", { headers: { cookie: cookie.split(";")[0] } });
     expect(page.status).toBe(200);
     expect(page.headers.get("content-security-policy")).toContain("script-src 'self'");
