@@ -1,43 +1,47 @@
 name: azure
 label: Azure
 description: >-
-  Microsoft Azure look on Fluent 2 foundations: white slides on a sky-tinted
-  surround, Azure blue (#0078D4) primary, Microsoft navy ink and Fluent cyan
-  accents, Segoe UI Variable and Cascadia Code (local fonts with named
-  fallbacks; no network), Fluent corner radii, curves and shadows.
+  The Azure brand with some spark: white slides on Azure's lavender-to-sky
+  gradient, Azure blue (#0078D4) primary, the purple of the Azure AI and
+  architecture icons (#773ADC) as accent, deep navy ink. Segoe UI headings
+  (system fallbacks elsewhere), Cascadia Code labels, Azure radii and depth.
+  No network.
+# Values come from the Azure brand: the azure.microsoft.com design tokens
+# (--root-color-*, --root-gradient-*), the Azure "A" logo and the Azure
+# architecture icons.
 palette:
-  bg: "#EEF4FA"
+  bg: "#EDE8F6"            # the lavender stop of Azure's hero gradient
+  chrome: "linear-gradient(120deg, #EDE8F6 0%, #F4FAFD 45%, #DCEEF8 100%)"   # root-gradient-linear-sky-blue
   paper: "#FFFFFF"
-  line: "#DCE7F3"
-  ink: "#243A5E"           # Microsoft navy
-  muted: "#4A6283"
-  node: "#F5F9FD"
-  primary: "#0078D4"       # Azure blue
-  primary-soft: "#DEECF9"  # Fluent themeLighter
-  primary-line: "#B3D6F2"
-  primary-text: "#005A9E"  # Fluent themeDark: small blue text, 4.5:1 on every surface
-  accent: "#0099BC"        # Fluent cyan
-  accent-soft: "#E0F7FC"
-  accent-line: "#8ADCEC"
-  accent-text: "#0C6E8A"   # small cyan text, 4.5:1 on every surface
-  frame: "#F2FBFD"
-  dashed: "#7A8FA8"
-  ok: "#107C10"            # Fluent green
+  line: "#E4DDF3"          # lavender-200
+  ink: "#0E1726"           # dark-blue-900, Azure strong text
+  muted: "#55698C"         # dark-blue-400
+  node: "#F7F5FD"          # lavender-50
+  primary: "#0078D4"       # brilliant-blue-500, Azure blue
+  primary-soft: "#E6F2FB"  # brilliant-blue-50
+  primary-line: "#8AC1EB"  # brilliant-blue-200
+  primary-text: "#004275"  # brilliant-blue-800, Azure eyebrows and highlights
+  accent: "#773ADC"        # Azure icon purple (AI services)
+  accent-soft: "#F1EBFD"
+  accent-line: "#B796F9"   # Azure icon light purple
+  frame: "#F8F4FF"
+  dashed: "#A67AF4"        # Azure icon purple, mid
+  ok: "#4E803E"            # mint-green-800
 fonts:
   heading:
     family: Segoe UI Variable Display
-    fallback: '"Segoe UI", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Selawik, Arial, sans-serif'
+    fallback: '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif'
   body:
     family: Segoe UI Variable Text
-    fallback: '"Segoe UI", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Selawik, Arial, sans-serif'
+    fallback: '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif'
   mono:
     family: Cascadia Code
     fallback: '"Cascadia Mono", Consolas, "SF Mono", Menlo, monospace'
-radii:
-  slide: 8px
-  card: 6px
-  panel: 8px
-  frame: 12px
+radii:                     # Azure root radii: xs 4px, s/m 8px, l 16px
+  slide: 16px
+  card: 8px
+  panel: 16px
+  frame: 16px
   small: 4px
   pill: 99px
 spacing:
@@ -50,4 +54,4 @@ motion:
   distance: 8px
   stagger: .12s
 shadow:
-  slide: 0 8px 16px rgb(0 0 0 / 14%), 0 0 2px rgb(0 0 0 / 12%)   # Fluent shadow16
+  slide: 0 0 2px rgb(0 0 0 / 10%), 0 18px 40px rgb(119 58 220 / 16%)   # Azure depth with a purple glow

@@ -149,16 +149,16 @@ deckforge looks up themes in this order:
    - **`aurora`** is a dark, modern theme: a near-black canvas, violet primary and mint accent, oversized
      tight sans headings (Inter, else the system UI font) and generous space. It pairs best with the
      Essentials templates.
-   - **`azure`** is the Microsoft Azure look on Fluent 2 foundations: white slides on a sky-tinted
-     surround, Azure blue `#0078D4`, Microsoft navy ink, Fluent cyan accents, Segoe UI Variable and
-     Cascadia Code (system fallbacks elsewhere), and Fluent radii, curves and shadows. It works with
-     every template.
+   - **`azure`** takes its tokens from the Azure brand (the azure.microsoft.com colour tokens, the Azure logo
+     and the architecture icons): white slides on Azure's lavender-to-sky gradient, Azure blue `#0078D4`, the
+     purple of the Azure AI icons `#773ADC` as accent, deep navy ink `#0E1726`, Segoe UI and Cascadia Code
+     (system fallbacks elsewhere), and Azure radii and depth. It works with every template.
 
 ```yaml
 name: my-theme
 label: My theme
 palette:            # required: bg paper line ink muted node primary primary-soft primary-line accent accent-soft accent-line
-  bg: "#EDF1F7"     # optional: frame (boundary fill), dashed (dashed borders), ok, chrome (viewer surround),
+  bg: "#EDF1F7"     # optional: frame (boundary fill), dashed (dashed borders), ok, chrome (viewer surround; a colour or a quoted gradient),
                     #   accent-text / primary-text (darker shades for small text, 4.5:1 contrast)
   paper: "#FFFFFF"
   # …
