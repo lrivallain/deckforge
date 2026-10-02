@@ -6,20 +6,8 @@ import { api } from "./api.js";
 import { markChanged, notify, selectedSlide, state } from "./state.js";
 import { undo } from "./actions.js";
 import { slideTitle } from "../core/deck.js";
+import { toolLabel } from "./tool-labels.js";
 
-const TOOL_LABELS = {
-  get_deck: "Read the deck",
-  list_templates: "Listed templates",
-  list_themes: "Listed themes",
-  update_slide: "Updated slide",
-  add_slide: "Added slide",
-  remove_slide: "Removed slide",
-  move_slide: "Moved slide",
-  set_hidden: "Changed visibility",
-  set_template: "Changed template",
-  set_theme: "Changed theme",
-  update_meta: "Updated deck info",
-};
 
 const SUGGESTIONS = {
   slide: ["Tighten the copy on this slide", "Write speaker notes for this slide", "Make the headline a before/after shift"],
@@ -222,15 +210,15 @@ export function createChat() {
         const id = event.result?.id || event.args?.id;
         const slide = state.deck?.slides.find((s) => s.id === id);
         const label = event.result?.label
-          ? `${TOOL_LABELS[event.name] || event.name} · ${event.result.label}`
-          : `${TOOL_LABELS[event.name] || event.name}${slide ? ` · ${slideTitle(slide, state.templates[slide.template])}` : ""}`;
+          ? `${toolLabel(event.name)} · ${event.result.label}`
+          : `${toolLabel(event.name)}${slide ? ` · ${slideTitle(slide, state.templates[slide.template])}` : ""}`;
         (turnTools || log).append(h("span", { class: "tool-chip" }, icon("check", 12), label));
         if (id) markChanged([id]);
         notify({ highlights: true });
         break;
       }
       case "tool_error":
-        (turnTools || log).append(h("span", { class: "tool-chip tool-chip-error" }, icon("alert", 12), `${TOOL_LABELS[event.name] || event.name}: ${event.message}`));
+        (turnTools || log).append(h("span", { class: "tool-chip tool-chip-error" }, icon("alert", 12), `${toolLabel(event.name)}: ${event.message}`));
         break;
       case "done": {
         setBusy(false);
@@ -243,11 +231,9 @@ export function createChat() {
         if (event.changed?.length) {
           markChanged(event.changed);
           notify({ highlights: true });
-          const undoRow = h("div", { class: "msg-actions" },
-            h("span", { class: "muted small" }, `${event.changed.length} slide${event.changed.length > 1 ? "s" : ""} changed`),
-            h("button", { type: "button", class: "btn btn-sm", "data-testid": "undo-agent", onClick: async (e) => { e.currentTarget.disabled = true; if ((state.undoLabel || "").startsWith("Agent:")) await undo(); } }, icon("undo", 14), "Undo these changes"),
-          );
-          log.append(undoRow);
+        }
+        if (event.changed?.length || event.summary?.toolCalls) {
+          log.append(turnSummary(event));
           log.scrollTop = log.scrollHeight;
         }
         turnTools = null;
@@ -256,6 +242,30 @@ export function createChat() {
       default:
         break;
     }
+  }
+
+  /** Per-turn change summary: slides and slots touched, tool calls made, undo and the agent log. */
+  function turnSummary({ changed = [], summary }) {
+    const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+    const counts = [plural(changed.length, "slide") + " changed"];
+    if (summary) counts.push(plural(summary.toolCalls, "tool call") + (summary.failed ? ` (${summary.failed} failed)` : ""));
+    const items = [];
+    for (const { id, fields } of summary?.slides || []) {
+      const slide = state.deck?.slides.find((s) => s.id === id);
+      const name = slide ? slideTitle(slide, state.templates[slide.template]) : id;
+      items.push(h("li", {}, h("strong", {}, name), fields.length ? ` · ${fields.join(", ")}` : ""));
+    }
+    if (summary?.deck?.length) items.push(h("li", {}, h("strong", {}, "Deck"), ` · ${summary.deck.join(", ")}`));
+    const undoBtn = changed.length
+      ? h("button", { type: "button", class: "btn btn-sm", "data-testid": "undo-agent", onClick: async (e) => { e.currentTarget.disabled = true; if ((state.undoLabel || "").startsWith("Agent:")) await undo(); } }, icon("undo", 14), "Undo these changes")
+      : null;
+    const logLink = h("a", { class: "btn btn-sm btn-ghost", href: "/api/agent/log?download=1", download: true, title: "Download the tool calls of every turn as JSON", "data-testid": "agent-log" }, icon("download", 14), "Agent log");
+    return h("div", { class: "msg-actions turn-summary", "data-testid": "turn-summary" },
+      h("div", { class: "turn-summary-body" },
+        h("span", { class: "muted small" }, counts.join(" · ")),
+        items.length ? h("ul", { class: "turn-summary-list small" }, ...items) : null),
+      h("div", { class: "row" }, logLink, undoBtn),
+    );
   }
 
   function toggle(force) {

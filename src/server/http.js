@@ -342,6 +342,11 @@ export async function startServer({
     if (req.method === "POST" && route === "/agent/open-app") return send(res, 200, await agent.openInApp());
     if (req.method === "POST" && route === "/copilot/install-tools") return send(res, 200, { ok: true, ...installGlobalMcp(), status: globalMcpStatus() });
     if (req.method === "GET" && route === "/agent") return send(res, 200, agent.status());
+    if (req.method === "GET" && route === "/agent/log") {
+      const name = `${path.basename(store.deckPath).replace(/\.ya?ml$/i, "").replace(/[^\w.-]/g, "_") || "deck"}.agent-log.json`;
+      const headers = url.searchParams.has("download") ? { "Content-Disposition": `attachment; filename="${name}"` } : {};
+      return send(res, 200, agent.agentLog(), headers);
+    }
     return send(res, 404, { error: "Not found" });
   }
 

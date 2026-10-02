@@ -132,6 +132,61 @@ export const mcpToolSpecs = () => [GUIDE_TOOL, ...deckToolSpecs()];
 
 export const MUTATING_TOOLS = ["update_slide", "add_slide", "remove_slide", "move_slide", "set_hidden", "set_template", "set_theme", "update_meta", "set_image", "add_overlay", "update_overlay", "remove_overlay"];
 
+const keysOf = (value) => (value && typeof value === "object" && !Array.isArray(value) ? Object.keys(value) : []);
+
+/**
+ * What one tool call touches, for the per-turn change summary and the agent log:
+ * the slide it targets (null for deck-level and read tools) and the slots or
+ * fields it writes (dotted paths as given by the agent).
+ */
+export function describeToolCall(name, args = {}, result = {}) {
+  args = args && typeof args === "object" ? args : {};
+  result = result && typeof result === "object" ? result : {};
+  const slideId = result.id ?? args.id ?? null;
+  const overlay = (id) => `overlay ${id}`;
+  let fields;
+  switch (name) {
+    case "update_slide":
+      fields = [...keysOf(args.data), ...keysOf(args.set)];
+      if (args.notes !== undefined) fields.push("notes");
+      if (args.title !== undefined) fields.push("nav title");
+      if (args.footer !== undefined) fields.push("footer");
+      break;
+    case "add_slide":
+      fields = ["template", ...keysOf(args.data)];
+      if (args.notes !== undefined) fields.push("notes");
+      break;
+    case "set_template":
+      fields = ["template", ...keysOf(args.data)];
+      break;
+    case "set_hidden":
+      fields = ["hidden"];
+      break;
+    case "move_slide":
+      fields = ["position"];
+      break;
+    case "remove_slide":
+      return { slideId: args.id ?? result.removed ?? null, fields: ["removed"] };
+    case "set_image":
+      fields = [result.slot || args.slot || "image"];
+      break;
+    case "add_overlay":
+      fields = (result.overlayIds?.length ? result.overlayIds : [args.kind || "new"]).map(overlay);
+      break;
+    case "update_overlay":
+    case "remove_overlay":
+      fields = [overlay(args.overlayId)];
+      break;
+    case "set_theme":
+      return { slideId: null, fields: ["theme"] };
+    case "update_meta":
+      return { slideId: null, fields: keysOf(args.meta).map((k) => `meta.${k}`) };
+    default:
+      return { slideId: null, fields: [] };
+  }
+  return { slideId, fields: [...new Set(fields)] };
+}
+
 /**
  * Tool handlers bound to a store. Read tools return plain data; mutating tools
  * validate images against assets/ and apply the op through store.apply().

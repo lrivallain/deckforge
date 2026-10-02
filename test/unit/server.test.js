@@ -5,7 +5,10 @@ import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { startServer, resolveInside, protectDeckHtml } from "../../src/server/http.js";
 import { DeckStore } from "../../src/server/store.js";
-import { AgentController, cleanImproved, deckToolSpecs, MAX_IMPROVE_CHARS } from "../../src/server/agent.js";
+import { AgentController, cleanImproved, deckToolSpecs, MAX_IMPROVE_CHARS, summarizeTurn } from "../../src/server/agent.js";
+import { describeToolCall, mcpToolSpecs } from "../../src/server/deck-tools.js";
+import { TOOL_LABELS } from "../../src/editor/tool-labels.js";
+import { DOC_PATH, renderToolCatalogue, updateDoc } from "../../scripts/agent-tools-doc.js";
 import { systemPrompt } from "../../src/server/prompt.js";
 import { generateToken } from "../../src/server/token.js";
 import { devCliArgs } from "../../scripts/dev-args.js";
@@ -203,6 +206,19 @@ describe("HTTP server", () => {
     expect((await bad.json()).error).toMatch(/No slide/);
   });
 
+  it("serves the agent log with the token only, as a download on request", async () => {
+    await start();
+    expect((await req("/api/agent/log")).status).toBe(401);
+    const res = await req("/api/agent/log?download=1", { headers: auth() });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-disposition")).toBe('attachment; filename="deck.agent-log.json"');
+    const body = await res.json();
+    expect(body.deck.file).toBe("deck.yaml");
+    expect(body.deck).not.toHaveProperty("path");
+    expect(body.turns).toEqual([]);
+    expect((await req("/api/agent/log", { headers: auth() })).headers.get("content-disposition")).toBeNull();
+  });
+
   it("improves a text field over the API", async () => {
     await start();
     const post = (body, headers = {}) => req("/api/agent/improve", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
@@ -326,6 +342,29 @@ describe("AgentController", () => {
     expect(events.some((e) => e.type === "delta")).toBe(true);
     store.undo();
     expect(store.deck.slides.find((s) => s.id === "zoom").data.eyebrow).toBe("04 / Zoom into one step");
+  });
+
+  it("summarizes each turn and records its tool calls in the agent log", async () => {
+    agent = new AgentController({ store, factory: mockSdk });
+    const events = collect(agent);
+    const calls = [
+      { name: "get_deck", args: {} },
+      { name: "update_slide", args: { id: "zoom", set: { eyebrow: "New", "cards.0.title": "One" }, notes: "Say it" } },
+      { name: "update_slide", args: { id: "concept", set: { eyebrow: "x" } } },
+    ];
+    await agent.chat({ prompt: `#tools ${JSON.stringify(calls)}`, scope: "slide", slideId: "zoom" });
+    const done = await until(() => events.find((e) => e.type === "done"));
+    expect(done.summary).toEqual({ toolCalls: 3, failed: 1, slides: [{ id: "zoom", fields: ["eyebrow", "cards.0.title", "notes"] }], deck: [] });
+    const [turn] = agent.agentLog().turns;
+    expect(turn).toMatchObject({ turn: 1, scope: "slide", slideId: "zoom", changed: ["zoom"], error: null });
+    expect(turn.prompt).toMatch(/^#tools/);
+    expect(turn.calls.map((c) => [c.tool, c.ok])).toEqual([["get_deck", true], ["update_slide", true], ["update_slide", false]]);
+    expect(turn.calls[2].error).toMatch(/Out of scope/);
+    expect(turn.calls[1].args.set.eyebrow).toBe("New");
+
+    // Tool calls outside a turn are refused and not logged.
+    await globalThis.__deckforgeMockSession.config.tools.find((t) => t.name === "remove_slide").handler({ id: "zoom" });
+    expect(agent.agentLog().turns).toHaveLength(1);
   });
 
   it("enforces the slide scope", async () => {
@@ -586,5 +625,51 @@ describe("CLI", () => {
     const missing = spawnSync(process.execPath, [cli, "build", path.join(dir, "nope"), "--json"], { env, encoding: "utf8" });
     expect(missing.status).toBe(1);
     expect(JSON.parse(missing.stdout).error).toContain("does not exist");
+  });
+});
+
+describe("Agent change summary", () => {
+  it("describes the slots and fields each tool call touches", () => {
+    expect(describeToolCall("update_slide", { id: "a", data: { title: "T" }, set: { "cards.1.text": "x" }, notes: "n", title: "Nav", footer: "" })).toEqual({ slideId: "a", fields: ["title", "cards.1.text", "notes", "nav title", "footer"] });
+    expect(describeToolCall("add_slide", { template: "points", data: { items: [] } }, { id: "new-1" })).toEqual({ slideId: "new-1", fields: ["template", "items"] });
+    expect(describeToolCall("set_template", { id: "a", template: "split" })).toEqual({ slideId: "a", fields: ["template"] });
+    expect(describeToolCall("set_image", { id: "a", path: "assets/x.png", alt: "x" }, { id: "a", slot: "visual" })).toEqual({ slideId: "a", fields: ["visual"] });
+    expect(describeToolCall("add_overlay", { id: "a", kind: "arrow" }, { id: "a", overlayIds: ["o1"] })).toEqual({ slideId: "a", fields: ["overlay o1"] });
+    expect(describeToolCall("remove_overlay", { id: "a", overlayId: "o2" })).toEqual({ slideId: "a", fields: ["overlay o2"] });
+    expect(describeToolCall("remove_slide", { id: "a" }, { removed: "a" })).toEqual({ slideId: "a", fields: ["removed"] });
+    expect(describeToolCall("set_theme", { theme: "aurora" })).toEqual({ slideId: null, fields: ["theme"] });
+    expect(describeToolCall("update_meta", { meta: { brief: {}, title: "T" } })).toEqual({ slideId: null, fields: ["meta.brief", "meta.title"] });
+    expect(describeToolCall("get_deck", {})).toEqual({ slideId: null, fields: [] });
+  });
+
+  it("merges a turn's successful changes per slide and keeps deck-level fields apart", () => {
+    const summary = summarizeTurn([
+      { tool: "get_deck", ok: true, slideId: null, fields: [] },
+      { tool: "update_slide", ok: true, slideId: "a", fields: ["title"] },
+      { tool: "set_hidden", ok: true, slideId: "b", fields: ["hidden"] },
+      { tool: "update_slide", ok: true, slideId: "a", fields: ["title", "notes"] },
+      { tool: "remove_slide", ok: false, slideId: "c", fields: ["removed"] },
+      { tool: "set_theme", ok: true, slideId: null, fields: ["theme"] },
+    ]);
+    expect(summary).toEqual({ toolCalls: 6, failed: 1, slides: [{ id: "a", fields: ["title", "notes"] }, { id: "b", fields: ["hidden"] }], deck: ["theme"] });
+  });
+
+  it("has a drawer label for every deck tool", () => {
+    for (const { name } of deckToolSpecs()) expect(TOOL_LABELS[name], name).toBeTruthy();
+  });
+});
+
+describe("Agent model docs", () => {
+  it("keeps the generated tool catalogue in sync with the tool specs (npm run docs:tools)", () => {
+    const source = fs.readFileSync(DOC_PATH, "utf8");
+    expect(updateDoc(source)).toBe(source);
+  });
+
+  it("documents every tool and parameter", () => {
+    const catalogue = renderToolCatalogue();
+    for (const spec of mcpToolSpecs()) {
+      expect(catalogue).toContain(`### \`${spec.name}\``);
+      for (const param of Object.keys(spec.parameters.properties || {})) expect(catalogue, `${spec.name}.${param}`).toContain(`| \`${param}\` |`);
+    }
   });
 });

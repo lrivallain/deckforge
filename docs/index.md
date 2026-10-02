@@ -1,12 +1,12 @@
 ---
 layout: home
 title: deckforge
-titleTemplate: Presentations as YAML
+titleTemplate: Agent-native presentations
 
 hero:
   name: deckforge
-  text: Presentations as YAML
-  tagline: Write slides as data, pick a theme, refine them in a live editor with GitHub Copilot, and ship one static HTML file.
+  text: Agent-native presentations
+  tagline: Typed slides an AI can edit safely, on the Copilot you already have. Review every turn, undo it in one step, and ship one static HTML file or an editable PowerPoint.
   image:
     src: /logo.svg
     alt: deckforge logo
@@ -14,6 +14,9 @@ hero:
     - theme: brand
       text: Get started
       link: /guide/getting-started
+    - theme: alt
+      text: Why deckforge
+      link: /guide/why-deckforge
     - theme: alt
       text: Open a live deck
       link: /demo/aurora.html
@@ -23,30 +26,30 @@ hero:
       link: https://github.com/lrivallain/deckforge
 
 features:
+  - icon: 🛡️
+    title: An agent that edits safely
+    details: Copilot can only call typed deck tools, with no shell, file or web access. Limit it to one slide or open the whole deck. Every call is validated.
+    link: /guide/agent-model
+  - icon: ↩️
+    title: Reviewable, reversible turns
+    details: Each request is one undo step. The rail highlights the changed slides, the drawer lists the slots touched, and the agent log records every tool call.
+    link: /guide/agent-model#change-summary-and-agent-log
+  - icon: ✨
+    title: On the Copilot you already have
+    details: It runs on your GitHub Copilot sign-in, grounded on the deck's brief. No new account, no API key, no extra AI bill. Copilot CLI and other agents get the same tools through MCP.
+    link: /guide/copilot
   - icon: 📄
     title: deck.yaml is the source
-    details: Slides are data in templates. Diffs stay readable, content is validated, and layouts stay consistent across the deck.
+    details: Slides are data in templates with typed slots. Diffs stay readable, text is checked against slot limits, and layouts stay consistent.
     link: /guide/writing-decks
-  - icon: 🎨
-    title: Themes and templates
-    details: 4 themes and 20 templates, from one-idea slides to diagrams. Create your own with a front-matter, HTML and CSS file.
-    link: /guide/templates
   - icon: ✏️
-    title: Live editor
-    details: Edit text in place, use a typed inspector, add images and overlays with snapping, and undo every change. Saves automatically.
+    title: Live editor, themes and templates
+    details: Edit text in place, use a typed inspector, add images and overlays with snapping. 4 themes and 20 templates, and you can add your own.
     link: /guide/editor
-  - icon: ✨
-    title: GitHub Copilot inside
-    details: Ask for changes to one slide or the whole deck. Copilot can only call deck tools, and each turn is one undo step.
-    link: /guide/copilot
   - icon: 🚀
-    title: One static file
-    details: The viewer has keyboard navigation, speaker notes, a presenter window and print to PDF. No network requests by default.
+    title: One static file, or PowerPoint
+    details: Keyboard navigation, speaker notes, a presenter window and print to PDF, with no network requests by default. Or export an editable .pptx.
     link: /guide/presenting
-  - icon: 🤖
-    title: Copilot skill
-    details: Teach the Copilot CLI to plan, write, validate and measure a whole deck from a brief.
-    link: /guide/copilot-skill
 ---
 
 <div class="home-shot">

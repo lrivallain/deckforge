@@ -31,6 +31,7 @@ To report a vulnerability, see [SECURITY.md](https://github.com/lrivallain/deckf
 
 - Copilot can only use deck tools. It has no shell, file or web tools, and every other permission request is refused.
 - It places only images that are already in `assets/`. It never downloads anything.
+- The agent log (`GET /api/agent/log`) needs the token. It stays in memory and is only written where you save the download.
 - `deckforge mcp` gives MCP clients the same deck tools. To reach a running editor, it reads a private record
   (`~/.config/deckforge/editors/<id>.json`, mode 0600) that holds the editor's loopback address and token.
   `deckforge edit` deletes the record when it stops. Tool calls send the same token as the browser, and they are

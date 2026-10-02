@@ -52,6 +52,7 @@ The site in `docs/` uses [VitePress](https://vitepress.dev) and is deployed to G
 npm run docs:dev           # live preview
 npm run docs:build         # production build (fails on dead links)
 npm run docs:screenshots   # regenerate every screenshot, the favicons and the social card
+npm run docs:tools         # regenerate the tool catalogue of guide/agent-model.md after changing a deck tool
 ```
 
 Screenshots come from the example decks with a scripted Copilot (`scripts/docs-agent-mock.js`), so they are reproducible.
