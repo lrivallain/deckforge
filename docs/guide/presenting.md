@@ -60,7 +60,7 @@ The `--runtime` option sets how `deck.html` loads the viewer's script and styles
 | Mode | Output | Network |
 |---|---|---|
 | `local` (default) | `deck.html` + `deckforge/` folder (+ `assets/`) | none |
-| `inline` | One self-contained `deck.html`, images included | none |
+| `inline` | One self-contained `deck.html`, images included | none (a CSP blocks it) |
 | `cdn` | `deck.html` that loads the runtime from jsDelivr (tagged releases only) | jsDelivr |
 
 ```bash
@@ -68,7 +68,8 @@ deckforge build my-talk --runtime inline --out ~/Desktop/talk.html
 ```
 
 ::: tip Share one file
-Use `inline` to send a deck by email or chat. It opens offline from any folder.
+Use `inline` to send a deck by email or chat. It opens offline from any folder, and a Content-Security-Policy stops it
+from loading anything from the network. Add `--check-offline` to fail the build on any remote resource, and `--strip-notes` to leave the speaker notes out: see [Share offline](offline).
 :::
 
 ## Preview while you write

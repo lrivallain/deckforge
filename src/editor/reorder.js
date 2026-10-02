@@ -14,6 +14,7 @@ export function findItems(doc) {
   if (!inner) return [];
   const groups = new Map();
   for (const el of inner.querySelectorAll("[data-df-slot], [data-df-image]")) {
+    if (el.closest(".sr-only")) continue;
     const parts = (el.dataset.dfSlot || el.dataset.dfImage).split(".");
     for (let k = 1; k < parts.length; k++) {
       if (!INDEX_RE.test(parts[k])) continue;

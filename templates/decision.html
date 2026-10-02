@@ -1,0 +1,49 @@
+---
+name: decision
+label: Decision record
+description: >-
+  An architecture decision record on one slide: context, the decision (with
+  its status and date) and its consequences, good and bad.
+category: technical
+order: 4
+slots:
+  eyebrow: { type: text, max: 40, sample: ADR-014 }
+  title: { type: richtext, max: 60, required: true, sample: 'Use PostgreSQL for <span class="blue">the order service</span>' }
+  status: { type: text, max: 32, sample: "Accepted · 2026-09-14" }
+  contextLabel: { type: text, max: 20, sample: Context }
+  context: { type: richtext, max: 220, sample: The order service outgrew the shared MySQL cluster. We need JSON queries and logical replication for the reporting pipeline. }
+  decisionLabel: { type: text, max: 20, sample: Decision }
+  decision: { type: richtext, max: 160, sample: <strong>Migrate the order service to a managed PostgreSQL 16 instance</strong>; other services stay on MySQL for now. }
+  consequencesLabel: { type: text, max: 20, sample: Consequences }
+  pros: { type: list, max: 3, maxLength: 70, sample: [Native JSON queries and replication, One fewer tenant on the shared cluster] }
+  cons: { type: list, max: 3, maxLength: 70, sample: [Two database engines to operate, Driver change in three repositories] }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if status}}<p class="status">{{status}}</p>{{/if}}
+</header>
+<div class="adr">
+  <section class="block reveal"><h2>{{contextLabel}}</h2><p>{{context}}</p></section>
+  <section class="block chosen reveal"><h2>{{decisionLabel}}</h2><p>{{decision}}</p></section>
+  <section class="block reveal"><h2>{{consequencesLabel}}</h2>
+    <ul class="effects">{{#each pros}}<li class="pro"><span class="sign" aria-hidden="true">+</span><span>{{this}}</span></li>{{/each}}{{#each cons}}<li class="con"><span class="sign" aria-hidden="true">−</span><span>{{this}}</span></li>{{/each}}</ul>
+  </section>
+</div>
+{{> foot}}
+
+<style scoped>
+.status { flex: none; font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-ink); border: 2px solid var(--df-ok); border-radius: var(--df-radius-pill); padding: .3cqw 1cqw; white-space: nowrap; }
+.adr { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: center; gap: 1.6cqw; }
+.block { display: flex; flex-direction: column; gap: 1.1cqw; padding: 1.8cqw; background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-panel); }
+.block.chosen { background: var(--df-primary-soft); border-color: var(--df-primary-line); }
+.block h2 { font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .1em; }
+.block.chosen h2 { color: var(--df-primary); }
+.block p { font-size: 1.85cqw; line-height: 1.4; }
+.block.chosen p { font-size: 2.1cqw; }
+.block strong { font-weight: 600; }
+.effects { list-style: none; margin: 0; padding: 0; display: grid; gap: .9cqw; }
+.effects li { display: flex; gap: .9cqw; font-size: 1.65cqw; line-height: 1.35; }
+.sign { flex: none; width: 2cqw; height: 2cqw; border-radius: 50%; display: grid; place-items: center; font: 700 1.4cqw / 1 var(--df-font-mono); }
+.pro .sign { color: var(--df-ok); border: 1px solid currentColor; }
+.con .sign { color: var(--df-accent); border: 1px solid currentColor; }
+</style>

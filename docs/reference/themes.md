@@ -53,3 +53,5 @@ A face uses `local` names (no network) or a `url`, relative to `deck.html` or `h
 
 deckforge checks every value. Anything that could break out of CSS is rejected. The built-in themes don't bundle fonts:
 they use locally installed fonts with named fallbacks, so they make no network requests.
+With `--runtime inline`, `url:` font files inside the deck folder (woff2, woff, ttf or otf, up to 5 MB each) are embedded
+in `deck.html` as data URIs. See [Share offline › Fonts](../guide/offline#fonts).

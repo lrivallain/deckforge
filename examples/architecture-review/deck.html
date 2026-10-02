@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en" data-theme="build">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; script-src &#39;unsafe-inline&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src data:; media-src data:; base-uri &#39;none&#39;; form-action &#39;none&#39;">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="deckforge 0.1.0">
+  <title>Order platform - architecture review</title>
+  <meta name="description" content="Approve the proposed change to the order pipeline and its risk mitigations">
+  <style id="df-runtime">
+/*! deckforge | MIT License | https://github.com/lrivallain/deckforge */
+*{box-sizing:border-box}html{background:var(--df-chrome, var(--df-bg))}body{margin:0;background:var(--df-chrome, var(--df-bg));color:var(--df-ink);font-family:var(--df-font-body)}h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}a{color:var(--df-primary);text-underline-offset:.15em}button,select{font:inherit}button,a,select{touch-action:manipulation}:focus-visible{outline:3px solid var(--df-primary);outline-offset:4px}.stage{padding:20px}.slide{position:relative;width:min(1280px,100%);aspect-ratio:16 / 9;container-type:inline-size;margin:0 auto 24px;overflow:hidden;background:var(--df-paper);border:1px solid var(--df-line);border-radius:var(--df-radius-slide);box-shadow:var(--df-shadow-slide)}.slide-inner{position:absolute;inset:0;padding:var(--df-space-padding);display:flex;flex-direction:column;gap:var(--df-space-gap)}.header{display:flex;align-items:flex-end;justify-content:space-between;gap:2cqw}.header>div{min-width:0}.eyebrow{font:400 1.25cqw / 1.4 var(--df-font-mono);color:var(--df-primary);letter-spacing:.13em;text-transform:uppercase;margin-bottom:.6cqw}h1{font:800 3.4cqw / 1.1 var(--df-font-heading);letter-spacing:-.02em}h1 .old{display:block;font-size:2cqw;font-weight:600;color:var(--df-muted);margin-bottom:.3cqw}.blue,.primary{color:var(--df-primary)}.amber,.accent{color:var(--df-accent)}.muted{color:var(--df-muted)}.ok{color:var(--df-ok)}.mono{font-family:var(--df-font-mono)}.nowrap{white-space:nowrap}.subtitle{flex:0 0 24cqw;color:var(--df-muted);font-size:1.65cqw;line-height:1.4;text-align:right}h2,h3{font:600 1.95cqw / 1.2 var(--df-font-heading)}.icon{flex:none;width:2.1cqw;height:2.1cqw;stroke:var(--df-primary);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;fill:none}.pill{align-self:flex-start;font:400 1.2cqw var(--df-font-mono);color:var(--df-primary);border:1px solid var(--df-primary-line);border-radius:var(--df-radius-pill);background:var(--df-paper);padding:.3cqw .75cqw}.arrow{align-self:center;text-align:center;font-size:2.3cqw;color:var(--df-primary)}.card{background:var(--df-node);border:1px solid var(--df-line);border-radius:var(--df-radius-card);padding:1.2cqw 1.4cqw}.card.focus{border-color:var(--df-primary-line);background:var(--df-primary-soft)}.card.highlight{border-color:var(--df-accent-line);background:var(--df-accent-soft)}.outcome{display:flex;align-items:center;gap:1cqw;padding:.8cqw 1.2cqw;background:var(--df-primary-soft);border:1px solid var(--df-primary-line);border-radius:var(--df-radius-card);font-size:1.65cqw;line-height:1.35}.outcome strong{font-weight:600;white-space:nowrap}.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:2cqw;font:400 1.1cqw / 1.4 var(--df-font-mono);color:var(--df-muted);text-transform:uppercase}.foot .num{color:var(--df-primary);white-space:nowrap}.series-0{--series: var(--df-primary)}.series-1{--series: var(--df-accent)}.series-2{--series: var(--df-ok)}.series-3{--series: var(--df-muted)}.series-4{--series: var(--df-primary-line)}.series-5{--series: var(--df-accent-line)}.series-6{--series: var(--df-ink)}.series-7{--series: var(--df-line)}.swatch{display:inline-block;flex:none;width:1.1cqw;height:1.1cqw;border-radius:3px;background:var(--series, var(--df-primary))}.source{font:400 1.1cqw / 1.4 var(--df-font-mono);color:var(--df-muted)}.df-missing{margin:auto;text-align:center;display:grid;gap:1cqw;color:var(--df-muted)}.df-img{display:block;width:100%;height:100%;min-width:0;min-height:0}.media{position:relative;overflow:hidden;min-height:0;margin:0;background:var(--df-node);border:1px solid var(--df-line);border-radius:var(--df-radius-frame)}.media>.df-img,.media>.df-img-empty{position:absolute;inset:0}.media-caption{font:400 1.2cqw / 1.4 var(--df-font-mono);color:var(--df-muted);letter-spacing:.04em}.df-overlay{position:absolute;inset:0;z-index:5;pointer-events:none}.df-ov{position:absolute;box-sizing:border-box;pointer-events:auto;min-width:0;min-height:0}.df-ov-image{overflow:hidden;border-radius:var(--df-radius-small)}.df-ov-text{display:flex;flex-direction:column;justify-content:center;overflow:hidden;color:var(--df-ink)}.df-text-body{font:400 1.8cqw / 1.4 var(--df-font-body)}.df-text-heading{font:600 2.4cqw / 1.2 var(--df-font-heading)}.df-text-title{font:800 3.4cqw / 1.1 var(--df-font-heading);letter-spacing:-.02em}.df-text-caption{font:400 1.35cqw / 1.4 var(--df-font-body);color:var(--df-muted)}.df-text-label{font:400 1.25cqw / 1.4 var(--df-font-mono);letter-spacing:.13em;text-transform:uppercase}.df-align-left{text-align:left}.df-align-center{text-align:center}.df-align-right{text-align:right}.df-color-ink{color:var(--df-ink)}.df-color-muted{color:var(--df-muted)}.df-color-primary{color:var(--df-primary)}.df-color-accent{color:var(--df-accent-text, var(--df-accent))}.df-ov-callout{display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding:.9cqw 1.3cqw;font:400 1.65cqw / 1.35 var(--df-font-body);color:var(--df-ink);border:1px solid var(--df-primary-line);background:var(--df-primary-soft);border-radius:var(--df-radius-card)}.df-ov-callout.df-tone-accent{border-color:var(--df-accent-line);background:var(--df-accent-soft)}.df-ov-callout.df-tone-neutral{border-color:var(--df-line);background:var(--df-node)}.df-ov-arrow{--df-stroke: .3cqw}.df-ov-arrow.df-weight-thin{--df-stroke: .18cqw}.df-ov-arrow.df-weight-bold{--df-stroke: .5cqw}.df-ov-arrow.df-color-accent{color:var(--df-accent)}.df-ah-shaft{position:absolute;left:0;right:0;top:50%;border-top:var(--df-stroke) solid currentColor;transform:translateY(-50%)}.df-line-dashed .df-ah-shaft{border-top-style:dashed}.df-ah{position:absolute;top:50%;width:calc(var(--df-stroke) * 4 + .5cqw);height:calc(var(--df-stroke) * 3.4 + .5cqw);background:currentColor;transform:translateY(-50%)}.df-ah-end{right:0;clip-path:polygon(0 0,100% 50%,0 100%)}.df-ah-start{left:0;clip-path:polygon(100% 0,0 50%,100% 100%)}.df-ov-arrow:has(.df-ah-end) .df-ah-shaft{right:calc(var(--df-stroke) * 2)}.df-ov-arrow:has(.df-ah-start) .df-ah-shaft{left:calc(var(--df-stroke) * 2)}.df-ov-shape{border:2px solid transparent;border-radius:var(--df-radius-card)}.df-shape-rect{border-radius:0}.df-shape-ellipse{border-radius:50%}.df-shape-pill{border-radius:var(--df-radius-pill)}.df-fill-primary{background:var(--df-primary-soft)}.df-fill-accent{background:var(--df-accent-soft)}.df-fill-neutral{background:var(--df-node)}.df-fill-paper{background:var(--df-paper)}.df-stroke-primary{border-color:var(--df-primary)}.df-stroke-accent{border-color:var(--df-accent)}.df-stroke-line{border-color:var(--df-line)}.df-stroke-dashed{border-color:var(--df-dashed);border-style:dashed}.presenting .stage{height:calc(100dvh - 64px);display:flex;align-items:center;justify-content:center}.presenting .slide{width:min(100%,calc((100dvh - 104px) * 16 / 9));flex:none;margin:0}.presenting.show-notes .stage{height:calc(78dvh - 64px)}.presenting.show-notes .slide{width:min(100%,calc((100dvh - 104px - 22dvh) * 16 / 9))}.notes-panel{height:22dvh;overflow:auto;padding:14px 24px;background:var(--df-paper);border-top:1px solid var(--df-line);font-size:16px;line-height:1.5;color:var(--df-ink)}.notes-panel p+p{margin-top:.6em}.notes-panel .empty{color:var(--df-muted);font-style:italic}.controls{min-height:64px;padding:10px 20px;gap:10px;align-items:center;justify-content:center;background:var(--df-paper);border-top:1px solid var(--df-line);font-size:14px;flex-wrap:wrap}.controls:not([hidden]){display:flex}.controls button,.controls select,.controls a{min-height:40px;border:1px solid var(--df-muted);border-radius:7px;background:var(--df-paper);color:var(--df-ink);padding:6px 12px}.controls a{display:inline-flex;align-items:center;text-decoration:none}.controls button{cursor:pointer}.controls button:disabled{cursor:default;color:var(--df-muted);border-color:var(--df-line)}.controls button[aria-pressed=true]{color:var(--df-paper);background:var(--df-primary);border-color:var(--df-primary)}.controls-sep{width:1px;height:28px;background:var(--df-line)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.no-script{margin:16px;color:var(--df-muted)}:fullscreen{background:var(--df-chrome, var(--df-bg))}@keyframes df-enter{0%{opacity:0;transform:translateY(var(--df-motion-distance))}to{opacity:1;transform:none}}.presenting:not(.static) .entered .reveal{animation:df-enter var(--df-motion-duration) var(--df-motion-easing) both;animation-delay:var(--delay, 0s)}.static .reveal{animation:none!important;opacity:1!important;transform:none!important}@media(max-width:560px){.controls{padding:8px;gap:6px;font-size:12px}.controls button,.controls select,.controls a{padding:6px}.controls select{max-width:40vw}.controls-sep{display:none}}@media(prefers-reduced-motion:reduce){.reveal{animation:none!important;opacity:1!important;transform:none!important}}@page{size:13.333333in 7.5in;margin:0}@media print{html,body{margin:0;background:#fff;print-color-adjust:exact;-webkit-print-color-adjust:exact}.stage,.presenting .stage,.presenting.show-notes .stage{display:block;height:auto;padding:0}.slide,.presenting .slide,.presenting.show-notes .slide,.slide[hidden]{display:block!important;width:min(100%,calc(100vh * 16 / 9))!important;height:auto!important;aspect-ratio:16 / 9;margin:0 auto;border:0;border-radius:0;box-shadow:none;break-after:page;break-inside:avoid}.slide:last-of-type{break-after:auto}.controls,.no-script,.notes-panel,.slide-notes{display:none!important}.reveal{animation:none!important;opacity:1!important;transform:none!important}}.df-frame,.df-frame body{background:var(--df-paper);overflow:hidden}.df-frame .slide{width:1280px;height:720px;margin:0;border:0;border-radius:0;box-shadow:none}.df-edit .df-slot{border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:box-shadow .12s ease,background-color .12s ease}.df-edit .df-slot:hover{box-shadow:0 0 0 2px color-mix(in srgb,var(--df-primary) 35%,transparent);cursor:text}.df-edit .df-slot:focus{outline:none;box-shadow:0 0 0 2px var(--df-primary);background:color-mix(in srgb,var(--df-primary-soft) 55%,transparent)}.df-edit .df-slot:empty:before{content:"\2026";color:var(--df-muted);opacity:.6}.df-edit .df-slot.df-selected{box-shadow:0 0 0 2px var(--df-accent)}.df-edit .df-img-empty{display:grid;place-items:center;min-height:6cqw;width:100%;height:100%;padding:1cqw;text-align:center;font:400 1.2cqw / 1.4 var(--df-font-mono);color:var(--df-muted);background:var(--df-node);border:1.5px dashed var(--df-dashed);border-radius:inherit;cursor:pointer}.df-edit .df-img-empty.df-drop,.df-edit [data-df-image].df-drop{outline:3px solid var(--df-primary);outline-offset:-3px}.df-edit .df-ov{cursor:move;-webkit-user-select:none;user-select:none}.df-edit .df-ov:hover{outline:1.5px dashed color-mix(in srgb,var(--df-primary) 55%,transparent);outline-offset:1px}.df-edit .df-gesture,.df-edit .df-gesture *{-webkit-user-select:none!important;user-select:none!important}.df-edit .df-reorderable:hover{outline:1px dashed color-mix(in srgb,var(--df-primary) 35%,transparent);outline-offset:2px}.df-edit .df-ov-empty{display:grid;place-items:center;width:100%;height:100%;font:400 1.2cqw var(--df-font-mono);color:var(--df-muted);border:1.5px dashed var(--df-dashed)}.df-edit .df-reorderable.df-dragging{opacity:.45}.df-edit .df-slot[data-df-placeholder]{opacity:.5;font-style:italic;outline:1px dashed color-mix(in srgb,var(--df-muted) 60%,transparent);outline-offset:2px}
+
+</style>
+  <style id="df-theme">
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 800; font-style: normal; font-display: swap; src: local("Bricolage Grotesque ExtraBold Regular"), local("BricolageGrotesqueExtraBold-Regular"); }
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 600; font-style: normal; font-display: swap; src: local("Bricolage Grotesque SemiBold Regular"), local("BricolageGrotesqueSemiBold-Regular"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 400; font-style: normal; font-display: swap; src: local("Instrument Sans Regular"), local("InstrumentSans-Regular"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 600; font-style: normal; font-display: swap; src: local("Instrument Sans SemiBold Regular"), local("InstrumentSansSemiBold-Regular"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap; src: local("IBM Plex Mono Regular"), local("IBMPlexMono-Regular"); }
+:root {
+  color-scheme: light;
+  --df-bg: #EDF1F7;
+  --df-paper: #FFFFFF;
+  --df-line: #E2E8F2;
+  --df-ink: #16202F;
+  --df-muted: #53617A;
+  --df-node: #F7F9FC;
+  --df-primary: #0F6CBD;
+  --df-primary-soft: #EAF3FC;
+  --df-primary-line: #BBD7F0;
+  --df-accent: #C2620A;
+  --df-accent-soft: #FFF4E4;
+  --df-accent-line: #F0C078;
+  --df-frame: #FFFCF5;
+  --df-ok: #1F9D6B;
+  --df-dashed: #53617A;
+  --df-accent-text: #A8550A;
+  --df-chrome: #EDF1F7;
+  --df-primary-text: #0F6CBD;
+  --df-font-heading: "Bricolage Grotesque", "Trebuchet MS", "Segoe UI", sans-serif;
+  --df-font-body: "Instrument Sans", "Segoe UI", Arial, sans-serif;
+  --df-font-mono: "IBM Plex Mono", Consolas, monospace;
+  --df-radius-slide: 12px;
+  --df-radius-card: 10px;
+  --df-radius-panel: 12px;
+  --df-radius-frame: 14px;
+  --df-radius-small: 8px;
+  --df-radius-pill: 99px;
+  --df-space-padding: 3cqw 4cqw 2cqw;
+  --df-space-gap: 1.3cqw;
+  --df-space-grid: 1.1cqw;
+  --df-motion-duration: .55s;
+  --df-motion-easing: ease;
+  --df-motion-distance: 8px;
+  --df-motion-stagger: .15s;
+  --df-shadow-slide: 0 24px 60px rgb(22 32 47 / 10%);
+}
+  </style>
+  <style id="df-templates">
+/* template: title */
+.df-t-title .slide-inner {justify-content: center; padding-right: 30cqw;}
+.df-t-title .title-body {display: flex; flex-direction: column; gap: 1.4cqw;}
+.df-t-title h1 {font-size: 5cqw; line-height: 1.05;}
+.df-t-title h1 .old {font-size: 2.6cqw; margin-bottom: .6cqw;}
+.df-t-title .lead {font-size: 2cqw; line-height: 1.4; color: var(--df-muted); max-width: 52cqw;}
+.df-t-title .title-meta {position: absolute; left: 4cqw; right: 4cqw; bottom: 2.4cqw; display: flex; justify-content: space-between; font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .08em; text-transform: uppercase; border-top: 1px solid var(--df-line); padding-top: 1.2cqw;}
+.df-t-title .motif {position: absolute; right: 4cqw; top: 50%; transform: translateY(-58%); width: 22cqw; height: 26cqw;}
+.df-t-title .visual {position: absolute; right: 4cqw; top: calc(50% - 15.5cqw); width: 24cqw; height: 27cqw;}
+.df-t-title .m {position: absolute; border-radius: var(--df-radius-frame);}
+.df-t-title .m1 {inset: 0 6cqw 9cqw 0; background: var(--df-primary-soft); border: 1px solid var(--df-primary-line);}
+.df-t-title .m2 {inset: 7cqw 0 2cqw 7cqw; background: var(--df-paper); border: 1.5px dashed var(--df-dashed);}
+.df-t-title .m3 {width: 9cqw; height: 4.6cqw; right: 2cqw; bottom: 0; background: var(--df-accent-soft); border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-pill);}
+/* template: kpis */
+.df-t-kpis .kpis {flex: 1; min-height: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1.6cqw; align-content: center;}
+.df-t-kpis .kpi {--tone: var(--df-line); display: flex; flex-direction: column; gap: .9cqw; padding: 2cqw 1.8cqw; background: var(--df-node); border: 1px solid var(--df-line); border-top: .5cqw solid var(--tone); border-radius: var(--df-radius-card);}
+.df-t-kpis .kpi[data-tone="good" i] {--tone: var(--df-ok);}
+.df-t-kpis .kpi[data-tone="warn" i] {--tone: var(--df-accent);}
+.df-t-kpis .kpi[data-tone="focus" i] {--tone: var(--df-primary); background: var(--df-primary-soft); border-color: var(--df-primary-line); border-top-color: var(--tone);}
+.df-t-kpis .value {font: 800 5cqw / 1 var(--df-font-heading); letter-spacing: -.04em; white-space: nowrap;}
+.df-t-kpis .kpi[data-tone="warn" i] .value {color: var(--df-accent-text, var(--df-accent));}
+.df-t-kpis .kpi[data-tone="focus" i] .value {color: var(--df-primary);}
+.df-t-kpis .label {font: 600 1.8cqw / 1.25 var(--df-font-body);}
+.df-t-kpis .note {font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted);}
+.df-t-kpis .kpi[data-tone="good" i] .note::before {content: "▲ "; color: var(--df-ok);}
+.df-t-kpis .kpi[data-tone="warn" i] .note::before {content: "▼ "; color: var(--df-accent);}
+/* template: lifecycle */
+.df-t-lifecycle .lifecycle {flex: 1; display: flex; align-items: stretch; gap: .9cqw; min-height: 0;}
+.df-t-lifecycle .stage-card {flex: 1 1 0; min-width: 0; padding: 1.4cqw; border: 1px solid var(--df-line); border-radius: var(--df-radius-panel); background: var(--df-node); display: flex; flex-direction: column; gap: 1.2cqw;}
+.df-t-lifecycle .stage-card.focus {flex-grow: 1.2; border-color: var(--df-primary-line); background: var(--df-primary-soft);}
+.df-t-lifecycle .stage-card h2 {font-size: 2.5cqw;}
+.df-t-lifecycle .stage-card p {font-size: 1.8cqw; line-height: 1.4;}
+.df-t-lifecycle .stage-card .owner {margin-top: auto; font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted);}
+.df-t-lifecycle .arrow {flex: 0 0 2cqw;}
+.df-t-lifecycle .feedback {color: var(--df-accent-text); font: 400 1.4cqw / 1.4 var(--df-font-mono); text-align: center; padding: .6cqw;}
+/* template: bars */
+.df-t-bars .chart {flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.2cqw;}
+.df-t-bars .bar-row {display: grid; grid-template-columns: 17cqw minmax(0, 1fr); align-items: center; gap: 1.4cqw;}
+.df-t-bars .label {font-size: 1.7cqw; line-height: 1.2; text-align: right; overflow-wrap: anywhere;}
+.df-t-bars .track {display: flex; align-items: center; min-width: 0; height: 3.2cqw; padding-right: 13cqw;}
+.df-t-bars .bar {flex: none; width: var(--size); height: 100%; background: var(--df-primary); border-radius: 2px;}
+.df-t-bars .bar.projected, .df-t-bars .swatch.hatch {background: repeating-linear-gradient(135deg, var(--df-primary) 0 .25cqw, var(--df-primary-soft) .25cqw .7cqw); box-shadow: inset 0 0 0 1px var(--df-primary-line);}
+.df-t-bars .focus .bar:not(.projected) {background: var(--df-accent);}
+.df-t-bars .focus .bar.projected {background: repeating-linear-gradient(135deg, var(--df-accent) 0 .25cqw, var(--df-accent-soft) .25cqw .7cqw); box-shadow: inset 0 0 0 1px var(--df-accent-line);}
+.df-t-bars .value {flex: none; padding: 0 1cqw; font: 700 2cqw / 1 var(--df-font-heading); letter-spacing: -.02em; white-space: nowrap;}
+.df-t-bars .unit, .df-t-bars .value small {font: 400 1.25cqw var(--df-font-mono); letter-spacing: 0; color: var(--df-muted);}
+.df-t-bars .focus .value {color: var(--df-accent-text, var(--df-accent));}
+.df-t-bars .vertical {flex-direction: row; align-items: stretch; justify-content: center; gap: 2cqw;}
+.df-t-bars .vertical .bar-row {flex: 1 1 0; max-width: 14cqw; min-width: 0; grid-template-columns: none; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: .8cqw;}
+.df-t-bars .vertical .track {order: 1; flex-direction: column-reverse; align-items: center; width: 100%; height: 100%; padding: 4cqw 0 0;}
+.df-t-bars .vertical .label {order: 2; text-align: center; font-size: 1.5cqw;}
+.df-t-bars .vertical .bar {width: min(100%, 7cqw); height: var(--size);}
+.df-t-bars .vertical .value {padding: 0 0 .7cqw;}
+.df-t-bars .source {display: flex; align-items: center; gap: 2cqw;}
+.df-t-bars .key {display: inline-flex; align-items: center; gap: .6cqw;}
+/* template: options-matrix */
+.df-t-options-matrix .matrix-wrap {flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;}
+.df-t-options-matrix .matrix {width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 1.75cqw; line-height: 1.25;}
+.df-t-options-matrix .matrix th, .df-t-options-matrix .matrix td {padding: 1.1cqw 1.2cqw; border-bottom: 1px solid var(--df-line); text-align: center;}
+.df-t-options-matrix .matrix th:first-child {text-align: left; width: 26%;}
+.df-t-options-matrix .matrix thead th {font: 400 1.2cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink);}
+.df-t-options-matrix .matrix tbody th {font: 600 1.9cqw / 1.2 var(--df-font-heading);}
+.df-t-options-matrix .matrix tr.chosen > * {background: var(--df-primary-soft); border-bottom-color: var(--df-primary-line);}
+.df-t-options-matrix .matrix tr.chosen th {color: var(--df-primary); box-shadow: inset .4cqw 0 0 var(--df-primary);}
+.df-t-options-matrix .matrix td[data-rating="good" i], .df-t-options-matrix .matrix td[data-rating="strong" i], .df-t-options-matrix .matrix td[data-rating="yes" i], .df-t-options-matrix .matrix td[data-rating="✓"], .df-t-options-matrix .matrix td[data-rating="poor" i], .df-t-options-matrix .matrix td[data-rating="weak" i], .df-t-options-matrix .matrix td[data-rating="no" i], .df-t-options-matrix .matrix td[data-rating="✗"] {font-weight: 600;}
+.df-t-options-matrix .matrix td[data-rating="good" i]::before, .df-t-options-matrix .matrix td[data-rating="strong" i]::before, .df-t-options-matrix .matrix td[data-rating="yes" i]::before, .df-t-options-matrix .matrix td[data-rating="poor" i]::before, .df-t-options-matrix .matrix td[data-rating="weak" i]::before, .df-t-options-matrix .matrix td[data-rating="no" i]::before {content: ""; display: inline-block; width: .9cqw; height: .9cqw; margin-right: .6cqw; border-radius: 50%; background: var(--df-ok); vertical-align: .1em;}
+.df-t-options-matrix .matrix td[data-rating="poor" i]::before, .df-t-options-matrix .matrix td[data-rating="weak" i]::before, .df-t-options-matrix .matrix td[data-rating="no" i]::before {background: var(--df-accent);}
+.df-t-options-matrix .matrix td[data-rating="poor" i], .df-t-options-matrix .matrix td[data-rating="weak" i], .df-t-options-matrix .matrix td[data-rating="no" i], .df-t-options-matrix .matrix td[data-rating="✗"] {color: var(--df-accent-text, var(--df-ink));}
+/* template: decision */
+.df-t-decision .status {flex: none; font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-ink); border: 2px solid var(--df-ok); border-radius: var(--df-radius-pill); padding: .3cqw 1cqw; white-space: nowrap;}
+.df-t-decision .adr {flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: center; gap: 1.6cqw;}
+.df-t-decision .block {display: flex; flex-direction: column; gap: 1.1cqw; padding: 1.8cqw; background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-panel);}
+.df-t-decision .block.chosen {background: var(--df-primary-soft); border-color: var(--df-primary-line);}
+.df-t-decision .block h2 {font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .1em;}
+.df-t-decision .block.chosen h2 {color: var(--df-primary);}
+.df-t-decision .block p {font-size: 1.85cqw; line-height: 1.4;}
+.df-t-decision .block.chosen p {font-size: 2.1cqw;}
+.df-t-decision .block strong {font-weight: 600;}
+.df-t-decision .effects {list-style: none; margin: 0; padding: 0; display: grid; gap: .9cqw;}
+.df-t-decision .effects li {display: flex; gap: .9cqw; font-size: 1.65cqw; line-height: 1.35;}
+.df-t-decision .sign {flex: none; width: 2cqw; height: 2cqw; border-radius: 50%; display: grid; place-items: center; font: 700 1.4cqw / 1 var(--df-font-mono);}
+.df-t-decision .pro .sign {color: var(--df-ok); border: 1px solid currentColor;}
+.df-t-decision .con .sign {color: var(--df-accent); border: 1px solid currentColor;}
+/* template: risk-register */
+.df-t-risk-register .register-wrap {flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;}
+.df-t-risk-register .register {width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 1.5cqw; line-height: 1.3;}
+.df-t-risk-register .register th, .df-t-risk-register .register td {padding: .9cqw 1cqw; border-bottom: 1px solid var(--df-line); text-align: left; vertical-align: top;}
+.df-t-risk-register .register thead th {font: 400 1.15cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink); vertical-align: bottom;}
+.df-t-risk-register .register .risk {width: 30%;}
+.df-t-risk-register .register .mitigation {width: 32%;}
+.df-t-risk-register .register tbody th {font-weight: 600;}
+.df-t-risk-register .register .owner {color: var(--df-muted);}
+.df-t-risk-register .level {display: inline-block; padding: .2cqw .7cqw; border-radius: var(--df-radius-pill); border: 1px solid var(--df-line); font: 400 1.2cqw / 1.4 var(--df-font-mono); white-space: nowrap;}
+.df-t-risk-register .level[data-level="critical" i] {background: var(--df-accent-soft); border: 2px solid var(--df-accent); color: var(--df-accent-text, var(--df-ink)); font-weight: 700;}
+.df-t-risk-register .level[data-level="high" i] {background: var(--df-accent-soft); border-color: var(--df-accent-line); color: var(--df-accent-text, var(--df-accent));}
+.df-t-risk-register .level[data-level="medium" i] {background: var(--df-primary-soft); border-color: var(--df-primary-line); color: var(--df-primary);}
+.df-t-risk-register .level[data-level="low" i] {background: var(--df-node); color: var(--df-muted);}
+/* template: checklist */
+.df-t-checklist .checklist-wrap {flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;}
+.df-t-checklist .checklist {width: 100%; border-collapse: collapse; font-size: 1.85cqw; line-height: 1.3;}
+.df-t-checklist .checklist th, .df-t-checklist .checklist td {padding: 1cqw 1.2cqw; border-bottom: 1px solid var(--df-line); text-align: left;}
+.df-t-checklist .checklist thead th {font: 400 1.15cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid var(--df-ink);}
+.df-t-checklist .checklist tbody th {font-weight: 500;}
+.df-t-checklist .checklist .check {width: 4cqw;}
+.df-t-checklist .checklist .owner, .df-t-checklist .checklist .due {width: 18%; color: var(--df-muted); white-space: nowrap;}
+.df-t-checklist .checklist .due {width: 10%; font: 400 1.4cqw var(--df-font-mono);}
+.df-t-checklist .box {display: grid; place-items: center; width: 2.2cqw; height: 2.2cqw; border: 2px solid var(--df-primary); border-radius: var(--df-radius-small);}
+.df-t-checklist .done .box {background: var(--df-ok); border-color: var(--df-ok);}
+.df-t-checklist .done .box::after {content: "✓"; color: var(--df-paper); font: 700 1.5cqw / 1 var(--df-font-body);}
+.df-t-checklist .done th {color: var(--df-muted);}
+/* template: sources */
+.df-t-sources .entries {flex: 1; min-height: 0; list-style: none; margin: 0; padding: 0; column-gap: 3cqw; font-size: 1.45cqw; line-height: 1.35;}
+.df-t-sources .entries:has(> li:nth-child(9)) {columns: 2; font-size: 1.2cqw;}
+.df-t-sources .entries li {display: grid; grid-template-columns: 3cqw minmax(0, 26cqw) minmax(0, 1fr); gap: 1.4cqw; padding: .7cqw 0; border-bottom: 1px solid var(--df-line); break-inside: avoid;}
+.df-t-sources .entries:has(> li:nth-child(9)) li {grid-template-columns: 2.6cqw minmax(0, 11cqw) minmax(0, 1fr);}
+.df-t-sources .num {font-family: var(--df-font-mono); color: var(--df-primary);}
+.df-t-sources .where {color: var(--df-muted);}
+.df-t-sources .what {overflow-wrap: anywhere;}
+  </style>
+</head>
+<body>
+  <noscript><p class="no-script">All slides are shown below. Use the browser's print command for a PDF.</p></noscript>
+  <main class="stage" aria-label="Order platform - architecture review">
+<section class="slide df-t-title" id="slide-title" data-slide-id="title" data-template="title" data-title="The order platform holds today. Peak season needs one change." aria-labelledby="title-title">
+  <div class="slide-inner">
+<div class="title-body">
+  <p class="eyebrow reveal">Architecture review</p>
+  <h1 id="title-title" class="reveal">The order platform holds today. <span class="blue">Peak season needs one change.</span></h1>
+  <p class="lead reveal">Current state, the bottleneck we found, three options and the change we propose.</p>
+</div>
+<div class="motif" aria-hidden="true">
+  <span class="m m1"></span><span class="m m2"></span><span class="m m3"></span>
+</div>
+<footer class="title-meta reveal">
+  <span>Platform team</span>
+  <span>Architecture board · October</span>
+</footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Replace every figure in this deck with your own, and keep the sources field of each slide up to date.<br>The Sources appendix at the end is generated from those fields.</p></aside>
+</section>
+<section class="slide df-t-kpis" id="slide-health" data-slide-id="health" data-template="kpis" data-title="Healthy today, close to the limit at peak" aria-labelledby="health-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Where we stand</p><h1 id="health-title">Healthy today, <span class="amber">close to the limit at peak</span></h1></div>
+  <p class="subtitle">Last 90 days, production.</p>
+</header>
+<div class="kpis">
+  <article class="kpi reveal" data-tone="good"><p class="value">99.94%</p><p class="label">Availability</p><p class="note">SLO 99.9% · met</p></article><article class="kpi reveal" data-tone="warn"><p class="value">420 ms</p><p class="label">p95 checkout latency</p><p class="note">Budget 500 ms</p></article><article class="kpi reveal" data-tone="focus"><p class="value">2.1×</p><p class="label">Peak traffic expected</p><p class="note">Black Friday forecast</p></article><article class="kpi reveal" data-tone="good"><p class="value">31</p><p class="label">Deploys per week</p><p class="note">From 18 last year</p></article>
+</div>
+<p class="source reveal">Source: monitoring dashboards, 90-day export</p>
+<footer class="foot"><span>Order platform / architecture review</span><span class="num">02 / 09</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>The latency budget is the one number to remember. At twice the traffic it breaks.</p><p class="notes-sources">Sources: Monitoring dashboards, 90-day export; Peak forecast 2026 (https://example.com/forecast)</p></aside>
+</section>
+<section class="slide df-t-lifecycle" id="slide-flow" data-slide-id="flow" data-template="lifecycle" data-title="Three services, one synchronous chain" aria-labelledby="flow-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">How an order flows</p><h1 id="flow-title">Three services, <span class="blue">one synchronous chain</span></h1></div>
+  <p class="subtitle">Each hop adds latency and a failure mode.</p>
+</header>
+<div class="lifecycle">
+  
+  
+  <article class="stage-card reveal">
+    <span class="pill">01 / INGEST</span>
+    <h2>API gateway</h2>
+    <p>Authenticates and validates the order.</p>
+    <p class="owner">Owner: edge team</p>
+  </article>
+  
+  <span class="arrow reveal" role="img" aria-label="calls">&rarr;</span>
+  <article class="stage-card focus reveal">
+    <span class="pill">02 / PROCESS</span>
+    <h2>Order service</h2>
+    <p>Prices and reserves stock in one call to the inventory database.</p>
+    <p class="owner">Owner: order team</p>
+  </article>
+  
+  <span class="arrow reveal" role="img" aria-label="calls">&rarr;</span>
+  <article class="stage-card reveal">
+    <span class="pill">03 / FULFIL</span>
+    <h2>Fulfilment</h2>
+    <p>Books the carrier and sends the confirmation.</p>
+    <p class="owner">Owner: logistics team</p>
+  </article>
+  
+</div>
+<p class="feedback reveal">Failures retry synchronously from the gateway</p>
+<p class="outcome reveal"><strong>The takeaway</strong><span>The order service waits on the inventory database for every order.</span></p>
+<footer class="foot"><span>Order platform / architecture review</span><span class="num">03 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-bars" id="slide-latency" data-slide-id="latency" data-template="bars" data-title="The inventory lock takes half the budget" aria-labelledby="latency-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Latency budget</p><h1 id="latency-title">The inventory lock <span class="amber">takes half the budget</span></h1></div>
+  <p class="subtitle">p95 per hop at today&#39;s peak, in ms.</p>
+</header>
+<figure class="chart reveal" role="img" aria-label="The inventory lock takes half the budget: Inventory lock 210 ms (+160 Added at 2.1× traffic); Pricing 85 ms (+40 Added at 2.1× traffic); Gateway 60 ms (+10 Added at 2.1× traffic); Carrier booking 45 ms (+15 Added at 2.1× traffic); Confirmation 20 ms">
+  
+  <div class="bar-row focus">
+    <span class="label">Inventory lock</span>
+    <span class="track"><span class="bar" data-value="210" style="--size: 56.757%"></span><span class="bar projected" style="--size: 43.243%"></span><span class="value">210<span class="unit"> ms</span><small> +160</small></span></span>
+  </div>
+  
+  <div class="bar-row">
+    <span class="label">Pricing</span>
+    <span class="track"><span class="bar" data-value="85" style="--size: 22.973%"></span><span class="bar projected" style="--size: 10.811%"></span><span class="value">85<span class="unit"> ms</span><small> +40</small></span></span>
+  </div>
+  
+  <div class="bar-row">
+    <span class="label">Gateway</span>
+    <span class="track"><span class="bar" data-value="60" style="--size: 16.216%"></span><span class="bar projected" style="--size: 2.703%"></span><span class="value">60<span class="unit"> ms</span><small> +10</small></span></span>
+  </div>
+  
+  <div class="bar-row">
+    <span class="label">Carrier booking</span>
+    <span class="track"><span class="bar" data-value="45" style="--size: 12.162%"></span><span class="bar projected" style="--size: 4.054%"></span><span class="value">45<span class="unit"> ms</span><small> +15</small></span></span>
+  </div>
+  
+  <div class="bar-row">
+    <span class="label">Confirmation</span>
+    <span class="track"><span class="bar" data-value="20" style="--size: 5.405%"></span><span class="value">20<span class="unit"> ms</span></span></span>
+  </div>
+  
+</figure>
+<table class="sr-only">
+  <caption>The inventory lock takes half the budget</caption>
+  <tbody><tr><th scope="row">Inventory lock</th><td>210 ms</td><td>+160 Added at 2.1× traffic</td></tr><tr><th scope="row">Pricing</th><td>85 ms</td><td>+40 Added at 2.1× traffic</td></tr><tr><th scope="row">Gateway</th><td>60 ms</td><td>+10 Added at 2.1× traffic</td></tr><tr><th scope="row">Carrier booking</th><td>45 ms</td><td>+15 Added at 2.1× traffic</td></tr><tr><th scope="row">Confirmation</th><td>20 ms</td></tr></tbody>
+</table>
+<p class="source reveal"><span class="key"><span class="swatch hatch" aria-hidden="true"></span>Added at 2.1× traffic</span>Source: load test LT-48, 2.1× replay</p>
+<footer class="foot"><span>Order platform / architecture review</span><span class="num">04 / 09</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Bars are computed from the values. Change a number and the bar follows.</p><p class="notes-sources">Sources: Load test LT-48 report</p></aside>
+</section>
+<section class="slide df-t-options-matrix" id="slide-options" data-slide-id="options" data-template="options-matrix" data-title="Reserve stock asynchronously for the best balance" aria-labelledby="options-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Options</p><h1 id="options-title">Reserve stock asynchronously <span class="blue">for the best balance</span></h1></div>
+  <p class="subtitle">Scored with the order and data teams.</p>
+</header>
+<div class="matrix-wrap reveal">
+  <table class="matrix">
+    <caption class="sr-only">Reserve stock asynchronously for the best balance</caption>
+    <thead><tr><th scope="col">Option</th><th scope="col">Peak latency</th><th scope="col">Effort</th><th scope="col">Risk</th><th scope="col">Run cost</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Scale the database</th><td data-rating="Weak">Weak</td><td data-rating="Low">Low</td><td data-rating="Low">Low</td><td data-rating="High">High</td></tr>
+      <tr class="chosen"><th scope="row">Async reservation</th><td data-rating="Good">Good</td><td data-rating="Medium">Medium</td><td data-rating="Medium">Medium</td><td data-rating="Low">Low</td></tr>
+      <tr><th scope="row">Split the inventory</th><td data-rating="Good">Good</td><td data-rating="High">High</td><td data-rating="High">High</td><td data-rating="Medium">Medium</td></tr>
+      
+    </tbody>
+  </table>
+</div>
+<p class="outcome reveal"><strong>Recommendation</strong><span>Move the stock reservation to an event, confirm the order first and compensate the rare failures.</span></p>
+<footer class="foot"><span>Order platform / architecture review</span><span class="num">05 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-decision" id="slide-decision" data-slide-id="decision" data-template="decision" data-title="Reserve stock after the order is accepted" aria-labelledby="decision-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">ADR-021</p><h1 id="decision-title">Reserve stock <span class="blue">after the order is accepted</span></h1></div>
+  <p class="status">Proposed · for approval today</p>
+</header>
+<div class="adr">
+  <section class="block reveal"><h2>Context</h2><p>At 2.1× traffic the synchronous inventory lock pushes p95 latency to 560 ms, above the 500 ms budget.</p></section>
+  <section class="block chosen reveal"><h2>Decision</h2><p><strong>Publish an order-accepted event and reserve stock asynchronously</strong>; cancel and notify when stock is gone.</p></section>
+  <section class="block reveal"><h2>Consequences</h2>
+    <ul class="effects"><li class="pro"><span class="sign" aria-hidden="true">+</span><span>p95 latency back under 350 ms at peak</span></li><li class="pro"><span class="sign" aria-hidden="true">+</span><span>The database lock leaves the checkout path</span></li><li class="con"><span class="sign" aria-hidden="true">−</span><span>About 0.2% of orders cancelled after acceptance</span></li><li class="con"><span class="sign" aria-hidden="true">−</span><span>A new compensation flow to test and operate</span></li></ul>
+  </section>
+</div>
+<footer class="foot"><span>Order platform / architecture review</span><span class="num">06 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-risk-register" id="slide-risks" data-slide-id="risks" data-template="risk-register" data-title="Three risks, all with an owner" aria-labelledby="risks-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Risks</p><h1 id="risks-title">Three risks, <span class="amber">all with an owner</span></h1></div>
+  <p class="subtitle">Reviewed with service owners.</p>
+</header>
+<div class="register-wrap reveal">
+  <table class="register">
+    <caption class="sr-only">Three risks, all with an owner</caption>
+    <thead><tr><th scope="col" class="risk">Risk</th><th scope="col">Impact</th><th scope="col">Likelihood</th><th scope="col">Owner</th><th scope="col" class="mitigation">Mitigation</th></tr></thead>
+    <tbody>
+      <tr><th scope="row" class="risk">Oversold stock during flash sales</th><td><span class="level" data-level="High">High</span></td><td><span class="level" data-level="Medium">Medium</span></td><td class="owner">Order team</td><td class="mitigation">Hold a 2% safety stock on promoted items.</td></tr>
+      <tr><th scope="row" class="risk">Event backlog at peak</th><td><span class="level" data-level="Medium">Medium</span></td><td><span class="level" data-level="Medium">Medium</span></td><td class="owner">Platform team</td><td class="mitigation">Autoscale consumers; alert on lag over 30 s.</td></tr>
+      <tr><th scope="row" class="risk">Customers confused by late cancellations</th><td><span class="level" data-level="Medium">Medium</span></td><td><span class="level" data-level="Low">Low</span></td><td class="owner">Customer care</td><td class="mitigation">Clear email and an instant refund.</td></tr>
+      
+    </tbody>
+  </table>
+</div>
+<footer class="foot"><span>Order platform / architecture review</span><span class="num">07 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-checklist" id="slide-confirm" data-slide-id="confirm" data-template="checklist" data-title="Four points to confirm with the board" aria-labelledby="confirm-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">Before we build</p><h1 id="confirm-title">Four points to confirm <span class="blue">with the board</span></h1></div>
+  <p class="subtitle">Decision needed today.</p>
+</header>
+<div class="checklist-wrap reveal">
+  <table class="checklist">
+    <caption class="sr-only">Four points to confirm with the board</caption>
+    <thead><tr><th scope="col" class="check"><span class="sr-only">Done</span></th><th scope="col"></th><th scope="col">Owner</th><th scope="col">Due</th></tr></thead>
+    <tbody>
+      <tr><td class="check"><span class="box" role="img" aria-label="Open"></span></td><th scope="row">Approve ADR-021 and the compensation flow</th><td class="owner">Architecture board</td><td class="due">Today</td></tr>
+      <tr><td class="check"><span class="box" role="img" aria-label="Open"></span></td><th scope="row">Agree the 0.2% late-cancellation budget</th><td class="owner">Product owner</td><td class="due">10 Oct</td></tr>
+      <tr><td class="check"><span class="box" role="img" aria-label="Open"></span></td><th scope="row">Load test at 2.5× before the code freeze</th><td class="owner">Platform team</td><td class="due">31 Oct</td></tr>
+      <tr><td class="check"><span class="box" role="img" aria-label="Open"></span></td><th scope="row">Update the runbook and on-call training</th><td class="owner">SRE lead</td><td class="due">7 Nov</td></tr>
+      
+    </tbody>
+  </table>
+</div>
+<footer class="foot"><span>Order platform / architecture review</span><span class="num">08 / 09</span></footer>
+  </div>
+</section>
+<section class="slide df-t-sources" id="slide-sources" data-slide-id="sources" data-template="sources" data-title="Sources" aria-labelledby="sources-title">
+  <div class="slide-inner">
+<header class="reveal">
+  
+  <h1 id="sources-title">Sources</h1>
+</header>
+<ol class="entries reveal">
+  <li><span class="num">02</span><span class="where">Healthy today, close to the limit at peak</span><span class="what">Monitoring dashboards, 90-day export</span></li><li><span class="num"></span><span class="where"></span><span class="what"><a href="https://example.com/forecast" target="_blank" rel="noopener noreferrer">Peak forecast 2026</a></span></li><li><span class="num">04</span><span class="where">The inventory lock takes half the budget</span><span class="what">Load test LT-48 report</span></li>
+</ol>
+<footer class="foot"><span>Order platform / architecture review</span><span class="num">09 / 09</span></footer>
+  </div>
+</section>
+  </main>
+  <nav class="controls" aria-label="Slide controls" hidden>
+  <button id="df-previous" type="button" aria-label="Previous slide">Previous</button>
+  <label class="sr-only" for="df-slide-select">Choose a slide</label>
+  <select id="df-slide-select"></select>
+  <button id="df-next" type="button" aria-label="Next slide">Next</button>
+  <span class="controls-sep" aria-hidden="true"></span>
+  <button id="df-static" type="button" aria-pressed="false" title="Disable animations (S)">Static</button>
+  <button id="df-notes" type="button" aria-pressed="false" title="Show speaker notes (N)">Notes</button>
+  <button id="df-presenter" type="button" title="Open presenter view (P)">Presenter</button>
+  <button id="df-fullscreen" type="button" aria-pressed="false" title="Fullscreen (F)">Fullscreen</button>
+  <span id="df-announcement" class="sr-only" role="status" aria-live="polite"></span>
+</nav>
+  <script data-df-runtime>
+/*! deckforge | MIT License | https://github.com/lrivallain/deckforge */
+(()=>{(function(){"use strict";let u=document.documentElement,r=Array.from(document.querySelectorAll(".stage > .slide")),f=document.querySelector(".controls");if(!r.length||!f)return;let d=e=>document.getElementById(e),y=d("df-previous"),x=d("df-next"),p=d("df-slide-select"),v=d("df-static"),w=d("df-notes"),P=d("df-presenter"),b=d("df-fullscreen"),m=d("df-announcement"),c=C(),o=0,s=null,E=null,l=null;function C(){let e=document.querySelector('meta[name="deckforge-editor"]'),t=e&&e.getAttribute("content");if(!t||!/^\/(?!\/)/.test(t))return null;let n=document.createElement("a");return n.id="df-edit",n.href=t,n.title="Edit this slide (E)",n.textContent="Edit",n.dataset.base=t,f.insertBefore(n,m),n}let D=parseFloat(getComputedStyle(u).getPropertyValue("--df-motion-stagger"))||.15;for(let e of r){let t=0;for(let n of e.querySelectorAll(".reveal")){let i=n.getAttribute("data-df-order"),M=i!==null&&/^\d+$/.test(i)?Number(i):t++;n.style.getPropertyValue("--delay")||n.style.setProperty("--delay",`${(M*D).toFixed(2)}s`)}}r.forEach((e,t)=>{let n=document.createElement("option");n.value=String(t),n.textContent=`${t+1} / ${r.length} - ${e.dataset.title||"Slide"}`,p.append(n)});function k(){let e=/^#([1-9]\d*)$/.exec(location.hash);if(e){let n=Number(e[1]);return Number.isSafeInteger(n)&&n<=r.length?n-1:0}let t=/^#slide-([\w-]+)$/.exec(location.hash);if(t){let n=r.findIndex(i=>i.dataset.slideId===t[1]);if(n>=0)return n}return 0}function L(e){let t=r[e]&&r[e].querySelector(".slide-notes");return t?t.innerHTML:""}function S(){if(!l)return;let e=L(o);l.innerHTML=e||'<p class="empty">No speaker notes for this slide.</p>'}function g(e){if(e)for(let t of e.querySelectorAll('img[loading="lazy"]'))t.loading="eager"}function h(){r.forEach(g)}if(document.readyState==="complete"?setTimeout(h,200):addEventListener("load",()=>setTimeout(h,200)),addEventListener("beforeprint",h),window.matchMedia){let e=window.matchMedia("print");e.addEventListener&&e.addEventListener("change",t=>t.matches&&h())}function a(e){if(o=Math.max(0,Math.min(r.length-1,e)),g(r[o]),g(r[o+1]),g(r[o-1]),r.forEach((t,n)=>{t.hidden=n!==o,t.classList.remove("entered")}),r[o].offsetWidth,r[o].classList.add("entered"),y.disabled=o===0,x.disabled=o===r.length-1,p.value=String(o),m.textContent=`Slide ${o+1} of ${r.length}: ${r[o].dataset.title||""}`,location.hash!==`#${o+1}`&&history.replaceState(null,"",`#${o+1}`),c){let t=r[o].dataset.slideId;c.href=t?`${c.dataset.base.split("#")[0]}#slide-${t}`:c.dataset.base}S(),F()}function $(){let e=u.classList.toggle("static");v.setAttribute("aria-pressed",String(e))}function A(){let e=u.classList.toggle("show-notes");w.setAttribute("aria-pressed",String(e)),e?(l=document.createElement("section"),l.className="notes-panel",l.setAttribute("aria-label","Speaker notes"),f.before(l),S()):l&&(l.remove(),l=null)}let q=`
+    body{margin:0;font:16px/1.5 system-ui,sans-serif;color:#16202F;background:#F7F9FC;display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+    header,footer{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 20px;background:#fff;border-bottom:1px solid #E2E8F2}
+    footer{border-top:1px solid #E2E8F2;border-bottom:0}
+    h1{font-size:20px;margin:0}
+    .meta{color:#53617A;font-variant-numeric:tabular-nums}
+    main{overflow:auto;padding:20px 24px;font-size:22px;line-height:1.5}
+    main p{margin:0 0 .7em}
+    .empty{color:#53617A;font-style:italic}
+    button{font:inherit;min-height:40px;padding:6px 14px;border:1px solid #53617A;border-radius:7px;background:#fff;cursor:pointer}
+    button:disabled{color:#53617A;border-color:#E2E8F2;cursor:default}
+    :focus-visible{outline:3px solid #0F6CBD;outline-offset:3px}`;function F(){if(!s||s.closed)return;let e=s.document,t=e.getElementById("p-title");t&&(t.textContent=`${o+1} / ${r.length} \u2014 ${r[o].dataset.title||""}`,e.getElementById("p-notes").innerHTML=L(o)||'<p class="empty">No speaker notes for this slide.</p>',e.getElementById("p-next").textContent=o<r.length-1?`Next: ${r[o+1].dataset.title||""}`:"End of deck",e.getElementById("p-prev-btn").disabled=o===0,e.getElementById("p-next-btn").disabled=o===r.length-1)}function B(){if(s&&!s.closed){s.focus();return}if(s=window.open("","deckforge-presenter","popup,width=960,height=640"),!s){m.textContent="The presenter window was blocked. Allow pop-ups for this page, or use Notes.";return}E=E||Date.now();let e=s.document;e.open(),e.write(`<!doctype html><html lang="${u.lang||"en"}"><head><meta charset="utf-8"><title>Presenter \u2014 ${document.title.replace(/</g,"&lt;")}</title><style>${q}</style></head><body>
+      <header><h1 id="p-title" aria-live="polite"></h1><span class="meta" id="p-clock"></span></header>
+      <main id="p-notes" aria-label="Speaker notes"></main>
+      <footer><span class="meta" id="p-next"></span><span><button id="p-prev-btn" type="button">Previous</button> <button id="p-next-btn" type="button">Next</button></span></footer>
+    </body></html>`),e.close(),e.getElementById("p-prev-btn").addEventListener("click",()=>a(o-1)),e.getElementById("p-next-btn").addEventListener("click",()=>a(o+1)),e.addEventListener("keydown",N);let t=()=>{if(!s||s.closed)return;let n=Math.floor((Date.now()-E)/1e3),i=e.getElementById("p-clock");i&&(i.textContent=`Elapsed ${String(Math.floor(n/60)).padStart(2,"0")}:${String(n%60).padStart(2,"0")}`),s.setTimeout(t,1e3)};t(),F()}async function I(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else throw new Error("unsupported")}catch{m.textContent="Fullscreen is not available in this browser or was denied."}}document.addEventListener("fullscreenchange",()=>{b.setAttribute("aria-pressed",String(!!document.fullscreenElement))});function N(e){if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;let t=e.target;if(t&&typeof t.closest=="function"){let i=t.ownerDocument!==document?"input, select, textarea, [contenteditable]":"a, button, input, select, textarea, [contenteditable]";if(t.closest(i))return}let n;switch(e.key){case"ArrowRight":case"PageDown":case" ":n=o+1;break;case"ArrowLeft":case"PageUp":n=o-1;break;case"Home":n=0;break;case"End":n=r.length-1;break;case"s":case"S":e.preventDefault(),$();return;case"n":case"N":e.preventDefault(),A();return;case"p":case"P":e.preventDefault(),B();return;case"f":case"F":e.preventDefault(),I();return;case"e":case"E":if(!c)return;e.preventDefault(),location.href=c.href;return;default:return}e.preventDefault(),a(n)}y.addEventListener("click",()=>a(o-1)),x.addEventListener("click",()=>a(o+1)),p.addEventListener("change",()=>a(Number(p.value))),v.addEventListener("click",$),w.addEventListener("click",A),P.addEventListener("click",B),b.addEventListener("click",I),document.documentElement.requestFullscreen||(b.hidden=!0),addEventListener("hashchange",()=>a(k())),addEventListener("keydown",N),addEventListener("beforeprint",()=>r.forEach(e=>e.classList.add("entered"))),addEventListener("pagehide",()=>{s&&!s.closed&&s.close()}),window.deckforge={go:e=>a(e),next:()=>a(o+1),previous:()=>a(o-1),get current(){return o},get count(){return r.length}},u.classList.add("presenting"),f.hidden=!1,a(k())})();})();
+
+</script>
+</body>
+</html>

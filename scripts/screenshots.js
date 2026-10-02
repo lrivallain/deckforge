@@ -1,9 +1,10 @@
 // Regenerate the documentation screenshots from the example decks.
-// Usage: npm run docs:screenshots   (node scripts/screenshots.js [--only editor,themes,…])
+// Usage: npm run docs:screenshots   (node scripts/screenshots.js [--only editor,demo,themes,…])
 // Needs Playwright's Chromium (npx playwright install chromium). Copilot is
-// mocked (scripts/docs-agent-mock.js): no network, no sign-in.
+// mocked (scripts/docs-agent-mock.js): no network, no sign-in. The `demo` group
+// records the agent-turn GIF and also needs ffmpeg on the PATH.
 
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -177,6 +178,49 @@ async function editorShots() {
   }
 }
 
+/** Record a whole-deck Copilot turn, its highlighted changes and one undo as docs/public/screenshots/agent-turn.gif. */
+async function demoGif() {
+  if (spawnSync("ffmpeg", ["-version"], { stdio: "ignore" }).status !== 0) {
+    console.warn("ffmpeg not found: skipping the agent-turn GIF (brew install ffmpeg or apt install ffmpeg).");
+    return;
+  }
+  const dir = makeDeck("demo");
+  const editor = await startEditor(dir);
+  const videoDir = path.join(scratch, "video");
+  const viewport = { width: 1280, height: 800 };
+  const context = await browser.newContext({ viewport, reducedMotion: "reduce", colorScheme: "light", recordVideo: { dir: videoDir, size: viewport } });
+  const started = Date.now();
+  const page = await context.newPage();
+  let from;
+  try {
+    await page.goto(editor.url);
+    await page.locator('.rail-item[data-id="concept"]').click();
+    await page.getByTestId("toggle-chat").click();
+    await page.getByRole("button", { name: "Whole deck" }).click();
+    await settle(page);
+    from = (Date.now() - started) / 1000;
+    await page.waitForTimeout(600);
+    await page.getByTestId("chat-input").pressSequentially("Make every takeaway one short idea and add speaker notes.", { delay: 28 });
+    await page.waitForTimeout(400);
+    await page.getByTestId("chat-send").click();
+    await page.getByTestId("turn-summary").waitFor({ timeout: 20000 });
+    await page.waitForTimeout(1800);
+    await page.locator('.rail-item[data-id="lifecycle"]').click();
+    await page.waitForTimeout(2200);
+    await page.getByTestId("undo-agent").click();
+    await page.waitForTimeout(2200);
+  } finally {
+    await page.close();
+    await context.close();
+    await editor.stop();
+  }
+  const video = await page.video().path();
+  const file = path.join(OUT, "agent-turn.gif");
+  const filters = "fps=10,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle";
+  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-ss", from.toFixed(2), "-i", video, "-vf", filters, "-loop", "0", file]);
+  saved.push(path.relative(ROOT, file));
+}
+
 async function viewerShots() {
   const dir = makeDeck("viewer");
   const page = await newPage({ width: 1440, height: 900 });
@@ -226,6 +270,7 @@ async function templateShots() {
 try {
   fs.mkdirSync(OUT, { recursive: true });
   if (wanted("editor")) await editorShots();
+  if (wanted("demo")) await demoGif();
   if (wanted("viewer")) await viewerShots();
   if (wanted("themes")) await themeShots();
   if (wanted("templates")) await templateShots();

@@ -26,6 +26,9 @@ This skill is installed or updated with `deckforge skill install-copilot`.
 ```bash
 deckforge new <dir> --title "<title>" [--theme build]   # deck.yaml with one title slide, then built
 deckforge new <dir> --example                           # the full specimen (concept, implementation, lifecycle, zoom)
+deckforge new <dir> --example postmortem                # a technical starter: architecture-review, postmortem,
+                                                        # assessment or decision-record (inline runtime, charts)
+deckforge new <dir> --example agent-native              # a finished deck built from a brief by this skill
 deckforge templates <dir> --json                        # the catalogue this deck can use
 ```
 
@@ -61,6 +64,9 @@ slides:
     title: The shift                     # optional navigation title (defaults to the headline)
     hidden: false                        # true keeps a backup slide out of the presentation
     footer: Optional per-slide footer
+    sources:                             # optional: listed in the notes and on a generated Sources slide
+      - Q3 incident review (internal, 2026-09)
+      - { label: Price list, href: "https://example.com/prices" }
     notes: |
       What to say, in 2 to 4 short sentences.
 
@@ -68,6 +74,9 @@ slides:
     data: { … }                          # the template's slots, nothing else
     overlays: [ … ]                      # optional free elements (section 6)
 ```
+
+`meta.sourcesSlide: false` turns the generated Sources appendix off; a string renames it
+(`sourcesSlide: Références`).
 
 The editor manages `placeholders` (slots still showing sample text, never published) and
 `stash` (content kept from a previous template). Leave them alone. The editor rewrites
@@ -94,9 +103,25 @@ The editor manages `placeholders` (slots still showing sample text, never publis
 | Numbers (Essentials) | `metric` | Up to 3 big values with a label (`focus` on one) and a `source`. Real figures only |
 | Picture and one line (Essentials) | `visual` | Full-bleed approved image with a kicker and one line at the bottom |
 | Close (Essentials) | `closing` | Short headline, the one action you ask for and a `link` |
+| Figures as bars (data) | `bars` | Up to 8 bars, `vertical: true` for columns. Optional hatched `projected` amount. Sizes come from the numbers |
+| Share of a whole (data) | `donut` | Up to 6 segments; the centre shows the total unless `centreValue` is set |
+| Current vs target (data) | `compare-bars` | Two stacked bars on one scale; segments carry `current` and `target` numbers |
+| Key figures (data) | `kpis` | 3–4 cards with `value`, `label`, `note` and `tone: good\|warn\|focus` |
+| Numbers in a table (data) | `table` | Up to 8 rows × 4 numeric columns (`v1`–`v4`); `totalLabel` adds a computed total row |
+| Incident or migration phases | `timeline` | Up to 7 dated events; `focus` on the key moments |
+| Options → recommendation | `options-matrix` | Up to 4 options × 5 criteria (one rating per criterion), one `recommended`, a recommendation line |
+| Risks | `risk-register` | Up to 6 risks; impact/likelihood as `critical`, `high`, `medium` or `low` |
+| Decision record (ADR) | `decision` | Context → decision (with `status`) → consequences (`pros`, `cons`) |
+| Scope reduction | `funnel` | Inventory → exclusions → scope, up to 5 steps with a `note` each |
+| Points to confirm | `checklist` | Up to 7 items with `owner`, `due` and `done` |
+| Sources appendix | `sources` | Generated from the slides' `sources:`; rarely written by hand |
 
 The Essentials templates (`cover` … `closing`) are a simpler, diagram-free baseline that works with
 every theme. They pair well with the dark `aurora` theme (`deckforge new <dir> --example aurora`).
+
+The data templates (`bars` … `table`) compute bar lengths, segments and totals from `number` fields when the
+deck is built: write the real figures, never percentages, and they cannot drift. They also add an
+`aria-label` and a screen-reader table generated from the data.
 
 Always confirm the names against `deckforge templates --json`. Deck-local and user templates
 can add to this list or override entries in it.
@@ -111,6 +136,7 @@ can add to this list or override entries in it.
 | `cards` | `[{…}]` | Each field has its own slot type and `max` |
 | `icon` | name | One of the `icons` from `templates --json` (pen review book users shield cloud server database code gear chart target flag idea rocket flow agent network …) |
 | `link` | `{label, href}` | `https://`, `mailto:`, `#…` or relative |
+| `number` | number | A YAML number (`42`, `9.5`). Shown in the deck's locale. Charts size themselves from it |
 | `boolean` | true/false | |
 | `image` | `{src, alt, fit, focus}` | `src: assets/<name>.<png\|jpg\|jpeg\|webp\|gif\|svg>` (no sub-folders; the name starts with a letter or digit) or `https://…`. `alt` is required in practice. `fit: cover\|contain`. `focus: "x% y%"` |
 
@@ -124,7 +150,8 @@ Images:
 - Copy approved files into `<dir>/assets/`, or let the user drop them in the editor.
   The editor checks the type from the file's magic bytes and refuses scripted SVG.
 - Copy SVG files by hand only from a trusted source.
-- `https://` images make every viewer download them: avoid them for offline decks.
+- `https://` images make every viewer download them: avoid them for offline decks. An inline deck's CSP blocks them
+  (build warns `Blocked offline: …`), and `deckforge build <dir> --runtime inline --check-offline` fails on them.
 
 ## 6. Overlays
 
@@ -207,7 +234,10 @@ Copy the structure of a built-in theme (see the [theme file reference](https://d
 ```bash
 deckforge build <dir> --json                 # validate + write deck.html (exit 2 on errors)
 deckforge build <dir> --runtime inline       # one self-contained file to share (no network)
+deckforge build <dir> --runtime inline --check-offline --strip-notes --out <copy>.html
+                                             # confidential copy: fails on any http(s) resource, no speaker notes
 deckforge build <dir> --out <file> [--runtime local|inline|cdn]
+deckforge diff <old.yaml> <dir>              # per-slide summary of the changes, for reviews
 deckforge export <dir> --json                # editable deck.pptx next to deck.yaml (needs Playwright)
 ```
 
@@ -223,9 +253,13 @@ deckforge export <dir> --json                # editable deck.pptx next to deck.y
 | Required slot missing or still sample text | Write real content |
 | Image missing, unsupported source or empty alt | Copy the approved file into `assets/`, or write a specific alt text |
 | Overlay beyond the slide | Move or resize it inside 0–100 % |
+| `"x" must be a number` | Write a plain YAML number (`1200`, `9.5`), no unit or thousands separator |
+| `"x.0" has an unknown field "…"` | A value with a comma in a `{ … }` flow mapping: quote it |
+| `Not offline: … loads https://…` (`--check-offline`) | Copy the file into `assets/` and use `--runtime inline` |
+| `Blocked offline: … loads https://…` (inline build) | The inline CSP blocks it: copy the file into `assets/` |
 
 Runtimes: `local` (the default) copies `deckforge/deckforge.viewer.{js,css}` next to `deck.html`.
-`inline` embeds everything, images included. `cdn` loads the runtime from jsDelivr and only works for tagged releases.
+`inline` embeds everything, images included, with a CSP that blocks the network. `cdn` loads the runtime from jsDelivr and only works for tagged releases.
 `local` and `inline` make no network requests.
 
 ## 9. Editor and viewer facts for the user

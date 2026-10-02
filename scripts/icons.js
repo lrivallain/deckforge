@@ -74,7 +74,7 @@ if (fs.existsSync(shot)) {
       box-shadow:0 30px 60px -20px rgba(15,108,189,.35); }
   </style></head><body>
     <div class="text"><div class="brand"><img src="${svgUri}" alt=""><h1>deckforge</h1></div>
-    <p>Presentations as <b>YAML</b>.<br>Themes, templates, a live editor and <b>GitHub Copilot</b>.</p></div>
+    <p><b>Agent-native</b> presentations.<br>Typed slides an AI can edit safely, on the <b>Copilot</b> you already have.</p></div>
     <img class="shot" src="${shotUri}" alt="">
   </body></html>`);
   await page.evaluate(() => Promise.all([...document.images].map((i) => i.decode())));

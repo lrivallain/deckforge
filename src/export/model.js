@@ -223,8 +223,9 @@ function parseStop(arg, length) {
  */
 export function parseGradient(value, w, h) {
   const m = /^(repeating-)?(linear|radial)-gradient\((.*)\)$/s.exec(String(value).trim());
-  if (!m || m[1]) return null;
+  if (!m || (m[1] && m[2] !== "linear")) return null;
   const type = m[2];
+  const repeating = Boolean(m[1]);
   const args = splitTopLevel(m[3]);
   let angle = 180;
   if (args.length && !parseColor(firstToken(args[0]))) {
@@ -272,8 +273,18 @@ export function parseGradient(value, w, h) {
     const neighbour = stops[i - 1]?.alpha > 0 ? stops[i - 1] : stops[i + 1]?.alpha > 0 ? stops[i + 1] : null;
     if (neighbour) stops[i].hex = neighbour.hex;
   }
+  // repeating-linear-gradient: the stops span one period of the line, repeated (spreadMethod="repeat").
+  let period = null;
+  if (repeating) {
+    period = stops[stops.length - 1].offset - stops[0].offset;
+    if (!(period > 0) || stops[0].offset !== 0) return null;
+    for (const s of stops) s.offset /= period;
+  }
   for (const s of stops) s.offset = round(Math.max(0, Math.min(1, s.offset)));
-  return type === "linear" ? { type, angle: ((angle % 360) + 360) % 360, stops } : { type, stops };
+  if (type !== "linear") return { type, stops };
+  const out = { type, angle: ((angle % 360) + 360) % 360, stops };
+  if (period) out.period = period;
+  return out;
 }
 
 const svgOpen = (w, h) => `<svg xmlns="http://www.w3.org/2000/svg" width="${round(w, 2)}" height="${round(h, 2)}" viewBox="0 0 ${round(w, 2)} ${round(h, 2)}">`;
@@ -287,8 +298,9 @@ export function gradientSvg(gradient, w, h, radius = 0) {
     const half = gradientLength(gradient.angle, w, h) / 2;
     const dx = Math.sin(rad) * half;
     const dy = -Math.cos(rad) * half;
-    const [x1, y1, x2, y2] = [w / 2 - dx, h / 2 - dy, w / 2 + dx, h / 2 + dy].map((n) => round(n, 2));
-    def = `<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${stops}</linearGradient>`;
+    const span = gradient.period || 1;
+    const [x1, y1, x2, y2] = [w / 2 - dx, h / 2 - dy, w / 2 - dx + 2 * dx * span, h / 2 - dy + 2 * dy * span].map((n) => round(n, 2));
+    def = `<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${gradient.period ? ' spreadMethod="repeat"' : ""}>${stops}</linearGradient>`;
   } else {
     def = `<radialGradient id="g" cx="0.5" cy="0.5" r="0.7071">${stops}</radialGradient>`;
   }

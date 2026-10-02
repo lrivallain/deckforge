@@ -91,8 +91,9 @@ describe("built-in templates", () => {
   it("all parse without errors and render their sample data", () => {
     expect(templateErrors).toEqual([]);
     expect(Object.keys(templates).sort()).toEqual([
-      "agenda", "bullets", "closing", "concept-map", "cover", "image", "image-text", "implementation-map", "lifecycle", "metric",
-      "points", "quote", "resources", "section", "split", "statement", "title", "two-column", "visual", "zoom",
+      "agenda", "bars", "bullets", "checklist", "closing", "compare-bars", "concept-map", "cover", "decision", "donut", "funnel",
+      "image", "image-text", "implementation-map", "kpis", "lifecycle", "metric", "options-matrix", "points", "quote", "resources",
+      "risk-register", "section", "sources", "split", "statement", "table", "timeline", "title", "two-column", "visual", "zoom",
     ]);
     for (const template of Object.values(templates)) {
       expect(template.issues.filter((i) => i.level === "error"), template.name).toEqual([]);

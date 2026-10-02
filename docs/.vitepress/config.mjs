@@ -7,7 +7,7 @@ export default defineConfig({
   base,
   lang: "en",
   title: "deckforge",
-  description: "Presentations as YAML: themes, templates, a live editor and GitHub Copilot. Static HTML decks with no network requests.",
+  description: "Agent-native presentations: typed slides an AI can edit safely, on the Copilot you already have. deck.yaml source, live editor, static HTML and PowerPoint output.",
   cleanUrls: true,
   lastUpdated: true,
   head: [
@@ -34,13 +34,18 @@ export default defineConfig({
       {
         text: "Guide",
         items: [
+          { text: "Why deckforge", link: "/guide/why-deckforge" },
           { text: "Getting started", link: "/guide/getting-started" },
           { text: "Write a deck", link: "/guide/writing-decks" },
           { text: "Themes", link: "/guide/themes" },
           { text: "Templates", link: "/guide/templates" },
           { text: "Editor", link: "/guide/editor" },
           { text: "Copilot assistant", link: "/guide/copilot" },
+          { text: "Agent model", link: "/guide/agent-model" },
           { text: "Present and share", link: "/guide/presenting" },
+          { text: "Technical decks", link: "/guide/technical-decks" },
+          { text: "Share offline", link: "/guide/offline" },
+          { text: "Decks in git and CI", link: "/guide/git-ci" },
           { text: "Copilot skill", link: "/guide/copilot-skill" },
         ],
       },

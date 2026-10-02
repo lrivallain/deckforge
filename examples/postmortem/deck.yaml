@@ -1,0 +1,107 @@
+meta:
+  title: Checkout outage - postmortem
+  lang: en
+  theme: build
+  runtime: inline
+  footer: Postmortem PM-112 / blameless
+  brief:
+    topic: Postmortem of the checkout outage of 14 September
+    audience: Engineering teams and service owners
+    goal: Share what happened, why, and agree the follow-up actions and their owners
+    duration: 15 minutes
+slides:
+  - id: title
+    template: title
+    data:
+      eyebrow: Postmortem PM-112
+      title: Checkout failed for 52 minutes. <span class="blue">Here is what we change.</span>
+      subtitle: A blameless review of the 14 September incident, its causes and the follow-up actions.
+      presenter: Incident commander
+      details: Engineering review · 21 September
+    notes: |
+      Blameless format: describe systems and decisions, never people.
+      Replace the figures with the ones from your incident record; the Sources appendix is generated from each slide's sources field.
+  - id: impact
+    template: kpis
+    data:
+      eyebrow: Impact
+      title: One in five checkouts <span class="amber">failed for 52 minutes</span>
+      subtitle: 14 September, 09:12 to 10:04 UTC.
+      kpis:
+        - { value: 52 min, label: Customer impact, note: "Detected after 4 min", tone: warn }
+        - { value: 21%, label: Checkouts failed at peak, note: 3 410 orders retried, tone: warn }
+        - { value: 38%, label: Monthly error budget used, note: "SLO 99.9%", tone: focus }
+        - { value: "0", label: Orders lost, note: All retried or refunded, tone: good }
+      source: "Source: incident record PM-112"
+    sources:
+      - Incident record PM-112
+  - id: timeline
+    template: timeline
+    data:
+      eyebrow: Timeline
+      title: Detected in 4 minutes, <span class="amber">resolved in 52</span>
+      subtitle: "All times UTC, 14 September."
+      events:
+        - { time: "09:12", title: Deploy 4.18, text: Release rolls out to all regions at once. }
+        - { time: "09:16", title: Alert fires, text: Checkout error rate passes 5%., focus: true }
+        - { time: "09:24", title: Incident declared, text: Commander assigned and status page updated. }
+        - { time: "09:31", title: Rollback starts, text: On-call reverts to release 4.17. }
+        - { time: "09:48", title: Traffic recovers, text: Error rate back under 0.1%. }
+        - { time: "10:04", title: Resolved, text: Incident closed and review scheduled., focus: true }
+      takeawayLabel: The takeaway
+      takeaway: Detection was fast. The 15 minutes before the rollback were not.
+    sources:
+      - Incident channel log
+      - Deployment history, 14 September
+  - id: errors
+    template: bars
+    data:
+      eyebrow: Blast radius
+      title: Every region failed, <span class="amber">the busiest the most</span>
+      subtitle: Failed checkouts during the incident.
+      unit: orders
+      items:
+        - { label: Europe West, value: 1480, focus: true }
+        - { label: North America, value: 1120 }
+        - { label: Europe North, value: 540 }
+        - { label: Asia Pacific, value: 270 }
+      source: "Source: checkout logs, 09:12-10:04 UTC"
+    sources:
+      - Checkout logs, 09:12-10:04 UTC
+    notes: The bars are computed from the values; the total is 3 410 failed checkouts.
+  - id: cause
+    template: zoom
+    data:
+      eyebrow: Root cause
+      title: A config change <span class="blue">reached every region at once</span>
+      subtitle: The code was fine; the rollout was not.
+      steps:
+        - { label: Deploy, active: true }
+        - { label: Detect, active: false }
+        - { label: Mitigate, active: false }
+        - { label: Learn, active: false }
+      stepperLabel: "Incident phases: deploy, detect, mitigate, learn"
+      problemLabel: Trigger
+      problemTitle: A connection-pool setting shipped inside the release
+      problemText: The pool size dropped from 50 to 5. Checkout exhausted it within minutes under normal traffic.
+      bridge: contributing factors
+      responses:
+        - { title: No canary, text: The release went to all regions in one step., highlight: true }
+        - { title: Config in the image, text: The setting was not reviewed as a config change. }
+        - { title: Slow rollback, text: The rollback needed a manual approval. }
+      takeawayLabel: The takeaway
+      takeaway: Any change that reaches every region at once can take checkout down.
+  - id: actions
+    template: checklist
+    data:
+      eyebrow: Follow-up actions
+      title: Five actions, <span class="blue">each with an owner</span>
+      subtitle: Tracked in the PM-112 board.
+      ownerHeader: Owner
+      dueHeader: Due
+      items:
+        - { item: Roll out releases region by region with a canary, owner: Platform team, due: 15 Oct }
+        - { item: Move pool settings to reviewed configuration, owner: Checkout team, due: 30 Sep }
+        - { item: Allow on-call to roll back without approval, owner: SRE lead, due: 25 Sep, done: true }
+        - { item: Alert on connection-pool saturation, owner: Observability, due: 30 Sep }
+        - { item: Replay this incident in the next game day, owner: SRE lead, due: 20 Nov }

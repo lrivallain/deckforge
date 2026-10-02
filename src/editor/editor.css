@@ -274,6 +274,11 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .tool-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 99px; font-size: 12px; background: var(--ui-copilot-soft); color: var(--ui-copilot); font-weight: 550; }
 .tool-chip-error { background: var(--ui-danger-soft); color: var(--ui-danger); }
 .msg-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px dashed var(--ui-line-strong); }
+.turn-summary { flex-direction: column; align-items: stretch; }
+.turn-summary-body { display: grid; gap: 4px; min-width: 0; }
+.turn-summary-list { margin: 0; padding-left: 18px; color: var(--ui-muted); overflow-wrap: anywhere; }
+.turn-summary-list strong { color: var(--ui-ink); font-weight: 600; }
+.turn-summary .row { justify-content: flex-end; }
 .chat-suggestions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 10px; }
 .chip { border: 1px solid var(--ui-line-strong); background: var(--ui-panel); border-radius: 99px; padding: 5px 11px; font-size: 12.5px; cursor: pointer; color: var(--ui-muted); }
 .chip:hover { border-color: var(--ui-copilot); color: var(--ui-copilot); }

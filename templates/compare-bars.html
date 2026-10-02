@@ -1,0 +1,75 @@
+---
+name: compare-bars
+label: Current vs target
+description: >-
+  Two stacked bars on one scale, such as today's cost against the target. The
+  segments and the totals are computed from the numbers when the deck is
+  rendered. Up to six segments with a legend. Real, sourced figures only.
+category: data
+order: 3
+slots:
+  eyebrow: { type: text, max: 40, sample: Target state }
+  title: { type: richtext, max: 60, required: true, sample: 'Managed services cut <span class="blue">the run cost by 35%</span>' }
+  subtitle: { type: text, max: 60, sample: Monthly run cost in k€. }
+  unit: { type: text, max: 12, sample: k€, description: Shown after each total }
+  currentLabel: { type: text, max: 20, sample: Today }
+  targetLabel: { type: text, max: 20, sample: Target }
+  segments:
+    type: cards
+    max: 6
+    scale: total
+    fields:
+      label: { type: text, max: 22 }
+      current: { type: number }
+      target: { type: number }
+    sample:
+      - { label: Compute, current: 42, target: 24 }
+      - { label: Databases, current: 18, target: 15 }
+      - { label: Storage, current: 14, target: 11 }
+      - { label: Operations, current: 12, target: 6 }
+  source: { type: text, max: 90, sample: "Source: illustrative figures" }
+---
+<header class="header reveal">
+  <div>{{#if eyebrow}}<p class="eyebrow">{{eyebrow}}</p>{{/if}}<h1 id="{{slide.titleId}}">{{title}}</h1></div>
+  {{#if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+</header>
+<div class="compare-wrap">
+<figure class="compare reveal" role="img" aria-label="{{slide.title}}: {{currentLabel}} {{segments.@sum.current}} {{unit}} ({{#each segments}}{{label}} {{current}}{{#unless @last}}, {{/unless}}{{/each}}); {{targetLabel}} {{segments.@sum.target}} {{unit}} ({{#each segments}}{{label}} {{target}}{{#unless @last}}, {{/unless}}{{/each}})">
+  <div class="row">
+    <p class="head"><span class="name">{{currentLabel}}</span><span class="total">{{segments.@sum.current}}{{#if unit}} <span class="unit">{{unit}}</span>{{/if}}</span></p>
+    <div class="track">{{#each segments}}<span class="segment series-{{@index}}" data-value="{{current}}" style="--size: {{@pct.current}}%"></span>{{/each}}</div>
+  </div>
+  <div class="row target">
+    <p class="head"><span class="name">{{targetLabel}}</span><span class="total">{{segments.@sum.target}}{{#if unit}} <span class="unit">{{unit}}</span>{{/if}}</span></p>
+    <div class="track">{{#each segments}}<span class="segment series-{{@index}}" data-value="{{target}}" style="--size: {{@pct.target}}%"></span>{{/each}}</div>
+  </div>
+</figure>
+<ul class="legend reveal">
+  {{#each segments}}<li class="series-{{@index}}"><span class="swatch" aria-hidden="true"></span><span class="label">{{label}}</span><span class="values">{{current}} → {{target}}</span></li>{{/each}}
+</ul>
+</div>
+<table class="sr-only">
+  <caption>{{slide.title}}</caption>
+  <thead><tr><td></td><th scope="col">{{currentLabel}}</th><th scope="col">{{targetLabel}}</th></tr></thead>
+  <tbody>{{#each segments}}<tr><th scope="row">{{label}}</th><td>{{current}} {{unit}}</td><td>{{target}} {{unit}}</td></tr>{{/each}}</tbody>
+  <tfoot><tr><th scope="row">Total</th><td>{{segments.@sum.current}} {{unit}}</td><td>{{segments.@sum.target}} {{unit}}</td></tr></tfoot>
+</table>
+{{#if source}}<p class="source reveal">{{source}}</p>{{/if}}
+{{> foot}}
+
+<style scoped>
+.compare-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 3cqw; }
+.compare { display: flex; flex-direction: column; gap: 2.4cqw; }
+.row { display: grid; grid-template-columns: 17cqw minmax(0, 1fr); align-items: center; gap: 2cqw; }
+.head { display: flex; flex-direction: column; gap: .3cqw; text-align: right; }
+.name { font: 400 1.3cqw / 1.3 var(--df-font-mono); color: var(--df-muted); text-transform: uppercase; letter-spacing: .1em; }
+.total { font: 800 3.6cqw / 1 var(--df-font-heading); letter-spacing: -.03em; white-space: nowrap; }
+.target .total { color: var(--df-primary); }
+.unit { font: 400 1.3cqw var(--df-font-mono); letter-spacing: 0; color: var(--df-muted); }
+.track { display: flex; min-width: 0; height: 6cqw; gap: 0; }
+.segment { flex: none; width: var(--size); height: 100%; background: var(--series); border-right: 2px solid var(--df-paper); }
+.segment:first-child { border-radius: var(--df-radius-small) 0 0 var(--df-radius-small); }
+.legend { list-style: none; margin: 0; padding: 0 0 0 19cqw; display: flex; flex-wrap: wrap; gap: .8cqw 2.4cqw; }
+.legend li { display: flex; align-items: center; gap: .7cqw; font-size: 1.5cqw; }
+.legend .values { font: 400 1.25cqw var(--df-font-mono); color: var(--df-muted); white-space: nowrap; }
+</style>
