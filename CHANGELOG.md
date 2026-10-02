@@ -5,6 +5,10 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Editor: the page no longer scrolls past the app, which used to push the toolbar out of view.
+
 ## [0.1.0]
 
 First public version. Add the release date to this heading when you tag it.

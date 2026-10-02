@@ -226,6 +226,20 @@ test("Copilot improves a text field and the change can be cancelled (mocked SDK)
   await expect(page.locator(".ai-field:has([data-testid=chat-input])")).toHaveCount(0);
 });
 
+test("the app shell never makes the page itself scrollable", async ({ page }) => {
+  const pageScroll = () => page.evaluate(() => {
+    const root = document.scrollingElement;
+    return { overflow: root.scrollHeight - root.clientHeight, y: window.scrollY };
+  });
+  expect(await pageScroll()).toEqual({ overflow: 0, y: 0 });
+  // Reaching the end of the long inspector must not scroll the window.
+  await page.locator(".notes-input").focus();
+  await page.locator(".inspector-body").hover();
+  await page.mouse.wheel(0, 5000);
+  await expect(page.locator(".topbar")).toBeInViewport();
+  expect(await pageScroll()).toEqual({ overflow: 0, y: 0 });
+});
+
 test("editor has no serious accessibility violations", async ({ page }) => {
   const results = await new AxeBuilder({ page }).exclude("iframe").withTags(["wcag2a", "wcag2aa"]).analyze();
   const serious = results.violations.filter((v) => ["serious", "critical"].includes(v.impact));
