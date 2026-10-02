@@ -55,12 +55,14 @@ export function outputPathFor(deckPath) {
  * Render a deck object to HTML and write it to outPath.
  * `sourceDir` holds deck.yaml and assets/; `deckDir` is where the runtime
  * (and, for --out elsewhere, the used assets) are copied.
- * `checkOffline` reports every network reference of the output as an error
- * (and adds a CSP that blocks the network to inline decks); `stripNotes`
- * leaves the speaker notes out.
+ * Inline decks get a CSP that blocks the network (`offlineCsp: false` leaves it
+ * out, e.g. for the PPTX export, which reads the images back); the remote
+ * resources it would block are reported as warnings. `checkOffline` reports
+ * every network reference of the output as an error; `stripNotes` leaves the
+ * speaker notes out.
  * @returns {{ html: string, outPath: string, issues: object[], assets: object, external?: object[] }}
  */
-export function buildDeckObject(deck, { deckDir, sourceDir = deckDir, outPath, runtime, templates, themes, write = true, checkOffline = false, stripNotes = false }) {
+export function buildDeckObject(deck, { deckDir, sourceDir = deckDir, outPath, runtime, templates, themes, write = true, checkOffline = false, stripNotes = false, offlineCsp = true }) {
   const mode = runtime || deck.meta.runtime || "local";
   let theme = themes[deck.meta.theme] || themes.build || Object.values(themes)[0];
   const issues = validateDeck(deck, { templates, themes });
@@ -70,12 +72,16 @@ export function buildDeckObject(deck, { deckDir, sourceDir = deckDir, outPath, r
   const assets = mode === "inline" ? readRuntimeAssets() : {};
   if (mode === "inline" && theme?.css) theme = { ...theme, css: embedFontFiles(theme.css, sourceDir) };
   const assetUrl = mode === "inline" ? (src) => assetDataUri(sourceDir, src) || src : undefined;
-  const csp = checkOffline && mode === "inline" ? OFFLINE_CSP : "";
+  const csp = mode === "inline" && offlineCsp ? OFFLINE_CSP : "";
   const html = renderDeck(deck, { templates, theme, runtime: mode, assets, version: VERSION, assetUrl, stripNotes, csp });
   let external;
   if (checkOffline) {
     external = findExternalReferences(html);
     for (const ref of external) issues.push({ level: "error", message: `Not offline: ${ref.where} loads ${ref.url}` });
+  } else if (csp) {
+    for (const ref of findExternalReferences(html)) {
+      issues.push({ level: "warning", message: `Blocked offline: ${ref.where} loads ${ref.url}, which the inline deck's CSP blocks (copy it into assets/)` });
+    }
   }
   if (write) {
     writeFileAtomic(outPath, html);

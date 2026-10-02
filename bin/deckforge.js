@@ -33,7 +33,8 @@ Commands
              EXAMPLES)
   build      Render deck.yaml to a static deck.html next to it (--json: machine-readable report).
              --check-offline fails (exit 2) when the output loads anything over http(s), such as
-             https:// images or the cdn runtime; inline decks also get a CSP that blocks the network.
+             https:// images or the cdn runtime. Inline decks always get a CSP that blocks the network
+             (build warns about the remote resources it blocks).
              --strip-notes leaves the speaker notes out, for a copy to share
   diff       Per-slide summary of the changes between two deck.yaml files, for reviews
              ("-" reads the first one from stdin, e.g. git show main:deck.yaml | deckforge diff - deck.yaml)
@@ -53,7 +54,7 @@ Commands
 Runtime modes (how deck.html loads the viewer)
   local   copy deckforge/deckforge.viewer.{js,css} next to deck.html (default)
   cdn     reference https://cdn.jsdelivr.net/gh/lrivallain/deckforge@v${VERSION}/dist/
-  inline  embed everything into one self-contained file
+  inline  embed everything into one self-contained file, with a CSP that blocks the network
 
 Images live in <deck>/assets/ (added from the editor). local copies the used
 ones next to --out, inline embeds them as data URIs, cdn keeps relative paths.

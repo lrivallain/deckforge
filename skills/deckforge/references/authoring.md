@@ -149,8 +149,8 @@ Images:
 - Copy approved files into `<dir>/assets/`, or let the user drop them in the editor.
   The editor checks the type from the file's magic bytes and refuses scripted SVG.
 - Copy SVG files by hand only from a trusted source.
-- `https://` images make every viewer download them: avoid them for offline decks.
-  `deckforge build <dir> --runtime inline --check-offline` fails when the output loads anything from the network.
+- `https://` images make every viewer download them: avoid them for offline decks. An inline deck's CSP blocks them
+  (build warns `Blocked offline: …`), and `deckforge build <dir> --runtime inline --check-offline` fails on them.
 
 ## 6. Overlays
 
@@ -255,9 +255,10 @@ deckforge export <dir> --json                # editable deck.pptx next to deck.y
 | `"x" must be a number` | Write a plain YAML number (`1200`, `9.5`), no unit or thousands separator |
 | `"x.0" has an unknown field "…"` | A value with a comma in a `{ … }` flow mapping: quote it |
 | `Not offline: … loads https://…` (`--check-offline`) | Copy the file into `assets/` and use `--runtime inline` |
+| `Blocked offline: … loads https://…` (inline build) | The inline CSP blocks it: copy the file into `assets/` |
 
 Runtimes: `local` (the default) copies `deckforge/deckforge.viewer.{js,css}` next to `deck.html`.
-`inline` embeds everything, images included. `cdn` loads the runtime from jsDelivr and only works for tagged releases.
+`inline` embeds everything, images included, with a CSP that blocks the network. `cdn` loads the runtime from jsDelivr and only works for tagged releases.
 `local` and `inline` make no network requests.
 
 ## 9. Editor and viewer facts for the user

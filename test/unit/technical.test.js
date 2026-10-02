@@ -14,6 +14,7 @@ import { diffDecks, formatDiff } from "../../src/core/diff.js";
 import { applyOp } from "../../src/core/ops.js";
 import { loadTemplates, loadThemes } from "../../src/server/registry.js";
 import { buildDeckObject } from "../../src/server/build.js";
+import { protectDeckHtml } from "../../src/server/http.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const cli = path.join(root, "bin/deckforge.js");
@@ -231,9 +232,28 @@ slides:
     const inline = spawnSync(process.execPath, [cli, "build", deckDir, "--runtime", "inline", "--check-offline"], { env, encoding: "utf8" });
     expect(inline.status).toBe(2);
     expect(inline.stderr).toContain("Not offline: <img src> loads https://example.com/p.png");
+    // Without --check-offline, an inline build still blocks the network and warns about what it blocks.
     const plain = spawnSync(process.execPath, [cli, "build", deckDir, "--runtime", "inline"], { env, encoding: "utf8" });
     expect(plain.status).toBe(0);
+    expect(plain.stderr).toContain("Blocked offline: <img src> loads https://example.com/p.png");
+    expect(fs.readFileSync(path.join(deckDir, "deck.html"), "utf8")).toContain('<meta http-equiv="Content-Security-Policy"');
+    const local = spawnSync(process.execPath, [cli, "build", deckDir, "--runtime", "local"], { env, encoding: "utf8" });
+    expect(local.status).toBe(0);
+    expect(local.stderr).not.toContain("Blocked offline");
     expect(fs.readFileSync(path.join(deckDir, "deck.html"), "utf8")).not.toContain("Content-Security-Policy");
+  });
+
+  it("leaves the offline CSP out of the PPTX export build and of decks served by the editor", () => {
+    const sourceDir = path.join(root, "examples", "postmortem");
+    const deck = parseDeckYaml(fs.readFileSync(path.join(sourceDir, "deck.yaml"), "utf8"));
+    const build = (extra) => buildDeckObject(deck, { deckDir: sourceDir, outPath: "unused.html", runtime: "inline", templates, themes, write: false, ...extra });
+    const html = build({}).html;
+    expect(html).toContain('http-equiv="Content-Security-Policy"');
+    expect(build({ offlineCsp: false }).html).not.toContain("Content-Security-Policy");
+    const served = protectDeckHtml(html, "n0nce");
+    expect(served.html).not.toContain('http-equiv="Content-Security-Policy"');
+    expect(served.html).toContain("EventSource");
+    expect(served.csp).toContain("connect-src 'self'");
   });
 
   it("embeds a theme's own font files in inline decks, and flags remote fonts", () => {

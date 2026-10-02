@@ -22,7 +22,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Technical templates: `timeline`, `options-matrix`, `risk-register`, `decision`, `funnel` and `checklist`.
   - Starter decks: `deckforge new <dir> --example architecture-review | postmortem | assessment | decision-record`.
   - Per-slide `sources:`, listed in the speaker notes and on a generated Sources appendix slide (`meta.sourcesSlide`).
-  - `deckforge build --check-offline` fails on any `http(s)` resource and adds a network-blocking CSP to inline decks;
+  - Inline decks get a Content-Security-Policy that blocks the network, and `deckforge build` warns about the remote
+    resources it blocks. `deckforge build --check-offline` fails on any `http(s)` resource;
     `--strip-notes` leaves the speaker notes out. Inline decks embed the theme's own font files.
   - `deckforge diff <a> <b>`: a per-slide summary of the changes for pull request reviews.
   - Guides: Technical decks, Share offline, and Decks in git and CI (with a GitHub Actions workflow).

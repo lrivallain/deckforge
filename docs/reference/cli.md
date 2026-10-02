@@ -52,7 +52,7 @@ Renders the deck and prints validation issues. It exits with code **2** when the
 |---|---|
 | `--runtime` | How the page loads the viewer. See [runtime modes](../guide/presenting#runtime-modes). The default is `meta.runtime`, or `local` |
 | `--out`, `-o` | Output file. The default is `deck.html` next to `deck.yaml` |
-| `--check-offline` | Fails (exit code 2) when the output would load anything over `http(s)`: `https://` images, remote fonts, the `cdn` runtime. With `--runtime inline`, the page also gets a Content-Security-Policy that blocks the network. See [Share offline](../guide/offline) |
+| `--check-offline` | Fails (exit code 2) when the output would load anything over `http(s)`: `https://` images, remote fonts, the `cdn` runtime. Without it, an `inline` build only warns about them, because its Content-Security-Policy blocks the network. See [Share offline](../guide/offline) |
 | `--strip-notes` | Leaves the speaker notes out of the output, for a copy to share |
 | `--json` | Prints a machine-readable report: `ok`, `outPath`, `issues`, `loadErrors`, `assets`, and `offline {ok, external}` with `--check-offline` |
 

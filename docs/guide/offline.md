@@ -10,8 +10,8 @@ deckforge build my-talk --runtime inline --check-offline --strip-notes --out ~/D
 
 | Option | Effect |
 |---|---|
-| `--runtime inline` | Embeds the viewer, the theme, the templates' CSS and every image in the one file |
-| `--check-offline` | Fails with exit code 2 if the output would load anything over `http(s)`, and adds a CSP that blocks the network |
+| `--runtime inline` | Embeds the viewer, the theme, the templates' CSS and every image in the one file, behind a CSP that blocks the network |
+| `--check-offline` | Fails with exit code 2 if the output would load anything over `http(s)` |
 | `--strip-notes` | Leaves the speaker notes out, for a copy you hand over rather than present |
 
 Set `runtime: inline` in `meta` to make it the default for the deck. The [technical starters](technical-decks) do.
@@ -36,7 +36,7 @@ leaves your machine except through the Copilot service your organisation already
 
 ## The Content-Security-Policy
 
-With `--check-offline` and the `inline` runtime, `deck.html` starts with this policy:
+With the `inline` runtime, `deck.html` always starts with this policy:
 
 ```text
 default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';
@@ -44,7 +44,13 @@ img-src data:; font-src data:; media-src data:; base-uri 'none'; form-action 'no
 ```
 
 The browser then refuses any request the page could make, even one added to the file later by hand. Inline scripts and
-styles are allowed because they are the deck itself.
+styles are allowed because they are the deck itself. Hyperlinks still open when clicked: the policy blocks loading,
+not navigation.
+
+`deckforge build` warns about every remote resource the policy will block (`Blocked offline: <img src> loads https://…`),
+so a deck never loses an image silently. `--check-offline` turns those warnings into errors. A deck that must load
+something from the network has to use the `local` or `cdn` runtime. `deckforge edit` and `serve` replace the policy by
+their own while they serve the deck, for live reload and the PowerPoint export.
 
 ## What `--check-offline` reports
 
@@ -81,8 +87,8 @@ embedded as a `data:` URI. Check that the font's licence allows embedding in doc
 ## Images
 
 Images are `data:` URIs in the inline file. The editor refuses SVG files with scripts, event handlers or embedded
-documents, and browsers never let an SVG shown as an image load anything. `https://` images are never downloaded by deckforge, so
-`--check-offline` reports them: copy them into `assets/` first.
+documents, and browsers never let an SVG shown as an image load anything. `https://` images are never downloaded by deckforge: an
+inline build warns that its CSP blocks them, and `--check-offline` fails. Copy them into `assets/` first.
 
 ## Check it yourself
 
