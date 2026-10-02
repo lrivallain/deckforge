@@ -23,7 +23,7 @@ the right tool.
 - **The same tools for other agents.** [`deckforge mcp`](../reference/cli#mcp) gives Copilot CLI, the Copilot app or any MCP
   client the same typed tools, and their changes appear live in the editor.
 - **Measured, not eyeballed.** The [Copilot skill](./copilot-skill) measures every slide at 1280×720 for overflow,
-  clipped text and overlays that cover text.
+  clipped text and overlays that cover text. See the [example deck](./copilot-skill#example) and its validation report.
 
 ## Comparison
 

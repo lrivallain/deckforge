@@ -21,7 +21,7 @@ deckforge --help | --version
 ## new
 
 ```bash
-deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora]] [--force]
+deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora|agent-native]] [--force]
 ```
 
 Creates `<dir>/deck.yaml` with a title slide and builds it. `--example` copies a bundled example deck and its

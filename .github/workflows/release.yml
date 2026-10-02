@@ -32,6 +32,7 @@ jobs:
           npm run build
           node bin/deckforge.js build examples/starter
           node bin/deckforge.js build examples/aurora
+          node bin/deckforge.js build examples/agent-native
           git diff --exit-code -- dist examples
       - name: Extract the release notes from CHANGELOG.md
         run: |

@@ -16,7 +16,7 @@ import { LEGACY_SKILL_NAME, copilotSkillsDir, installCopilotSkill } from "../src
 const HELP = `deckforge ${VERSION} — themeable, template-driven HTML presentations
 
 Usage
-  deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora]]
+  deckforge new <dir> [--title "My talk"] [--theme build] [--example [starter|aurora|agent-native]]
   deckforge build <deck.yaml|dir> [--runtime local|cdn|inline] [--out deck.html] [--json]
   deckforge export <deck.yaml|dir> [--out deck.pptx] [--json]
   deckforge templates [deck.yaml|dir] [--json]
@@ -28,7 +28,8 @@ Usage
 
 Commands
   new        Create a deck folder with a deck.yaml (a title slide, or --example for a full specimen:
-             "starter" (default, diagram-led) or "aurora" (dark theme, Essentials templates))
+             "starter" (default, diagram-led), "aurora" (dark theme, Essentials templates) or
+             "agent-native" (the agent model pitch built by the Copilot skill))
   build      Render deck.yaml to a static deck.html next to it (--json: machine-readable report)
   export     Export deck.yaml to an editable PowerPoint deck.pptx next to it (native text,
              shapes and pictures; needs Playwright: npm i -g playwright && npx playwright install chromium)

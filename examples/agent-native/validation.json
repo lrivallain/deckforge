@@ -1,0 +1,25 @@
+{
+  "deck": "examples/agent-native/deck.yaml",
+  "commands": [
+    "deckforge build examples/agent-native --json",
+    "skills/deckforge/scripts/layout-check.js on deck.html at 1280×720 (Chromium)"
+  ],
+  "ok": true,
+  "build": {
+    "ok": true,
+    "slides": 8,
+    "visibleSlides": 8,
+    "issues": [],
+    "loadErrors": [],
+    "assets": {
+      "used": [],
+      "missing": [],
+      "unused": []
+    }
+  },
+  "layout": {
+    "ok": true,
+    "checked": 8,
+    "problems": []
+  }
+}

@@ -56,6 +56,8 @@ features:
 
 ![The deckforge editor: slide rail, live preview and inspector](/screenshots/editor.png)
 
-Try the examples as visitors see them: the [Aurora deck](/demo/aurora.html){target="_blank"} or the [Build specimen](/demo/starter.html){target="_blank"}. Press <kbd>→</kbd> to go to the next slide and <kbd>N</kbd> to show the speaker notes.
+![A whole-deck request to Copilot: three slides highlighted and listed in the turn summary, then one click on Undo these changes restores them](/screenshots/agent-turn.gif)
+
+Try the examples as visitors see them: the [Aurora deck](/demo/aurora.html){target="_blank"}, the [Build specimen](/demo/starter.html){target="_blank"}, or [Agent-native decks](/demo/agent-native.html){target="_blank"}, written from a brief by the [Copilot skill](/guide/copilot-skill#example). Press <kbd>→</kbd> to go to the next slide and <kbd>N</kbd> to show the speaker notes.
 
 </div>

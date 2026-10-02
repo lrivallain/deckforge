@@ -8,6 +8,7 @@ import { DeckStore } from "../../src/server/store.js";
 import { AgentController, cleanImproved, deckToolSpecs, MAX_IMPROVE_CHARS, summarizeTurn } from "../../src/server/agent.js";
 import { describeToolCall, mcpToolSpecs } from "../../src/server/deck-tools.js";
 import { TOOL_LABELS } from "../../src/editor/tool-labels.js";
+import { parseDeckYaml } from "../../src/core/index.js";
 import { DOC_PATH, renderToolCatalogue, updateDoc } from "../../scripts/agent-tools-doc.js";
 import { systemPrompt } from "../../src/server/prompt.js";
 import { generateToken } from "../../src/server/token.js";
@@ -553,10 +554,22 @@ describe("CLI", () => {
     const starter = path.join(dir, "starter");
     execFileSync(process.execPath, [cli, "new", starter, "--example"], { env });
     expect(fs.readFileSync(path.join(starter, "deck.yaml"), "utf8")).toBe(fs.readFileSync(path.join(root, "examples/starter/deck.yaml"), "utf8"));
+    const agentNative = path.join(dir, "agent-native");
+    execFileSync(process.execPath, [cli, "new", agentNative, "--example", "agent-native"], { env });
+    expect(fs.readFileSync(path.join(agentNative, "deck.yaml"), "utf8")).toBe(fs.readFileSync(path.join(root, "examples/agent-native/deck.yaml"), "utf8"));
     const before = path.join(dir, "before");
     execFileSync(process.execPath, [cli, "new", "--example", before], { env });
     expect(fs.readFileSync(path.join(before, "deck.yaml"), "utf8")).toContain("theme: build");
     expect(() => execFileSync(process.execPath, [cli, "new", path.join(dir, "x"), "--example=nope"], { env, stdio: "pipe" })).toThrow(/unknown example "nope"/);
+  });
+  it("keeps the skill-built example deck valid, with an up-to-date validation report", () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "deckforge-cli-"));
+    const report = JSON.parse(execFileSync(process.execPath, [cli, "build", path.join(root, "examples/agent-native"), "--json", "--out", path.join(dir, "deck.html")], { env, encoding: "utf8" }));
+    expect(report).toMatchObject({ ok: true, issues: [], loadErrors: [] });
+    const deck = parseDeckYaml(fs.readFileSync(path.join(root, "examples/agent-native/deck.yaml"), "utf8"));
+    expect(deck.meta.brief).toMatchObject({ topic: expect.any(String), audience: expect.any(String), goal: expect.any(String) });
+    const saved = JSON.parse(fs.readFileSync(path.join(root, "examples/agent-native/validation.json"), "utf8"));
+    expect(saved).toMatchObject({ ok: true, build: { ok: true, slides: report.slides, issues: [] }, layout: { ok: true, checked: report.visibleSlides, problems: [] } });
   });
   it("accepts a --token=<t> value that starts with a dash", async () => {
     const deckPath = makeDeck();

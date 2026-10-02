@@ -33,6 +33,8 @@ an AI edits typed slides through validated tools, and you can review and undo ev
   tools (`update_slide`, `set_template`, `add_overlay`…), with no shell, file or web access. Each turn is one undo step,
   and the drawer lists the slides and slots it touched. Download the agent log to review every tool call.
   See the [agent model](https://deckforge.vuptime.io/guide/agent-model).
+
+  ![A whole-deck request to Copilot: three slides highlighted and listed in the turn summary, then one click on Undo these changes restores them](docs/public/screenshots/agent-turn.gif)
 - **On the Copilot you already have.** It uses your GitHub Copilot sign-in: no new account, no API key, no extra AI bill.
   It is grounded on the deck's brief (topic, audience, goal, sources).
 - **The same tools for any agent.** `deckforge mcp` gives Copilot CLI, the Copilot app or another MCP client the same typed
@@ -61,7 +63,9 @@ deckforge build my-talk --runtime inline                    # one self-contained
 deckforge export my-talk                                    # an editable deck.pptx
 ```
 
-To start from a complete deck, run `deckforge new my-talk --example aurora`.
+To start from a complete deck, run `deckforge new my-talk --example aurora`. The
+[`agent-native` example](examples/agent-native) was written from a brief by the Copilot skill and ships with its brief,
+storyline plan and validation report.
 
 ## Documentation
 

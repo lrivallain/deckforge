@@ -16,6 +16,8 @@ never do, how it is grounded on your brief, and the security boundaries around i
 4. **Audit.** Download the **agent log**, a JSON file with every tool call of every turn, and review it next to the
    `deck.yaml` diff.
 
+![A whole-deck request: Copilot updates three slides, the rail highlights them, the drawer lists the slots it touched, and one click on Undo these changes restores them](/screenshots/agent-turn.gif){.shot}
+
 ## Tool catalogue
 
 The tables below are generated from the tool definitions in `src/server/deck-tools.js` (`npm run docs:tools`), and a test
@@ -326,3 +328,9 @@ The [security model](../reference/security) has the full list.
 `deckforge mcp` gives any MCP client (Copilot CLI, the Copilot app, or another agent) the same typed tools, plus
 `get_authoring_guide`. With the editor open, each change appears live and can be undone. Without it, the tools edit
 `deck.yaml` and rebuild `deck.html`. See [Continue in Copilot CLI or the Copilot app](./copilot#continue-in-copilot-cli-or-the-copilot-app).
+
+## See it
+
+- The animation at the top of this page: a whole-deck request, the highlighted slides and the turn summary, then one undo.
+- [Agent-native decks](/demo/agent-native.html){target="_blank"}: this page as an 8-slide deck, written from a brief by the
+  [Copilot skill](./copilot-skill#example) and checked by its [validation report](https://github.com/lrivallain/deckforge/blob/master/examples/agent-native/validation.json).
