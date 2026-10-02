@@ -184,9 +184,11 @@ h2, h3 { font: 600 1.95cqw / 1.2 var(--df-font-heading); }
 @media print {
   html, body { margin: 0; background: white; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .stage, .presenting .stage, .presenting.show-notes .stage { display: block; height: auto; padding: 0; }
+  /* Fit the printable area, not a fixed 13.333in box: the print dialog may use
+     another paper size, margins or scale. Slide content scales with cqw. */
   .slide, .presenting .slide, .presenting.show-notes .slide, .slide[hidden] {
-    display: block !important; width: 13.333333in !important; height: 7.5in;
-    margin: 0; border: 0; border-radius: 0; box-shadow: none;
+    display: block !important; width: min(100%, calc(100vh * 16 / 9)) !important; height: auto !important;
+    aspect-ratio: 16 / 9; margin: 0 auto; border: 0; border-radius: 0; box-shadow: none;
     break-after: page; break-inside: avoid;
   }
   .slide:last-of-type { break-after: auto; }

@@ -291,7 +291,8 @@ The viewer also supports these:
 - **Back to the editor:** when `deckforge edit` serves the deck, the controls show an **Edit** link
   that opens the editor on the current slide. A static `deck.html` and `deckforge serve` don't show it.
 - **Reduced motion:** with `prefers-reduced-motion`, slides show their final state immediately.
-- **Print / PDF:** printing outputs one 13.333×7.5 in page per slide, without the controls. Images are
+- **Print / PDF:** printing outputs one 13.333×7.5 in page per slide, without the controls. If the print
+  dialog uses another paper size, margins or scale, each slide scales to fit the printable area. Images are
   lazy in the markup, but the runtime loads the neighbouring slides' images on navigation and every
   image after the page has loaded and before printing.
 - **Overlays** reveal after the template elements, or at their `order` step.
