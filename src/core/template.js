@@ -138,11 +138,17 @@ function parse(source) {
 
 // ---------------------------------------------------------------- schema
 
+const SLOT_PROPERTIES = new Set(["type", "max", "required", "sample", "description", "label", "fields", "of", "maxLength"]);
+
 function normalizeSlot(name, def, errors, where = "") {
   if (typeof def === "string") def = { type: def };
   if (!def || typeof def !== "object") {
     errors.push(`Slot "${where}${name}" must be an object or a type name`);
     return { type: "text" };
+  }
+  for (const key of Object.keys(def)) {
+    // Usually an unquoted comma in a YAML flow mapping: { sample: a, b }.
+    if (!SLOT_PROPERTIES.has(key)) errors.push(`Slot "${where}${name}" has an unknown property "${key}" (quote values that contain commas)`);
   }
   const slot = { ...def, type: def.type || "text" };
   if (!SLOT_TYPES.includes(slot.type)) {
@@ -165,7 +171,7 @@ function normalizeSlot(name, def, errors, where = "") {
 export function parseTemplate(source, { name, scope = "builtin", path = null } = {}) {
   const { frontMatter, body } = splitFrontMatter(source);
   const errors = [];
-  let meta = {};
+  let meta;
   try {
     meta = frontMatter ? YAML.parse(frontMatter) || {} : {};
   } catch (err) {

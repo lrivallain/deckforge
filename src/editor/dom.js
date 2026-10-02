@@ -84,10 +84,10 @@ export function debounce(fn, ms) {
 
 let toastHost;
 export function toast(message, { action, onAction, kind = "info", timeout = 4000 } = {}) {
-  if (!toastHost) {
-    toastHost = h("div", { class: "toasts", role: "status", "aria-live": "polite" });
-    document.body.append(toastHost);
-  }
+  if (!toastHost) toastHost = h("div", { class: "toasts", role: "status", "aria-live": "polite" });
+  // Modal dialogs live in the top layer: show toasts inside the open one.
+  const host = [...document.querySelectorAll("dialog[open]")].pop() || document.body;
+  if (toastHost.parentNode !== host) host.append(toastHost);
   const node = h("div", { class: `toast toast-${kind}` }, h("span", {}, message));
   if (action) {
     node.append(h("button", { type: "button", class: "btn btn-link", onClick: () => { onAction?.(); node.remove(); } }, action));

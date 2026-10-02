@@ -8,7 +8,7 @@ slots:
   eyebrow: { type: text, max: 40, sample: In their words }
   quote: { type: richtext, max: 180, required: true, sample: 'The best review is the one where everyone looks at <span class="blue">the same version</span>.' }
   author: { type: text, max: 40, sample: Name Surname }
-  role: { type: text, max: 60, sample: Role, organisation }
+  role: { type: text, max: 60, sample: "Role, organisation" }
 ---
 <figure class="quote-body">
   {{#if eyebrow}}<p class="eyebrow reveal">{{eyebrow}}</p>{{/if}}
@@ -18,14 +18,15 @@ slots:
 {{> foot}}
 
 <style scoped>
-.quote-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2cqw; padding: 0 6cqw; }
-blockquote { position: relative; border-left: 4px solid var(--df-accent); padding-left: 3cqw; }
+.quote-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2cqw; padding: 0 6cqw 0 4cqw; }
+.quote-body > .eyebrow, figcaption { margin-left: 7cqw; }
+blockquote { position: relative; padding-left: 7cqw; }
 blockquote p { font: 600 3.6cqw / 1.2 var(--df-font-heading); letter-spacing: -.01em; }
 blockquote::before {
-  content: "\201C"; position: absolute; left: -1.2cqw; top: -5.2cqw; font: 800 9cqw / 1 var(--df-font-heading);
-  color: var(--df-accent-line);
+  content: "\201C"; position: absolute; left: 0; top: -1.4cqw; font: 800 10cqw / 1 var(--df-font-heading);
+  color: var(--df-accent);
 }
-figcaption { display: flex; gap: 1.2cqw; align-items: baseline; padding-left: calc(3cqw + 4px); font-size: 1.7cqw; }
+figcaption { display: flex; gap: 1.2cqw; align-items: baseline; font-size: 1.7cqw; border-top: 2px solid var(--df-accent-line); padding-top: 1.2cqw; }
 figcaption strong { font-weight: 600; }
 figcaption span { color: var(--df-muted); font: 400 1.3cqw var(--df-font-mono); text-transform: uppercase; letter-spacing: .08em; }
 </style>

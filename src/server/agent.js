@@ -304,7 +304,7 @@ export function defaultFactory() {
       try {
         sdk = await import("@github/copilot-sdk");
       } catch (err) {
-        throw new Error(`The Copilot SDK could not be loaded (${err.message}). Reinstall deckforge with its dependencies.`);
+        throw new Error(`The Copilot SDK is not installed (${err.message}). It is an optional dependency: install it with "npm install @github/copilot-sdk" next to deckforge.`, { cause: err });
       }
       const client = new sdk.CopilotClient({ workingDirectory: cwd, logLevel: "error", useLoggedInUser: true });
       await client.start();
