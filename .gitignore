@@ -5,3 +5,6 @@ playwright-report/
 .DS_Store
 *.log
 /tmp/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+docs/public/demo/

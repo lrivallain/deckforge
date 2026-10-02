@@ -7,6 +7,7 @@ export function editorPage({ title }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)} · deckforge</title>
+  <link rel="icon" href="/assets/deckforge.icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/deckforge.editor.css">
   <script type="module" src="/assets/deckforge.editor.js"></script>
 </head>

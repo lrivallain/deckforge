@@ -1,0 +1,40 @@
+name: Bug report
+description: Something doesn't work as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected and what you got. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A minimal `deck.yaml` is ideal.
+      placeholder: |
+        1. deckforge new demo
+        2. …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [CLI / build, Viewer, Editor, Copilot assistant, Copilot skill, Themes / templates, Docs]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: deckforge version
+      description: Output of `deckforge --version`, or a commit SHA.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: macOS 15, Node 22.12, Chrome 140

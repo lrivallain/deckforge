@@ -79,6 +79,18 @@ test.describe("editor", () => {
     await waitForFile(editor.readHtml, (h) => h.includes(`src="${src}"`) && h.includes('loading="lazy"'));
   });
 
+  test("shows a thumbnail for an SVG that only has a viewBox", async ({ page }) => {
+    await page.getByTestId("add-slide").click();
+    await page.locator('.picker-card[data-template="image"]').click();
+    await page.getByRole("dialog").getByRole("button", { name: "Add slide" }).click();
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720"><rect width="1280" height="720" fill="#0F6CBD"/></svg>';
+    await page.getByTestId("image-file").setInputFiles({ name: "sky.svg", mimeType: "image/svg+xml", buffer: Buffer.from(svg) });
+    await waitForFile(editor.readYaml, (y) => /src: assets\/[0-9a-f]{12}\.svg/.test(y));
+    const thumb = await boxOf(page.getByTestId("image-thumb"));
+    expect(thumb.width).toBeGreaterThan(100);
+    expect(Math.round(thumb.width / thumb.height)).toBe(2);
+  });
+
   test("inserts, drags, resizes and nudges an overlay; every gesture is one undo step", async ({ page }) => {
     await page.getByTestId("insert-menu").click();
     await page.getByRole("menuitem", { name: /^Shape/ }).click();

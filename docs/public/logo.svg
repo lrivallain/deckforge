@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="deckforge">
+  <rect x="3.5" y="19.5" width="52" height="31" rx="6" fill="#FFFFFF" stroke="#0F6CBD" stroke-width="5"/>
+  <rect x="11" y="28" width="19" height="4.5" rx="2.25" fill="#0F6CBD"/>
+  <rect x="11" y="37" width="28" height="4.5" rx="2.25" fill="#BBD7F0"/>
+  <path d="M49 2.5C50.6 11.6 53 14 62 15.6 53 17.2 50.6 19.6 49 28.7 47.4 19.6 45 17.2 36 15.6 45 14 47.4 11.6 49 2.5Z" fill="#C2620A" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round" paint-order="stroke"/>
+  <path d="M37.5 1.5C38.1 4.6 38.9 5.4 42 6 38.9 6.6 38.1 7.4 37.5 10.5 36.9 7.4 36.1 6.6 33 6 36.1 5.4 36.9 4.6 37.5 1.5Z" fill="#F0A040"/>
+</svg>

@@ -40,7 +40,7 @@ function createTopbar({ onToggleChat }) {
   const chatBtn = h("button", { type: "button", class: "btn btn-accent", "aria-pressed": "false", "data-testid": "toggle-chat", onClick: () => chatBtn.setAttribute("aria-pressed", String(onToggleChat())) }, icon("sparkles", 16), "Copilot");
   const viewLink = h("a", { class: "btn", target: "_blank", rel: "noopener", "data-testid": "open-viewer" }, icon("play", 14), "Present");
   const root = h("header", { class: "topbar" },
-    h("div", { class: "brand" }, h("span", { class: "logo", "aria-hidden": "true" }, "df"), h("span", { class: "brand-name" }, "deckforge")),
+    h("div", { class: "brand" }, h("img", { class: "logo", src: "/assets/deckforge.icon.svg", alt: "", width: 30, height: 30 }), h("span", { class: "brand-name" }, "deckforge")),
     h("div", { class: "deck-info" }, title, saveState),
     h("div", { class: "toolbar" },
       undoBtn, redoBtn,

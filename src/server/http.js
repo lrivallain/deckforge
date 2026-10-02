@@ -35,7 +35,7 @@ const MIME = {
   ".txt": "text/plain; charset=utf-8",
   ".pdf": "application/pdf",
 };
-const ASSETS = new Set(["deckforge.viewer.js", "deckforge.viewer.css", "deckforge.editor.js", "deckforge.editor.css"]);
+const ASSETS = new Set(["deckforge.viewer.js", "deckforge.viewer.css", "deckforge.editor.js", "deckforge.editor.css", "deckforge.icon.svg"]);
 const MAX_BODY = 2 * 1024 * 1024;
 // Raw image bytes, or base64 inside JSON (4/3 larger plus the data: prefix).
 const MAX_ASSET_JSON = Math.ceil((MAX_ASSET_BYTES * 4) / 3) + 4096;

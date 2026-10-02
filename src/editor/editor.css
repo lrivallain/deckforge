@@ -106,10 +106,7 @@ textarea.notes-input, textarea.chat-input { resize: vertical; }
   border-bottom: 1px solid var(--ui-line); min-width: 0;
 }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.01em; }
-.logo {
-  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px;
-  background: linear-gradient(135deg, var(--ui-accent), var(--ui-copilot)); color: #fff; font-size: 13px; font-weight: 800;
-}
+.logo { display: block; width: 30px; height: 30px; }
 .brand-name { font-size: 15px; }
 .deck-info { display: flex; align-items: baseline; gap: 12px; min-width: 0; flex: 1; padding-left: 16px; border-left: 1px solid var(--ui-line); }
 .deck-title { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -445,6 +442,8 @@ button.image-drop { width: 100%; font-weight: 550; }
   display: block; max-width: 100%; max-height: 190px; border-radius: 6px; cursor: crosshair;
   background: repeating-conic-gradient(#EEF1F6 0% 25%, #FFFFFF 0% 50%) 50% / 14px 14px;
 }
+.image-thumb.is-vector, .image-thumb.is-vector img { width: 100%; }
+.image-thumb.is-vector img { object-fit: contain; }
 .image-thumb.is-broken img { min-width: 120px; min-height: 80px; }
 .focus-dot {
   position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; pointer-events: none;

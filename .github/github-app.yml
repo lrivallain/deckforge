@@ -9,6 +9,9 @@ instructions: |
   - Live preview: `npm run dev` (esbuild watch + `deckforge edit` on .demo/preview, restarts on src/bin/dist changes).
     It picks a free port in 4370-4399 once per run (`--port N` forces one), `--reset` restores the example deck,
     `--serve` runs the read-only viewer. Stop it with Ctrl+C or SIGTERM; it cleans up its children.
+  - Docs: VitePress site in docs/ (GitHub Pages). `npm run docs:dev` / `docs:build` (fails on dead links).
+    `npm run docs:screenshots` regenerates docs/public/screenshots, favicons and og-image from the example decks
+    (Playwright Chromium, mocked Copilot); rerun it after UI or template changes. docs/public/logo.svg is the icon master.
   - Never stop, restart or bind processes you did not start (other worktrees use 4370-4399; port 9000 is a
     long-running local service). Kill only by the PIDs you started.
 

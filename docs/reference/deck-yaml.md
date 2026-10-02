@@ -1,7 +1,79 @@
-# deck.yaml reference: images and overlays
+# deck.yaml
 
-This page details the image values and the per-slide overlay layer. The rest of the
-`deck.yaml` format is described in the [README](../README.md#deckyaml).
+`deck.yaml` is the source of truth. `deck.html` is generated from it, so don't edit `deck.html` by hand.
+
+## Full example
+
+```yaml
+meta:
+  title: Shipping with confidence
+  lang: en                    # BCP 47, used for <html lang>
+  theme: build                # a theme name (see Themes)
+  footer: Platform team / Q3  # rich text shown in every slide footer
+  runtime: local              # optional: local | cdn | inline
+  brief:                      # grounds the Copilot assistant
+    topic: Release safety
+    audience: Engineering managers
+    goal: Agree on one release gate
+    duration: 20 minutes
+    sources: [Q3 incident review]
+slides:
+  - id: shift                 # stable id: letters, digits, dashes
+    template: concept-map     # a template name (see Templates)
+    title: Concept map        # optional navigation title
+    hidden: false             # hidden slides are kept but not presented
+    footer: optional per-slide footer override (rich text)
+    notes: |
+      Speaker notes. Blank lines separate paragraphs.
+    data:                     # slot values defined by the template
+      eyebrow: 01 / Explain the shift
+      title: <span class="old">From X.</span><span class="blue">To Y.</span>
+      audiences:
+        - { icon: pen, title: Creators, text: Prepare the work }
+  - id: photo
+    template: image-text
+    data:
+      image: { src: assets/3f2a9c1b04de.jpg, alt: Review board with three printed drafts, fit: cover, focus: 50% 30% }
+      title: What reviewers see
+    overlays:                 # optional free layer, % of the 1280×720 slide
+      - { id: arrow-1, kind: arrow, x: 30, y: 20, w: 15, h: 6.67, z: 1, rotate: 25, data: { color: accent } }
+```
+
+## `meta`
+
+| Field | Type | Notes |
+|---|---|---|
+| `title` | string | Deck title, used for `<title>`. The default is `Untitled deck` |
+| `lang` | BCP 47 tag | Used for `<html lang>`. The default is `en` |
+| `theme` | theme name | See [Themes](../guide/themes). The default is `build` |
+| `footer` | rich text | Shown in every slide footer |
+| `runtime` | `local` \| `cdn` \| `inline` | Default `--runtime` for `deckforge build` |
+| `description` | string | `<meta name="description">` of the page |
+| `subtitle`, `author`, `date` | string | Available to templates, for example <code v-pre>{{deck.author}}</code> |
+| `brief` | mapping | `topic`, `audience`, `goal`, `duration`, `sources`: context for Copilot |
+
+## Slides
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Required, stable, unique. Letters, digits and dashes |
+| `template` | template name | See [Templates](../guide/templates) |
+| `title` | string | Optional navigation title |
+| `hidden` | boolean | Kept in the deck, not presented |
+| `footer` | rich text | Footer override for this slide |
+| `notes` | string | Speaker notes. Blank lines separate paragraphs |
+| `data` | mapping | Slot values, as defined by the template |
+| `overlays` | list | Free elements above the template (see below) |
+
+Two optional per-slide fields are managed by the editor:
+
+- `placeholders`: slots that still contain the template's sample text, for example after adding a slide
+  or switching templates. The editor shows them as dimmed "Sample" placeholders. They are **never
+  published** in `deck.html`, and a required slot left as a placeholder is reported as an issue.
+  Editing a slot makes it real content.
+- `stash`: content of slots the current template does not use. When you switch templates, nothing is
+  lost: switching back to a template with those slots restores them. A navigation `title` that only
+  repeated the old template's name is dropped, so the title follows the headline.
 
 ## Image values
 
