@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { OpError } from "../core/ops.js";
 import { improvePrompt, improveSystemPrompt, systemPrompt } from "./prompt.js";
-import { SLIDE_SCOPED_OPS, deckToolHandlers, deckToolSpecs } from "./deck-tools.js";
+import { MUTATING_TOOLS, SLIDE_SCOPED_OPS, deckToolHandlers, deckToolSpecs, describeToolCall } from "./deck-tools.js";
 import { cliCommands, copilotAppUrl, globalMcpStatus, mcpServerConfig, openUrl, rememberedSession, rememberSession, sessionHolders, sessionName, writeMcpConfig } from "./copilot-link.js";
 
 export { deckToolSpecs };
@@ -26,7 +26,33 @@ export function historyFromEvents(events = []) {
   return out.slice(-200);
 }
 
+/**
+ * Per-turn change summary: the slides and slots the successful changes touched,
+ * plus deck-level fields (theme, meta), and how many tool calls were made.
+ */
+export function summarizeTurn(calls = []) {
+  const slides = new Map();
+  const deck = new Set();
+  for (const call of calls) {
+    if (!call.ok || !MUTATING_TOOLS.includes(call.tool)) continue;
+    if (call.slideId == null) {
+      for (const field of call.fields) deck.add(field);
+      continue;
+    }
+    const fields = slides.get(call.slideId) || new Set();
+    for (const field of call.fields) fields.add(field);
+    slides.set(call.slideId, fields);
+  }
+  return {
+    toolCalls: calls.length,
+    failed: calls.filter((c) => !c.ok).length,
+    slides: [...slides].map(([id, fields]) => ({ id, fields: [...fields] })),
+    deck: [...deck],
+  };
+}
+
 const TURN_TIMEOUT_MS = 5 * 60 * 1000;
+const MAX_LOG_TURNS = 100;
 const IMPROVE_TIMEOUT_MS = 90 * 1000;
 export const MAX_IMPROVE_CHARS = 8000;
 const MAX_IMPROVE_CONCURRENCY = 3;
@@ -69,6 +95,8 @@ export class AgentController extends EventEmitter {
     this.handedOff = false;
     this.turn = null;
     this.history = [];
+    // Agent log: the tool calls of each turn, kept in memory for this editor run.
+    this.turnLog = [];
     this.improving = 0;
   }
 
@@ -123,10 +151,14 @@ export class AgentController extends EventEmitter {
       skipPermission: true,
       defer: "never",
       handler: async (args) => {
+        const turn = this.turn;
+        const call = (entry) => turn?.calls.push({ tool: spec.name, args: args || {}, at: new Date().toISOString(), ...entry });
         try {
           const result = await handlers[spec.name](args || {});
+          call({ ok: true, ...describeToolCall(spec.name, args, result) });
           return JSON.stringify(result);
         } catch (err) {
+          call({ ok: false, error: err.message, ...describeToolCall(spec.name, args) });
           this.emit("event", { type: "tool_error", name: spec.name, message: err.message });
           return { textResultForLlm: `Error: ${err.message}`, resultType: "failure", error: err.message };
         }
@@ -333,7 +365,23 @@ export class AgentController extends EventEmitter {
     const text = turn.final || turn.text;
     if (text) this.record({ role: "assistant", text });
     if (error) this.record({ role: "error", text: error.message });
-    this.emit("event", { type: "done", changed, error, text });
+    const summary = summarizeTurn(turn.calls);
+    this.turnLog.push({
+      turn: (this.turnLog.at(-1)?.turn ?? 0) + 1,
+      startedAt: turn.startedAt,
+      endedAt: new Date().toISOString(),
+      sessionId: this.sessionId,
+      prompt: turn.prompt,
+      scope: turn.scope,
+      slideId: turn.slideId,
+      calls: turn.calls,
+      changed,
+      summary,
+      reply: text || "",
+      error: error ? error.message : null,
+    });
+    if (this.turnLog.length > MAX_LOG_TURNS) this.turnLog.shift();
+    this.emit("event", { type: "done", changed, error, text, summary });
     this.setState(error ? "error" : "idle", error);
   }
 
@@ -355,7 +403,7 @@ export class AgentController extends EventEmitter {
         return;
       }
       this.pending = false;
-      const turn = { scope, slideId, text: "", final: "" };
+      const turn = { scope, slideId, prompt, text: "", final: "", calls: [], startedAt: new Date().toISOString() };
       turn.timer = setTimeout(() => {
         if (this.turn === turn) this.abort("timeout");
       }, TURN_TIMEOUT_MS);
@@ -403,6 +451,15 @@ export class AgentController extends EventEmitter {
     this.setState("idle");
     this.emitLink();
     return true;
+  }
+
+  /** The agent log: every Copilot turn of this editor run with its tool calls, for review. */
+  agentLog() {
+    return {
+      deck: { title: this.store.deck.meta?.title || "", file: path.basename(this.store.deckPath) },
+      exportedAt: new Date().toISOString(),
+      turns: this.turnLog,
+    };
   }
 
   /** Resume the remembered conversation now (e.g. when the chat opens) to show its history. */

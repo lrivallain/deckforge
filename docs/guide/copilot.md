@@ -24,10 +24,16 @@ You need a GitHub Copilot subscription. If you are not signed in, the drawer exp
 - Its instructions include the style's design rules, the template catalogue and your `meta.brief`.
   Fill in the brief to get better results.
 
-## Undo
+The [agent model](./agent-model) lists every tool with its parameters, and the exact scope and undo rules.
 
-The rail highlights the slides that Copilot changed. A whole turn is **one undo step**: use **Undo these changes**
-or <kbd>⌘/Ctrl</kbd> <kbd>Z</kbd>.
+## Review and undo
+
+The rail highlights the slides that Copilot changed. After each turn, the drawer shows a summary: the slides it changed,
+with the slots and fields it wrote, and the number of tool calls. A whole turn is **one undo step**: use
+**Undo these changes** or <kbd>⌘/Ctrl</kbd> <kbd>Z</kbd>.
+
+**Agent log** downloads the tool calls of every turn since the editor started, as JSON. See
+[Change summary and agent log](./agent-model#change-summary-and-agent-log).
 
 ## Continue in Copilot CLI or the Copilot app
 

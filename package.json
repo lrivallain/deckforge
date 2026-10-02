@@ -1,7 +1,7 @@
 {
   "name": "deckforge",
   "version": "0.1.0",
-  "description": "Editable, themeable HTML presentation framework: static viewer, local edition mode, template editor and an embedded Copilot agent.",
+  "description": "Agent-native presentations: typed slides an AI can edit safely, on the Copilot you already have. deck.yaml source, live editor, static HTML and editable PowerPoint output.",
   "keywords": [
     "presentation",
     "slides",
@@ -12,6 +12,8 @@
     "templates",
     "editor",
     "github-copilot",
+    "ai-agent",
+    "mcp",
     "cli"
   ],
   "license": "MIT",
@@ -56,7 +58,8 @@
     "docs:dev": "node scripts/docs-demo.js && vitepress dev docs",
     "docs:build": "node scripts/docs-demo.js && vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "docs:screenshots": "node scripts/screenshots.js && node scripts/icons.js"
+    "docs:screenshots": "node scripts/screenshots.js && node scripts/icons.js",
+    "docs:tools": "node scripts/agent-tools-doc.js"
   },
   "dependencies": {
     "yaml": "^2.9.1"

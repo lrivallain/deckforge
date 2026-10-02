@@ -193,6 +193,15 @@ test("Copilot edits the selected slide as one undoable turn (mocked SDK)", async
   await expect(stage(page).locator(".eyebrow").first()).toHaveText("Edited by Copilot");
   await waitForFile(editor.readYaml, (y) => y.includes("eyebrow: Edited by Copilot"));
 
+  const summary = page.getByTestId("turn-summary");
+  await expect(summary).toContainText("1 slide changed · 2 tool calls");
+  await expect(summary.locator("li")).toHaveText(/· eyebrow$/);
+  const download = page.waitForEvent("download");
+  await summary.getByTestId("agent-log").click();
+  const log = JSON.parse(fs.readFileSync(await (await download).path(), "utf8"));
+  expect(log.turns.at(-1).calls.map((c) => c.tool)).toEqual(["get_deck", "update_slide"]);
+  expect(log.turns.at(-1).summary.slides).toEqual([{ id: "zoom", fields: ["eyebrow"] }]);
+
   await page.getByTestId("undo-agent").click();
   await expect(stage(page).locator(".eyebrow").first()).toHaveText("04 / Zoom into one step");
   await waitForFile(editor.readYaml, (y) => !y.includes("Edited by Copilot"));

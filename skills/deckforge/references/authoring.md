@@ -28,6 +28,7 @@ deckforge new <dir> --title "<title>" [--theme build]   # deck.yaml with one tit
 deckforge new <dir> --example                           # the full specimen (concept, implementation, lifecycle, zoom)
 deckforge new <dir> --example postmortem                # a technical starter: architecture-review, postmortem,
                                                         # assessment or decision-record (inline runtime, charts)
+deckforge new <dir> --example agent-native              # a finished deck built from a brief by this skill
 deckforge templates <dir> --json                        # the catalogue this deck can use
 ```
 

@@ -33,6 +33,14 @@ Run the command again to update the skill. Then start a new Copilot session and 
 - *"Add a lifecycle slide after the concept map and check the layout."*
 - *"Turn the approved deck into an editable PowerPoint."*
 
+## Example
+
+[Agent-native decks](/demo/agent-native.html){target="_blank"} is an 8-slide deck the skill wrote from a brief. Its
+[folder](https://github.com/lrivallain/deckforge/tree/master/examples/agent-native) keeps the evidence: the brief in
+`meta.brief`, the storyline plan, speaker notes that cite their sources, and `validation.json`, the build report and the
+layout check of every slide at 1280×720. Run `node scripts/validate-example.js` to regenerate the report, or start your own
+copy with `deckforge new my-talk --example agent-native`.
+
 The skill's files are listed in [skills/deckforge](https://github.com/lrivallain/deckforge/tree/master/skills/deckforge).
 
 ## With the deck tools

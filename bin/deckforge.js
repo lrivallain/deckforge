@@ -70,6 +70,7 @@ const EXAMPLE_HELP = {
   postmortem: "incident postmortem",
   assessment: "migration or cost assessment",
   "decision-record": "options → recommendation, ADR-style",
+  "agent-native": "the agent model pitch, built from a brief by the Copilot skill",
 };
 
 let jsonOutput = false;

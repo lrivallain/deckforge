@@ -22,6 +22,13 @@ test("the starter deck passes the layout check at 1280×720", async ({ page }) =
   }
 });
 
+test("the example deck built by the skill passes the layout check", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 600 });
+  await page.goto(`file://${path.join(ROOT, "examples/agent-native/deck.html")}`);
+  const report = await check(page);
+  expect(report).toMatchObject({ ok: true, checked: 8, problems: [] });
+});
+
 test("the layout check reports covering, overlapping and out-of-bounds overlays", async ({ page }) => {
   const deck = tempDeck();
   try {

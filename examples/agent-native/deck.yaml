@@ -1,0 +1,212 @@
+meta:
+  title: Agent-native decks
+  subtitle: Typed slides an AI can edit safely, on the Copilot you already have
+  lang: en
+  theme: build
+  footer: deckforge / agent-native decks
+  description: A short pitch of deckforge's agent model, written from a brief by the deckforge Copilot skill.
+  brief:
+    topic: Why deckforge is built around an agent loop rather than a slide format
+    audience: Developers and tech leads who already use Markdown slide tools or hosted AI generators
+    goal: The audience understands the guarantees of the agent loop and tries one whole-deck request on their own deck
+    duration: 10 minutes
+    sources:
+      - https://deckforge.vuptime.io/guide/agent-model
+      - https://deckforge.vuptime.io/guide/why-deckforge
+      - https://deckforge.vuptime.io/reference/security
+slides:
+  - id: shift
+    template: title
+    title: Agent-native decks
+    data:
+      eyebrow: deckforge / the agent model
+      title: <span class="old">From AI that rewrites files.</span><span class="blue">To edits you can audit.</span>
+      subtitle: Typed slides an AI can edit safely, scoped to one slide or the whole deck, and undone in one step.
+      presenter: deckforge example deck
+      details: Built from a brief by the Copilot skill
+    notes: |
+      Open with the shift. Many AI slide tools either generate a whole deck in the cloud or rewrite a file that you
+      then have to re-read. deckforge takes another route: the agent edits typed slides through a small set of tools,
+      and every turn can be reviewed and undone.
+
+      Sources: deckforge docs, guide/agent-model and guide/why-deckforge (checked October 2026).
+  - id: concept
+    template: concept-map
+    title: The agent loop
+    data:
+      eyebrow: 01 / The loop
+      title: <span class="old">From a prompt and a hope.</span><span class="blue">To a loop you control.</span>
+      subtitle: Three roles, one boundary, four shared pieces.
+      audiences:
+        - icon: user
+          title: You
+          text: Ask for a change
+        - icon: agent
+          title: The agent
+          text: Proposes typed edits
+        - icon: review
+          title: Reviewers
+          text: Read the diff and the log
+      boundary: Typed tools only
+      boundaryNote: validated · scoped · reversible
+      lanes:
+        - title: Ask
+          text: One request, limited to one slide or the whole deck.
+        - title: Apply
+          text: Tool calls checked against the templates, as one undo step.
+      capabilitiesLabel: Shared pieces
+      capabilities: [The brief, Templates, Undo history, Agent log]
+      takeawayLabel: The takeaway
+      takeaway: The agent works inside a boundary you can read, not on a file you must re-check.
+    notes: |
+      Explain the loop in plain words before naming any component. You ask, the agent proposes edits, reviewers read
+      the result. Between them sits one boundary: the agent can only call typed tools.
+
+      The four shared pieces make the loop predictable: the deck's brief grounds the agent, templates define what a
+      slide can hold, the undo history makes every turn reversible, and the agent log records every call.
+  - id: implementation
+    template: implementation-map
+    title: How deckforge implements it
+    data:
+      eyebrow: 02 / Same map, real names
+      title: Now name the <span class="amber">components.</span>
+      subtitle: |-
+        Same positions.
+        deckforge labels.
+      audiences:
+        - icon: pen
+          title: Copilot drawer
+          text: In the deckforge editor
+        - icon: sparkles
+          title: Copilot SDK session
+          text: Your GitHub Copilot sign-in
+        - icon: file
+          title: deck.yaml diff
+          text: Plus the agent log JSON
+      boundary: 16 deck tools
+      boundaryNote: update_slide · set_template · add_overlay…
+      lanes:
+        - title: Scope guard
+          text: This slide allows 7 slide tools on one id only.
+        - title: Undo group
+          text: Each turn is one undo step and highlights its slides.
+      capabilitiesLabel: Shared implementation pieces
+      capabilities: [meta.brief, Slot limits, Undo stack, /api/agent/log]
+      takeawayLabel: The takeaway
+      takeaway: Nothing moved on the map. Only the labels became real components.
+    notes: |
+      Same geometry as the previous slide: only the labels change.
+
+      The drawer talks to a Copilot SDK session that runs on the user's existing GitHub Copilot sign-in, so there is
+      no new account or API key. A GitHub Copilot subscription is still required.
+
+      The boundary is 16 deck tools: four read tools (get_deck, list_templates, list_themes, list_assets) and twelve
+      that change the deck. With the "This slide" scope only seven slide tools are accepted, and only for the selected
+      slide id. `deckforge mcp` adds get_authoring_guide for external agents (17 tools).
+
+      Sources: src/server/deck-tools.js and guide/agent-model (checked October 2026).
+  - id: turn
+    template: lifecycle
+    title: One turn
+    data:
+      eyebrow: 03 / One turn, end to end
+      title: Ask. Apply. <span class="blue">Review.</span>
+      subtitle: Every request follows the same three steps.
+      stages:
+        - label: 01 / Request
+          title: Ask
+          text: Pick This slide or Whole deck, then describe the change in plain words.
+          owner: "Owner: you"
+        - label: 02 / Tool calls
+          title: Apply
+          text: The agent reads the deck and the brief, then calls typed tools. Invalid calls are refused.
+          owner: "Owner: the agent"
+          focus: true
+        - label: 03 / Check
+          title: Review
+          text: Changed slides are highlighted. The drawer lists the slots touched.
+          owner: "Owner: you"
+      feedback: Undo these changes → the whole turn is reverted in one step
+      takeawayLabel: The takeaway
+      takeaway: You stay in charge of the start and the end of every turn.
+    notes: |
+      Walk left to right. Ask: the scope toggle decides what the agent may touch. Apply: the agent reads the deck,
+      then calls tools; each call is validated, and a refused call is flagged in the drawer. Review: the rail
+      highlights the changed slides and the turn summary lists the slides, slots and tool calls.
+
+      Then trace the feedback path: one click on "Undo these changes", or Cmd/Ctrl+Z, reverts the whole turn.
+  - id: never
+    template: bullets
+    title: What the agent can never do
+    data:
+      eyebrow: 04 / The boundary
+      title: What the agent can <span class="amber">never</span> do
+      subtitle: Enforced by the editor, not by the prompt.
+      points:
+        - <strong>No shell, file or web access.</strong> Every other permission request is refused.
+        - <strong>No images from outside.</strong> Only files already in the deck's assets/ folder.
+        - <strong>No edits beyond its scope.</strong> This slide means one slide id, nothing else.
+        - <strong>No edits outside a turn.</strong> Changes are refused when no request is active.
+        - <strong>No remote access.</strong> The editor binds 127.0.0.1 behind a token and an Origin check.
+      takeawayLabel: The takeaway
+      takeaway: The guarantees live in code you can read, not in instructions the model may ignore.
+    notes: |
+      Each point maps to a check in the code, not a line in the system prompt:
+      - the Copilot session only lists the deck tools and rejects every other permission request;
+      - a change that introduces an image outside assets/ is refused before it is applied;
+      - with the slide scope, other tools and other slide ids are refused;
+      - the drawer's tools refuse changes when no agent turn is active;
+      - the editor listens on 127.0.0.1, requires a per-run token and checks the Origin header on writes.
+
+      Sources: guide/agent-model "What the agent can never do" and reference/security (checked October 2026).
+  - id: statement
+    template: statement
+    title: The one idea
+    data:
+      kicker: If you remember one thing
+      text: Every change is a <span class="blue">typed tool call</span> you can scope, read and undo.
+      note: The agent log keeps every call of every turn as JSON.
+    notes: |
+      Pause here. This is the sentence the audience should repeat. Mention that the agent log can be downloaded
+      from the drawer and reviewed next to the deck.yaml diff.
+  - id: fit
+    template: split
+    title: When it fits
+    data:
+      kicker: 05 / Pick the right tool
+      title: When deckforge fits, and when it doesn't
+      leftLabel: Pick deckforge
+      leftText: You want an AI to edit, but every change must be <strong>typed, scoped and reversible</strong>, in a source that diffs well.
+      rightLabel: Pick something else
+      rightText: Code-heavy talks, free-form layouts, one source for many formats, or a design-first deck from a prompt.
+    notes: |
+      Be fair. Slidev fits code-heavy talks and custom components. Markdown frameworks and PowerPoint give more freedom
+      for one-off layouts. Quarto renders one source to many formats. Hosted generators such as Gamma and Beautiful.ai
+      are built for design-first decks from a prompt.
+
+      Every claim here is sourced on deckforge.vuptime.io/guide/why-deckforge (checked October 2026).
+  - id: next
+    template: resources
+    title: Try it
+    data:
+      eyebrow: 06 / Try it
+      title: Where to go <span class="blue">next</span>
+      subtitle: Real links. One clear action.
+      groups:
+        - icon: shield
+          title: The agent model
+          text: Tools, scope rules, undo, the brief and the security boundaries.
+          link: { label: Agent model guide, href: "https://deckforge.vuptime.io/guide/agent-model" }
+        - icon: search
+          title: The comparison
+          text: Slidev, Marp, reveal.js, Quarto and hosted generators, with sources.
+          link: { label: Why deckforge, href: "https://deckforge.vuptime.io/guide/why-deckforge" }
+        - icon: terminal
+          title: Other agents
+          text: Give Copilot CLI or any MCP client the same typed tools.
+          link: { label: deckforge mcp reference, href: "https://deckforge.vuptime.io/reference/cli#mcp" }
+      actionLabel: Next step
+      action: Run deckforge new my-talk --example agent-native, then ask Copilot for one whole-deck change.
+    notes: |
+      End on one action: create a copy of this deck, open it with deckforge edit, switch the drawer to Whole deck and
+      ask for one change. Then look at the highlights, the turn summary and the agent log, and undo it in one click.

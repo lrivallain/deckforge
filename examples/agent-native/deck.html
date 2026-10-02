@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en" data-theme="build">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="deckforge 0.1.0">
+  <title>Agent-native decks</title>
+  <meta name="description" content="A short pitch of deckforge&#39;s agent model, written from a brief by the deckforge Copilot skill.">
+  <link rel="stylesheet" href="deckforge/deckforge.viewer.css">
+  <style id="df-theme">
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 800; font-style: normal; font-display: swap; src: local("Bricolage Grotesque ExtraBold Regular"), local("BricolageGrotesqueExtraBold-Regular"); }
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 600; font-style: normal; font-display: swap; src: local("Bricolage Grotesque SemiBold Regular"), local("BricolageGrotesqueSemiBold-Regular"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 400; font-style: normal; font-display: swap; src: local("Instrument Sans Regular"), local("InstrumentSans-Regular"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 600; font-style: normal; font-display: swap; src: local("Instrument Sans SemiBold Regular"), local("InstrumentSansSemiBold-Regular"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap; src: local("IBM Plex Mono Regular"), local("IBMPlexMono-Regular"); }
+:root {
+  color-scheme: light;
+  --df-bg: #EDF1F7;
+  --df-paper: #FFFFFF;
+  --df-line: #E2E8F2;
+  --df-ink: #16202F;
+  --df-muted: #53617A;
+  --df-node: #F7F9FC;
+  --df-primary: #0F6CBD;
+  --df-primary-soft: #EAF3FC;
+  --df-primary-line: #BBD7F0;
+  --df-accent: #C2620A;
+  --df-accent-soft: #FFF4E4;
+  --df-accent-line: #F0C078;
+  --df-frame: #FFFCF5;
+  --df-ok: #1F9D6B;
+  --df-dashed: #53617A;
+  --df-accent-text: #A8550A;
+  --df-chrome: #EDF1F7;
+  --df-primary-text: #0F6CBD;
+  --df-font-heading: "Bricolage Grotesque", "Trebuchet MS", "Segoe UI", sans-serif;
+  --df-font-body: "Instrument Sans", "Segoe UI", Arial, sans-serif;
+  --df-font-mono: "IBM Plex Mono", Consolas, monospace;
+  --df-radius-slide: 12px;
+  --df-radius-card: 10px;
+  --df-radius-panel: 12px;
+  --df-radius-frame: 14px;
+  --df-radius-small: 8px;
+  --df-radius-pill: 99px;
+  --df-space-padding: 3cqw 4cqw 2cqw;
+  --df-space-gap: 1.3cqw;
+  --df-space-grid: 1.1cqw;
+  --df-motion-duration: .55s;
+  --df-motion-easing: ease;
+  --df-motion-distance: 8px;
+  --df-motion-stagger: .15s;
+  --df-shadow-slide: 0 24px 60px rgb(22 32 47 / 10%);
+}
+  </style>
+  <style id="df-templates">
+/* template: title */
+.df-t-title .slide-inner {justify-content: center; padding-right: 30cqw;}
+.df-t-title .title-body {display: flex; flex-direction: column; gap: 1.4cqw;}
+.df-t-title h1 {font-size: 5cqw; line-height: 1.05;}
+.df-t-title h1 .old {font-size: 2.6cqw; margin-bottom: .6cqw;}
+.df-t-title .lead {font-size: 2cqw; line-height: 1.4; color: var(--df-muted); max-width: 52cqw;}
+.df-t-title .title-meta {position: absolute; left: 4cqw; right: 4cqw; bottom: 2.4cqw; display: flex; justify-content: space-between; font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .08em; text-transform: uppercase; border-top: 1px solid var(--df-line); padding-top: 1.2cqw;}
+.df-t-title .motif {position: absolute; right: 4cqw; top: 50%; transform: translateY(-58%); width: 22cqw; height: 26cqw;}
+.df-t-title .visual {position: absolute; right: 4cqw; top: calc(50% - 15.5cqw); width: 24cqw; height: 27cqw;}
+.df-t-title .m {position: absolute; border-radius: var(--df-radius-frame);}
+.df-t-title .m1 {inset: 0 6cqw 9cqw 0; background: var(--df-primary-soft); border: 1px solid var(--df-primary-line);}
+.df-t-title .m2 {inset: 7cqw 0 2cqw 7cqw; background: var(--df-paper); border: 1.5px dashed var(--df-dashed);}
+.df-t-title .m3 {width: 9cqw; height: 4.6cqw; right: 2cqw; bottom: 0; background: var(--df-accent-soft); border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-pill);}
+/* template: concept-map */
+.df-t-concept-map .header {flex: 0 0 9cqw;}
+.df-t-concept-map .map {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--df-space-grid);}
+.df-t-concept-map .row {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid);}
+.df-t-concept-map .audience {display: flex; align-items: center; gap: .9cqw; padding: 1cqw; background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-card);}
+.df-t-concept-map .audience p {margin-top: .3cqw; color: var(--df-muted); font-size: 1.45cqw;}
+.df-t-concept-map .boundary {display: flex; flex-direction: column; gap: .9cqw; padding: 1cqw 1.2cqw; border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-frame); background: var(--df-frame);}
+.df-t-concept-map .boundary-label {display: flex; align-items: center; justify-content: space-between; gap: 1cqw;}
+.df-t-concept-map .boundary-label h2 {color: var(--df-accent);}
+.df-t-concept-map .boundary-label span {font: 400 1.1cqw var(--df-font-mono); color: var(--df-muted);}
+.df-t-concept-map .lanes {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid);}
+.df-t-concept-map .lane {border: 1.5px dashed var(--df-dashed); border-radius: var(--df-radius-card); padding: 1cqw 1.2cqw; background: var(--df-paper);}
+.df-t-concept-map .lane p {margin-top: .35cqw; font-size: 1.6cqw; line-height: 1.35; color: var(--df-muted);}
+.df-t-concept-map .capabilities {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: .8cqw;}
+.df-t-concept-map .capability {border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-small); background: var(--df-primary-soft); padding: .65cqw; text-align: center; font-size: 1.5cqw;}
+/* template: implementation-map */
+.df-t-implementation-map .header {flex: 0 0 9cqw;}
+.df-t-implementation-map .map {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--df-space-grid);}
+.df-t-implementation-map .row {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid);}
+.df-t-implementation-map .audience {display: flex; align-items: center; gap: .9cqw; padding: 1cqw; background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-card);}
+.df-t-implementation-map .audience p {margin-top: .3cqw; color: var(--df-muted); font-size: 1.45cqw;}
+.df-t-implementation-map .boundary {display: flex; flex-direction: column; gap: .9cqw; padding: 1cqw 1.2cqw; border: 1.5px solid var(--df-accent-line); border-radius: var(--df-radius-frame); background: var(--df-frame);}
+.df-t-implementation-map .boundary-label {display: flex; align-items: center; justify-content: space-between; gap: 1cqw;}
+.df-t-implementation-map .boundary-label h2 {color: var(--df-accent);}
+.df-t-implementation-map .boundary-label span {font: 400 1.1cqw var(--df-font-mono); color: var(--df-muted);}
+.df-t-implementation-map .lanes {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--df-space-grid);}
+.df-t-implementation-map .lane {border: 1.5px dashed var(--df-dashed); border-radius: var(--df-radius-card); padding: 1cqw 1.2cqw; background: var(--df-paper);}
+.df-t-implementation-map .lane p {margin-top: .35cqw; font-size: 1.6cqw; line-height: 1.35; color: var(--df-muted);}
+.df-t-implementation-map .capabilities {display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: .8cqw;}
+.df-t-implementation-map .capability {border: 1px solid var(--df-primary-line); border-radius: var(--df-radius-small); background: var(--df-primary-soft); padding: .65cqw; text-align: center; font-size: 1.5cqw;}
+/* template: lifecycle */
+.df-t-lifecycle .lifecycle {flex: 1; display: flex; align-items: stretch; gap: .9cqw; min-height: 0;}
+.df-t-lifecycle .stage-card {flex: 1 1 0; min-width: 0; padding: 1.4cqw; border: 1px solid var(--df-line); border-radius: var(--df-radius-panel); background: var(--df-node); display: flex; flex-direction: column; gap: 1.2cqw;}
+.df-t-lifecycle .stage-card.focus {flex-grow: 1.2; border-color: var(--df-primary-line); background: var(--df-primary-soft);}
+.df-t-lifecycle .stage-card h2 {font-size: 2.5cqw;}
+.df-t-lifecycle .stage-card p {font-size: 1.8cqw; line-height: 1.4;}
+.df-t-lifecycle .stage-card .owner {margin-top: auto; font: 400 1.25cqw / 1.4 var(--df-font-mono); color: var(--df-muted);}
+.df-t-lifecycle .arrow {flex: 0 0 2cqw;}
+.df-t-lifecycle .feedback {color: var(--df-accent-text); font: 400 1.4cqw / 1.4 var(--df-font-mono); text-align: center; padding: .6cqw;}
+/* template: bullets */
+.df-t-bullets .points {flex: 1; list-style: none; padding: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.2cqw;}
+.df-t-bullets .point {display: flex; align-items: center; gap: 1.6cqw; padding: 1.3cqw 1.6cqw; background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-card); font-size: 2.1cqw; line-height: 1.35;}
+.df-t-bullets .point .pill {align-self: center; flex: none;}
+.df-t-bullets .point strong {font-weight: 600;}
+/* template: statement */
+.df-t-statement .statement {flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2cqw;}
+.df-t-statement .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase;}
+.df-t-statement .big {font: 700 5cqw / 1.08 var(--df-font-heading); letter-spacing: -.035em; max-width: 80cqw;}
+.df-t-statement .note {font-size: 1.7cqw; line-height: 1.4; color: var(--df-muted); max-width: 60cqw;}
+/* template: split */
+.df-t-split .kicker {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8cqw;}
+.df-t-split h1 {font-size: 4.4cqw; line-height: 1.05; letter-spacing: -.04em;}
+.df-t-split .cols {flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center;}
+.df-t-split .col {display: flex; flex-direction: column; gap: 1.4cqw; padding: 2cqw 4cqw 2cqw 0; border-top: 2px solid var(--df-line);}
+.df-t-split .col-right {padding: 2cqw 0 2cqw 4cqw;}
+.df-t-split .cols.hl .col-right {border-top-color: var(--df-accent);}
+.df-t-split .label {font: 400 1.3cqw / 1.4 var(--df-font-mono); color: var(--df-muted); letter-spacing: .12em; text-transform: uppercase;}
+.df-t-split .cols.hl .col-right .label {color: var(--df-accent-text);}
+.df-t-split .text {font: 500 2.5cqw / 1.25 var(--df-font-heading); letter-spacing: -.02em;}
+.df-t-split .cols.hl .col:not(.col-right) .text {color: var(--df-muted);}
+/* template: resources */
+.df-t-resources .groups {flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1.4cqw; align-items: stretch; min-height: 0;}
+.df-t-resources .group {display: flex; flex-direction: column; gap: 1cqw; padding: 1.8cqw; background: var(--df-node); border: 1px solid var(--df-line); border-radius: var(--df-radius-panel);}
+.df-t-resources .group .icon {width: 2.8cqw; height: 2.8cqw;}
+.df-t-resources .group h2 {font-size: 2.3cqw;}
+.df-t-resources .group p {font-size: 1.7cqw; line-height: 1.4; color: var(--df-muted);}
+.df-t-resources .group .link {margin-top: auto; font: 400 1.4cqw / 1.4 var(--df-font-mono);}
+  </style>
+</head>
+<body>
+  <noscript><p class="no-script">All slides are shown below. Use the browser's print command for a PDF.</p></noscript>
+  <main class="stage" aria-label="Agent-native decks">
+<section class="slide df-t-title" id="slide-shift" data-slide-id="shift" data-template="title" data-title="Agent-native decks" aria-labelledby="shift-title">
+  <div class="slide-inner">
+<div class="title-body">
+  <p class="eyebrow reveal">deckforge / the agent model</p>
+  <h1 id="shift-title" class="reveal"><span class="old">From AI that rewrites files.</span><span class="blue">To edits you can audit.</span></h1>
+  <p class="lead reveal">Typed slides an AI can edit safely, scoped to one slide or the whole deck, and undone in one step.</p>
+</div>
+<div class="motif" aria-hidden="true">
+  <span class="m m1"></span><span class="m m2"></span><span class="m m3"></span>
+</div>
+<footer class="title-meta reveal">
+  <span>deckforge example deck</span>
+  <span>Built from a brief by the Copilot skill</span>
+</footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Open with the shift. Many AI slide tools either generate a whole deck in the cloud or rewrite a file that you<br>then have to re-read. deckforge takes another route: the agent edits typed slides through a small set of tools,<br>and every turn can be reviewed and undone.</p><p>Sources: deckforge docs, guide/agent-model and guide/why-deckforge (checked October 2026).</p></aside>
+</section>
+<section class="slide df-t-concept-map map-slide" id="slide-concept" data-slide-id="concept" data-template="concept-map" data-title="The agent loop" aria-labelledby="concept-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">01 / The loop</p><h1 id="concept-title"><span class="old">From a prompt and a hope.</span><span class="blue">To a loop you control.</span></h1></div>
+  <p class="subtitle">Three roles, one boundary, four shared pieces.</p>
+</header>
+<div class="map">
+  <div class="row">
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      <div><h2>You</h2><p>Ask for a change</p></div>
+    </article>
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="7" width="14" height="12" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9.5 15.5h5M2.5 12v3M21.5 12v3"/></svg>
+      <div><h2>The agent</h2><p>Proposes typed edits</p></div>
+    </article>
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 12l3 3 5-6"/></svg>
+      <div><h2>Reviewers</h2><p>Read the diff and the log</p></div>
+    </article>
+    
+  </div>
+  <div class="boundary reveal">
+    <div class="boundary-label"><h2>Typed tools only</h2><span>validated · scoped · reversible</span></div>
+    <div class="lanes">
+      <article class="lane"><h3>Ask</h3><p>One request, limited to one slide or the whole deck.</p></article><article class="lane"><h3>Apply</h3><p>Tool calls checked against the templates, as one undo step.</p></article>
+    </div>
+    
+    <div class="capabilities" aria-label="Shared pieces">
+      <div class="capability">The brief</div><div class="capability">Templates</div><div class="capability">Undo history</div><div class="capability">Agent log</div>
+    </div>
+    
+  </div>
+</div>
+<p class="outcome reveal"><strong>The takeaway</strong><span>The agent works inside a boundary you can read, not on a file you must re-check.</span></p>
+<footer class="foot"><span>deckforge / agent-native decks</span><span class="num">02 / 08</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Explain the loop in plain words before naming any component. You ask, the agent proposes edits, reviewers read<br>the result. Between them sits one boundary: the agent can only call typed tools.</p><p>The four shared pieces make the loop predictable: the deck&#39;s brief grounds the agent, templates define what a<br>slide can hold, the undo history makes every turn reversible, and the agent log records every call.</p></aside>
+</section>
+<section class="slide df-t-implementation-map map-slide" id="slide-implementation" data-slide-id="implementation" data-template="implementation-map" data-title="How deckforge implements it" aria-labelledby="implementation-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">02 / Same map, real names</p><h1 id="implementation-title">Now name the <span class="amber">components.</span></h1></div>
+  <p class="subtitle">Same positions.<br>deckforge labels.</p>
+</header>
+<div class="map">
+  <div class="row">
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4L20 8l-4-4L4 16zM14 6l4 4"/></svg>
+      <div><h2>Copilot drawer</h2><p>In the deckforge editor</p></div>
+    </article>
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8zM18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/></svg>
+      <div><h2>Copilot SDK session</h2><p>Your GitHub Copilot sign-in</p></div>
+    </article>
+    
+    <article class="audience reveal">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/></svg>
+      <div><h2>deck.yaml diff</h2><p>Plus the agent log JSON</p></div>
+    </article>
+    
+  </div>
+  <div class="boundary reveal">
+    <div class="boundary-label"><h2>16 deck tools</h2><span>update_slide · set_template · add_overlay…</span></div>
+    <div class="lanes">
+      <article class="lane"><h3>Scope guard</h3><p>This slide allows 7 slide tools on one id only.</p></article><article class="lane"><h3>Undo group</h3><p>Each turn is one undo step and highlights its slides.</p></article>
+    </div>
+    
+    <div class="capabilities" aria-label="Shared implementation pieces">
+      <div class="capability">meta.brief</div><div class="capability">Slot limits</div><div class="capability">Undo stack</div><div class="capability">/api/agent/log</div>
+    </div>
+    
+  </div>
+</div>
+<p class="outcome reveal"><strong>The takeaway</strong><span>Nothing moved on the map. Only the labels became real components.</span></p>
+<footer class="foot"><span>deckforge / agent-native decks</span><span class="num">03 / 08</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Same geometry as the previous slide: only the labels change.</p><p>The drawer talks to a Copilot SDK session that runs on the user&#39;s existing GitHub Copilot sign-in, so there is<br>no new account or API key. A GitHub Copilot subscription is still required.</p><p>The boundary is 16 deck tools: four read tools (get_deck, list_templates, list_themes, list_assets) and twelve<br>that change the deck. With the &quot;This slide&quot; scope only seven slide tools are accepted, and only for the selected<br>slide id. `deckforge mcp` adds get_authoring_guide for external agents (17 tools).</p><p>Sources: src/server/deck-tools.js and guide/agent-model (checked October 2026).</p></aside>
+</section>
+<section class="slide df-t-lifecycle" id="slide-turn" data-slide-id="turn" data-template="lifecycle" data-title="One turn" aria-labelledby="turn-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">03 / One turn, end to end</p><h1 id="turn-title">Ask. Apply. <span class="blue">Review.</span></h1></div>
+  <p class="subtitle">Every request follows the same three steps.</p>
+</header>
+<div class="lifecycle">
+  
+  
+  <article class="stage-card reveal">
+    <span class="pill">01 / Request</span>
+    <h2>Ask</h2>
+    <p>Pick This slide or Whole deck, then describe the change in plain words.</p>
+    <p class="owner">Owner: you</p>
+  </article>
+  
+  <span class="arrow reveal" role="img" aria-label="">&rarr;</span>
+  <article class="stage-card focus reveal">
+    <span class="pill">02 / Tool calls</span>
+    <h2>Apply</h2>
+    <p>The agent reads the deck and the brief, then calls typed tools. Invalid calls are refused.</p>
+    <p class="owner">Owner: the agent</p>
+  </article>
+  
+  <span class="arrow reveal" role="img" aria-label="">&rarr;</span>
+  <article class="stage-card reveal">
+    <span class="pill">03 / Check</span>
+    <h2>Review</h2>
+    <p>Changed slides are highlighted. The drawer lists the slots touched.</p>
+    <p class="owner">Owner: you</p>
+  </article>
+  
+</div>
+<p class="feedback reveal">Undo these changes → the whole turn is reverted in one step</p>
+<p class="outcome reveal"><strong>The takeaway</strong><span>You stay in charge of the start and the end of every turn.</span></p>
+<footer class="foot"><span>deckforge / agent-native decks</span><span class="num">04 / 08</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Walk left to right. Ask: the scope toggle decides what the agent may touch. Apply: the agent reads the deck,<br>then calls tools; each call is validated, and a refused call is flagged in the drawer. Review: the rail<br>highlights the changed slides and the turn summary lists the slides, slots and tool calls.</p><p>Then trace the feedback path: one click on &quot;Undo these changes&quot;, or Cmd/Ctrl+Z, reverts the whole turn.</p></aside>
+</section>
+<section class="slide df-t-bullets" id="slide-never" data-slide-id="never" data-template="bullets" data-title="What the agent can never do" aria-labelledby="never-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">04 / The boundary</p><h1 id="never-title">What the agent can <span class="amber">never</span> do</h1></div>
+  <p class="subtitle">Enforced by the editor, not by the prompt.</p>
+</header>
+<ol class="points">
+  <li class="point reveal"><span class="pill" aria-hidden="true">01</span><span class="point-text"><strong>No shell, file or web access.</strong> Every other permission request is refused.</span></li><li class="point reveal"><span class="pill" aria-hidden="true">02</span><span class="point-text"><strong>No images from outside.</strong> Only files already in the deck's assets/ folder.</span></li><li class="point reveal"><span class="pill" aria-hidden="true">03</span><span class="point-text"><strong>No edits beyond its scope.</strong> This slide means one slide id, nothing else.</span></li><li class="point reveal"><span class="pill" aria-hidden="true">04</span><span class="point-text"><strong>No edits outside a turn.</strong> Changes are refused when no request is active.</span></li><li class="point reveal"><span class="pill" aria-hidden="true">05</span><span class="point-text"><strong>No remote access.</strong> The editor binds 127.0.0.1 behind a token and an Origin check.</span></li>
+</ol>
+<p class="outcome reveal"><strong>The takeaway</strong><span>The guarantees live in code you can read, not in instructions the model may ignore.</span></p>
+<footer class="foot"><span>deckforge / agent-native decks</span><span class="num">05 / 08</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Each point maps to a check in the code, not a line in the system prompt:<br>- the Copilot session only lists the deck tools and rejects every other permission request;<br>- a change that introduces an image outside assets/ is refused before it is applied;<br>- with the slide scope, other tools and other slide ids are refused;<br>- the drawer&#39;s tools refuse changes when no agent turn is active;<br>- the editor listens on 127.0.0.1, requires a per-run token and checks the Origin header on writes.</p><p>Sources: guide/agent-model &quot;What the agent can never do&quot; and reference/security (checked October 2026).</p></aside>
+</section>
+<section class="slide df-t-statement" id="slide-statement" data-slide-id="statement" data-template="statement" data-title="The one idea" aria-labelledby="statement-title">
+  <div class="slide-inner">
+<div class="statement">
+  <p class="kicker reveal">If you remember one thing</p>
+  <p id="statement-title" class="big reveal">Every change is a <span class="blue">typed tool call</span> you can scope, read and undo.</p>
+  <p class="note reveal">The agent log keeps every call of every turn as JSON.</p>
+</div>
+<footer class="foot"><span>deckforge / agent-native decks</span><span class="num">06 / 08</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Pause here. This is the sentence the audience should repeat. Mention that the agent log can be downloaded<br>from the drawer and reviewed next to the deck.yaml diff.</p></aside>
+</section>
+<section class="slide df-t-split" id="slide-fit" data-slide-id="fit" data-template="split" data-title="When it fits" aria-labelledby="fit-title">
+  <div class="slide-inner">
+<header class="reveal">
+  <p class="kicker">05 / Pick the right tool</p>
+  <h1 id="fit-title">When deckforge fits, and when it doesn't</h1>
+</header>
+<div class="cols">
+  <section class="col reveal">
+    <p class="label">Pick deckforge</p>
+    <p class="text">You want an AI to edit, but every change must be <strong>typed, scoped and reversible</strong>, in a source that diffs well.</p>
+  </section>
+  <section class="col col-right reveal">
+    <p class="label">Pick something else</p>
+    <p class="text">Code-heavy talks, free-form layouts, one source for many formats, or a design-first deck from a prompt.</p>
+  </section>
+</div>
+<footer class="foot"><span>deckforge / agent-native decks</span><span class="num">07 / 08</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>Be fair. Slidev fits code-heavy talks and custom components. Markdown frameworks and PowerPoint give more freedom<br>for one-off layouts. Quarto renders one source to many formats. Hosted generators such as Gamma and Beautiful.ai<br>are built for design-first decks from a prompt.</p><p>Every claim here is sourced on deckforge.vuptime.io/guide/why-deckforge (checked October 2026).</p></aside>
+</section>
+<section class="slide df-t-resources" id="slide-next" data-slide-id="next" data-template="resources" data-title="Try it" aria-labelledby="next-title">
+  <div class="slide-inner">
+<header class="header reveal">
+  <div><p class="eyebrow">06 / Try it</p><h1 id="next-title">Where to go <span class="blue">next</span></h1></div>
+  <p class="subtitle">Real links. One clear action.</p>
+</header>
+<div class="groups">
+  
+  <article class="group reveal">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    <h2>The agent model</h2>
+    <p>Tools, scope rules, undo, the brief and the security boundaries.</p>
+    <p class="link"><a href="https://deckforge.vuptime.io/guide/agent-model" target="_blank" rel="noopener noreferrer">Agent model guide</a></p>
+  </article>
+  
+  <article class="group reveal">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>
+    <h2>The comparison</h2>
+    <p>Slidev, Marp, reveal.js, Quarto and hosted generators, with sources.</p>
+    <p class="link"><a href="https://deckforge.vuptime.io/guide/why-deckforge" target="_blank" rel="noopener noreferrer">Why deckforge</a></p>
+  </article>
+  
+  <article class="group reveal">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 15h5"/></svg>
+    <h2>Other agents</h2>
+    <p>Give Copilot CLI or any MCP client the same typed tools.</p>
+    <p class="link"><a href="https://deckforge.vuptime.io/reference/cli#mcp" target="_blank" rel="noopener noreferrer">deckforge mcp reference</a></p>
+  </article>
+  
+</div>
+<p class="outcome reveal"><strong>Next step</strong><span>Run deckforge new my-talk --example agent-native, then ask Copilot for one whole-deck change.</span></p>
+<footer class="foot"><span>deckforge / agent-native decks</span><span class="num">08 / 08</span></footer>
+  </div>
+  <aside class="slide-notes" hidden aria-label="Speaker notes"><p>End on one action: create a copy of this deck, open it with deckforge edit, switch the drawer to Whole deck and<br>ask for one change. Then look at the highlights, the turn summary and the agent log, and undo it in one click.</p></aside>
+</section>
+  </main>
+  <nav class="controls" aria-label="Slide controls" hidden>
+  <button id="df-previous" type="button" aria-label="Previous slide">Previous</button>
+  <label class="sr-only" for="df-slide-select">Choose a slide</label>
+  <select id="df-slide-select"></select>
+  <button id="df-next" type="button" aria-label="Next slide">Next</button>
+  <span class="controls-sep" aria-hidden="true"></span>
+  <button id="df-static" type="button" aria-pressed="false" title="Disable animations (S)">Static</button>
+  <button id="df-notes" type="button" aria-pressed="false" title="Show speaker notes (N)">Notes</button>
+  <button id="df-presenter" type="button" title="Open presenter view (P)">Presenter</button>
+  <button id="df-fullscreen" type="button" aria-pressed="false" title="Fullscreen (F)">Fullscreen</button>
+  <span id="df-announcement" class="sr-only" role="status" aria-live="polite"></span>
+</nav>
+  <script src="deckforge/deckforge.viewer.js" defer></script>
+</body>
+</html>

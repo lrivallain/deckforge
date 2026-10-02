@@ -50,7 +50,10 @@ The site in `docs/` uses [VitePress](https://vitepress.dev) and is deployed to G
 ```bash
 npm run docs:dev           # live preview
 npm run docs:build         # production build (fails on dead links)
-npm run docs:screenshots   # regenerate every screenshot, the favicons and the social card
+npm run docs:screenshots   # regenerate every screenshot, the agent-turn GIF (needs ffmpeg), the favicons and the social card
+node scripts/screenshots.js --only demo   # only the agent-turn GIF
+node scripts/validate-example.js          # refresh examples/agent-native/validation.json after a template change
+npm run docs:tools         # regenerate the tool catalogue of guide/agent-model.md after changing a deck tool
 ```
 
 Screenshots come from the example decks with a scripted Copilot (`scripts/docs-agent-mock.js`), so they are reproducible.
