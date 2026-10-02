@@ -90,7 +90,7 @@ export class DeckStore extends EventEmitter {
   }
 
   /** Apply an operation. Returns the op result. */
-  apply(name, args, { source = "user", label, coalesce } = {}) {
+  apply(name, args, { source = "user", label, coalesce, coalesceMs = COALESCE_MS } = {}) {
     // Keep agent turns atomic: their undo entry must only contain agent changes.
     if (this.group && source !== this.group.source) {
       throw new OpError("Copilot is applying changes. Wait for it to finish or press Stop, then edit again.");
@@ -108,7 +108,7 @@ export class DeckStore extends EventEmitter {
       this.group.changed.push(...changed);
     } else {
       const top = this.undoStack.at(-1);
-      if (coalesce && top && top.coalesce === coalesce && now - top.at < COALESCE_MS && !this.redoStack.length) {
+      if (coalesce && top && top.coalesce === coalesce && now - top.at < coalesceMs && !this.redoStack.length) {
         top.after = deck;
         top.at = now;
       } else {

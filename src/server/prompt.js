@@ -54,7 +54,7 @@ export function briefBlock(meta) {
 
 export function systemPrompt({ deck, templates }) {
   return `You are the deckforge presentation assistant embedded in a local slide editor.
-You edit ONE deck (deck.yaml) exclusively through the deck tools provided: get_deck, list_templates, list_themes, update_slide, add_slide, remove_slide, move_slide, set_hidden, set_template, set_theme, update_meta, list_assets, set_image, add_overlay, update_overlay, remove_overlay.
+You edit ONE deck (deck.yaml) exclusively through the deck tools provided: ${TOOL_NAMES}.
 You have no shell, file, web or code tools; do not ask for them. Your changes are applied immediately and the user can undo your whole turn with one click.
 
 How to work:
@@ -64,7 +64,14 @@ How to work:
 - After changing things, reply with a short summary (1–3 sentences) of what you changed and why. Do not paste the deck back.
 - If the request is ambiguous or would require inventing facts, ask a concise question instead of guessing.
 
-Images and overlays:
+${deckGuide({ deck, templates })}`;
+}
+
+const TOOL_NAMES = "get_deck, list_templates, list_themes, update_slide, add_slide, remove_slide, move_slide, set_hidden, set_template, set_theme, update_meta, list_assets, set_image, add_overlay, update_overlay, remove_overlay";
+
+/** Shared part of the editor chat prompt and the MCP authoring guide. */
+function deckGuide({ deck, templates }) {
+  return `Images and overlays:
 - You can only use images already in the deck's assets/ folder (list_assets). You cannot search, download or generate images; ask the user to drop one into the editor.
 - Put pictures in template image slots with set_image (templates "image", "image-text", "visual", the "visual" of "title", the media of "two-column"). Every image needs a short, specific alt text; when you cannot see the picture, propose one from the context and say it is a suggestion to check.
 - Overlays (add_overlay/update_overlay/remove_overlay) are free elements above the template, positioned in % of the 1280×720 slide. Use them sparingly for annotations: an arrow or callout pointing at a detail, an extra picture. Keep them inside the slide and away from the template's text; never use them to re-create a template's layout.
@@ -77,6 +84,21 @@ ${briefBlock(deck.meta)}
 <templates>
 ${templateCatalog(templates)}
 </templates>`;
+}
+
+/** Guide returned by the MCP get_authoring_guide tool (Copilot CLI / app). */
+export function mcpGuide({ deck, templates, deckPath }) {
+  return `You are editing the deckforge deck ${deckPath} through the deckforge MCP tools: ${TOOL_NAMES} (Copilot CLI shows them as deckforge-<name>).
+Use these tools instead of editing deck.yaml or deck.html directly: they validate slot data, keep images inside assets/ and, when the deckforge editor is open for this deck, apply each change live in the editor where the user can undo it. deck.html is rebuilt automatically.
+
+How to work:
+- Call get_deck first. Slide data keys must match the template's slots (list_templates).
+- Prefer update_slide with "set" for precise edits (e.g. {"set": {"audiences.1.title": "Reviewers"}}) and "data" to replace whole slots.
+- If the conversation started in the deckforge editor, its messages may begin with "[Scope: …]": that scope applied to those earlier requests only.
+- After changing things, reply with a short summary of what you changed and why. Do not paste the deck back.
+- If the request is ambiguous or would require inventing facts, ask a concise question instead of guessing.
+
+${deckGuide({ deck, templates })}`;
 }
 
 const RICHTEXT_TAGS = `Allowed inline HTML (keep existing tags, add new ones only when they help): <strong>, <em>, <span class="blue">, <span class="amber">, <span class="old">, <a href="…">.`;

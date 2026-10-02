@@ -269,6 +269,25 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .chat-compose { padding: 12px 16px 16px; border-top: 1px solid var(--ui-line); display: grid; gap: 8px; }
 .chat-input { resize: none; min-height: 72px; }
 .chat.is-busy .chat-log::after { content: "Copilot is working…"; align-self: flex-start; font-size: 12.5px; color: var(--ui-copilot); animation: pulse .9s ease-in-out infinite alternate; }
+.chat-link { padding: 8px 16px; border-bottom: 1px solid var(--ui-line); display: grid; gap: 6px; }
+.chat-link[hidden] { display: none; }
+.session-chip { justify-self: start; display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; padding: 2px 0; font: 12px var(--ui-mono); color: var(--ui-faint); cursor: pointer; }
+.session-chip:hover { color: var(--ui-copilot); }
+.chat-handoff { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: start; padding: 8px 10px; border-radius: 10px; background: var(--ui-copilot-soft); color: var(--ui-ink); font-size: 12.5px; }
+.chat-handoff > .ui-icon { color: var(--ui-copilot); margin-top: 2px; }
+.chat-handoff p { margin: 0; }
+.chat-handoff .session-chip { grid-column: 2; }
+.handoff { width: min(680px, calc(100vw - 48px)); }
+.handoff-body { display: grid; gap: 14px; }
+.handoff-body p { margin: 0; }
+.handoff-body h3 { font-size: 13px; font-weight: 650; margin: 0 0 6px; }
+.handoff-body section { display: grid; gap: 8px; }
+.handoff-body details { display: grid; gap: 8px; }
+.handoff-body summary { cursor: pointer; font-size: 13px; color: var(--ui-muted); }
+.handoff-body details[open] summary { margin-bottom: 8px; }
+.handoff-body code { font: 12.5px var(--ui-mono); }
+.cmd { display: flex; align-items: flex-start; gap: 8px; }
+.cmd-text { flex: 1; margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--ui-ink); color: #fff; font: 12.5px/1.5 var(--ui-mono); white-space: pre-wrap; overflow-wrap: anywhere; user-select: all; max-height: 220px; overflow: auto; }
 
 /* ------------------------------------------------------------ dialogs */
 .dialog {

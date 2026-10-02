@@ -56,6 +56,9 @@ Resolve every bundled path from **the directory containing this SKILL.md**.
 - Keep private paths, mailbox links, account context and credentials out of slides and footers.
 - `deckforge edit` and `serve` bind to 127.0.0.1. The `edit` URL carries a per-run token, so never share it.
   Stop any server you started once the work is done.
+- When the `deckforge-*` MCP tools are available (`deckforge mcp`, e.g. a conversation continued from the editor),
+  edit that deck through them, starting with `get_authoring_guide` and `get_deck`. Do not write its `deck.yaml` directly:
+  the tools validate each change and keep an open editor in sync.
 - Do not install software, publish, upload, commit or send the deck without explicit approval.
   A local artifact does not authorize publication.
 - If PowerPoint tooling is unavailable, say so. Do not pass off HTML, PDF or slide images as editable PowerPoint.

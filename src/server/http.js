@@ -10,6 +10,9 @@ import path from "node:path";
 import { DIST_DIR } from "./registry.js";
 import { DeckStore } from "./store.js";
 import { AgentController } from "./agent.js";
+import { deckToolHandlers, mcpToolSpecs } from "./deck-tools.js";
+import { publishEditor } from "./copilot-link.js";
+import { OpError } from "../core/ops.js";
 import { editorPage } from "./editor-page.js";
 import { AssetError, listAssets, MAX_ASSET_BYTES, saveAsset } from "./assets.js";
 import { escapeHtml } from "../core/html.js";
@@ -210,6 +213,17 @@ export async function startServer({
   store.on("warning", (info) => broadcast("warning", info));
   agent?.on("event", (event) => broadcast("agent", event));
 
+  // Deck tools for `deckforge mcp` (Copilot CLI / app) routed through this editor:
+  // consecutive calls coalesce into one undo entry.
+  const MCP_TOOLS = new Set(mcpToolSpecs().map((t) => t.name));
+  const mcpTools = deckToolHandlers(store, {
+    guide: true,
+    guard: () => {
+      if (store.group) throw Object.assign(new OpError("The editor's Copilot chat is applying changes. Retry when it has finished."), { status: 409 });
+    },
+    applyOptions: (name) => ({ source: "mcp", label: `Copilot CLI: ${name}`, coalesce: "mcp", coalesceMs: 30000 }),
+  });
+
   // Cookies are shared by every port of 127.0.0.1: name the token per port so
   // several editors can run side by side without overwriting each other.
   const cookieName = () => `df_token_${actualPort}`;
@@ -275,6 +289,12 @@ export async function startServer({
       const result = store.apply(body.name, body.args, { source: "user", label: body.label, coalesce: body.coalesce });
       return send(res, 200, { ok: true, result, version: store.version });
     }
+    if (req.method === "POST" && route === "/tool") {
+      const name = String(body.name ?? "");
+      if (!MCP_TOOLS.has(name)) return send(res, 404, { error: `Unknown tool "${name}"` });
+      const args = body.args && typeof body.args === "object" && !Array.isArray(body.args) ? body.args : {};
+      return send(res, 200, { ok: true, result: await mcpTools[name](args) });
+    }
     if (req.method === "POST" && route === "/undo") return send(res, 200, { ok: store.undo(), version: store.version });
     if (req.method === "POST" && route === "/redo") return send(res, 200, { ok: store.redo(), version: store.version });
     if (req.method === "POST" && route === "/build") return send(res, 200, store.build());
@@ -293,6 +313,15 @@ export async function startServer({
       return send(res, 200, await agent.improve({ text, label, description, max, richtext, kind, slideId }));
     }
     if (req.method === "POST" && route === "/agent/reset") return send(res, 200, { ok: await agent.reset() });
+    if (req.method === "POST" && route === "/agent/connect") {
+      try {
+        return send(res, 200, await agent.connect());
+      } catch (err) {
+        const auth = Boolean(agent.error?.auth);
+        return send(res, err.name === "OpError" ? 409 : auth ? 503 : 502, { error: err.message, details: auth ? { auth, hint: agent.status().hint } : undefined });
+      }
+    }
+    if (req.method === "POST" && route === "/agent/handoff") return send(res, 200, await agent.handoff());
     if (req.method === "GET" && route === "/agent") return send(res, 200, agent.status());
     return send(res, 404, { error: "Not found" });
   }
@@ -349,7 +378,10 @@ export async function startServer({
   });
   actualPort = server.address().port;
   const origin = `http://${host}:${actualPort}`;
+  // Let `deckforge mcp` find this editor (private file in the config folder).
+  const unpublish = mode === "edit" ? publishEditor({ deckPath: store.deckPath, origin: `http://${host.includes(":") ? `[${host}]` : host}:${actualPort}`, token }) : () => {};
   const close = async () => {
+    unpublish();
     for (const res of clients) res.end();
     clients.clear();
     store.close();

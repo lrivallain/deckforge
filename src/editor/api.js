@@ -52,6 +52,8 @@ export const api = {
   agentAbort: () => request("POST", "/api/agent/abort", {}),
   agentReset: () => request("POST", "/api/agent/reset", {}),
   agentStatus: () => request("GET", "/api/agent"),
+  agentConnect: () => request("POST", "/api/agent/connect", {}),
+  agentHandoff: () => request("POST", "/api/agent/handoff", {}),
   improve: (payload, { signal } = {}) => request("POST", "/api/agent/improve", payload, { signal }),
 };
 

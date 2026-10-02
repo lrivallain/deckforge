@@ -12,6 +12,7 @@ deckforge --help | --version
 | [`templates`](#templates) | List templates, slots, themes and icons |
 | [`edit`](#edit) | Start the local editor |
 | [`serve`](#serve) | Serve the deck read-only with live reload |
+| [`mcp`](#mcp) | Give Copilot CLI or the Copilot app the deck tools (MCP server) |
 | [`skill`](#skill) | Install the GitHub Copilot skill |
 
 `<deck>` is a `deck.yaml` file or the folder that contains it.
@@ -66,6 +67,29 @@ deckforge serve <deck> [--port 0] [--no-open]
 
 Serves the built deck read-only. It rebuilds and reloads the page when the deck changes.
 
+## mcp
+
+```bash
+deckforge mcp <deck>
+```
+
+Runs a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio with the deck tools of the
+[Copilot assistant](../guide/copilot#what-it-can-and-cannot-do), plus `get_authoring_guide`. MCP clients start it
+themselves. The editor's [Continue in Copilot CLI](../guide/copilot#continue-in-copilot-cli) dialog gives a ready-made
+command, or you can register it in `~/.copilot/mcp-config.json`:
+
+```json
+{
+  "mcpServers": {
+    "deckforge": { "type": "local", "command": "deckforge", "args": ["mcp", "/path/to/my-talk"], "tools": ["*"] }
+  }
+}
+```
+
+When `deckforge edit` is running for the same deck, every call goes through the editor: changes appear live and can
+be undone there. Otherwise the server edits `deck.yaml` and rebuilds `deck.html` itself. stdout carries only the protocol,
+and logs go to stderr.
+
 ## skill
 
 ```bash
@@ -80,7 +104,7 @@ Installs the [Copilot skill](../guide/copilot-skill).
 |---|---|
 | `DECKFORGE_CONFIG_DIR` | User folder for templates and themes. The default is `$XDG_CONFIG_HOME/deckforge` or `~/.config/deckforge` |
 | `DECKFORGE_MODEL` | Model used by the Copilot assistant |
-| `COPILOT_HOME` | Base folder used by `skill install-copilot` |
+| `COPILOT_HOME` | Copilot CLI folder: `skill install-copilot` installs into it, and the editor checks its `session-state` before resuming a conversation |
 
 ## Lookup order
 

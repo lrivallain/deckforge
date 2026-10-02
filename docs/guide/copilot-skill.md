@@ -34,3 +34,9 @@ Run the command again to update the skill. Then start a new Copilot session and 
 - *"Turn the approved deck into an editable PowerPoint."*
 
 The skill's files are listed in [skills/deckforge](https://github.com/lrivallain/deckforge/tree/master/skills/deckforge).
+
+## With the deck tools
+
+The skill writes `deck.yaml` with the CLI. When a session also has the [`deckforge mcp`](../reference/cli#mcp) tools,
+for example a conversation [continued from the editor](./copilot#continue-in-copilot-cli), Copilot edits that deck
+through the tools instead. An open editor then shows each change as it happens.

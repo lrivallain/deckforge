@@ -29,6 +29,35 @@ You need a GitHub Copilot subscription. If you are not signed in, the drawer exp
 The rail highlights the slides that Copilot changed. A whole turn is **one undo step**: use **Undo these changes**
 or <kbd>⌘/Ctrl</kbd> <kbd>Z</kbd>.
 
+## Continue in Copilot CLI
+
+The conversation is a regular Copilot session. Its ID is shown under the scope toggle (click it to copy it).
+The session is named `deckforge · <deck title>`, and the editor resumes it the next time it opens the deck.
+**New conversation** starts a fresh session.
+
+To carry on in a terminal, click the terminal button in the drawer header (**Continue in Copilot CLI**).
+The editor lets go of the session and shows a command like this one:
+
+```bash
+copilot --resume <session-id> -C <deck folder> \
+  --additional-mcp-config @~/.config/deckforge/mcp/<id>.json --allow-tool deckforge
+```
+
+- Copilot CLI gets the same deck tools through [`deckforge mcp`](../reference/cli#mcp). In the CLI they are named
+  `deckforge-update_slide`, `deckforge-add_slide` and so on, and `deckforge-get_authoring_guide` returns the
+  design rules, the brief and the template catalogue.
+- While the editor is open, every change made in the CLI appears live. Changes made close together share one undo step
+  (**Copilot CLI: …**). With no editor running, the tools edit `deck.yaml` and rebuild `deck.html` themselves.
+- To take the conversation back, **exit Copilot CLI** and send a message in the drawer. The editor resumes the session
+  and shows what was said in the CLI. A session can only be open in one place at a time, so the editor refuses to resume it
+  while a Copilot CLI process still has it open.
+- The dialog also gives a command for a new CLI session with the deck tools, and the JSON to add this deck's tools to
+  `~/.copilot/mcp-config.json` for every Copilot session, in the CLI or the Copilot app.
+
+::: tip Copilot app
+To let Copilot app sessions edit the deck too, add the deck tools to `~/.copilot/mcp-config.json` with the JSON from the dialog.
+:::
+
 ## Improve one field
 
 Content text areas have a small ✨ button. This covers slot text, list items, card fields, speaker notes, overlay text, image

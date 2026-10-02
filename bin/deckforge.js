@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// deckforge CLI: new | build | templates | edit | serve | skill
+// deckforge CLI: new | build | templates | edit | serve | mcp | skill
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -21,6 +21,7 @@ Usage
   deckforge templates [deck.yaml|dir] [--json]
   deckforge edit <deck.yaml|dir> [--port 0] [--token <t>] [--runtime …] [--no-open]
   deckforge serve <deck.yaml|dir> [--port 0] [--no-open]
+  deckforge mcp <deck.yaml|dir>
   deckforge skill install-copilot [--force] [--dest <skills dir>] [--replace-build-presentation]
 
 Commands
@@ -30,6 +31,8 @@ Commands
   templates  List the templates (with their slots), themes and icons a deck can use
   edit       Start the local editor (127.0.0.1 only, random port and per-run token)
   serve      Serve the built deck read-only, rebuilding and reloading on change
+  mcp        Run a stdio MCP server with the deck tools for Copilot CLI / the Copilot app;
+             changes go through a running "deckforge edit" of that deck when there is one
   skill      install-copilot: install the deckforge GitHub Copilot skill into
              $COPILOT_HOME/skills (default ~/.copilot/skills)
 
@@ -231,6 +234,13 @@ switch (command) {
     } catch (err) {
       fail(err.message);
     }
+    break;
+  }
+  case "mcp": {
+    // stdout carries the MCP protocol: never print anything else to it.
+    const file = resolveDeck(target);
+    const { runMcpServer } = await import("../src/server/mcp.js");
+    await runMcpServer({ deckPath: file });
     break;
   }
   case "edit":
