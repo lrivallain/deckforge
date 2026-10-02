@@ -4,6 +4,7 @@
 import { h, icon, debounce } from "./dom.js";
 import { selectOverlays, state } from "./state.js";
 import { imageControl } from "./image-control.js";
+import { aiImprove } from "./improve.js";
 import { alignSelected, arrangeSelected, distributeSelected, duplicateSelected, removeSelected, toPct, toPx, updateOverlays } from "./overlays.js";
 import { OVERLAY_OPTIONS, overlayIssues } from "../core/overlay.js";
 import { stripTags } from "../core/html.js";
@@ -131,6 +132,7 @@ export function overlayPanel(slide, setters) {
       label: "Picture",
       path: `@ov:${o.id}:image`,
       required: true,
+      slideId: slide.id,
       onChange: (next, opts = {}) => {
         if (!next) return removeSelected();
         patchData(next, opts.coalesce ? { coalesce: `${slide.id}:${o.id}:${opts.coalesce}` } : {});
@@ -146,7 +148,11 @@ export function overlayPanel(slide, setters) {
     setters.set(`@ov:${o.id}:text`, (ov) => {
       if (document.activeElement !== textarea) textarea.value = ov.data?.text ?? "";
     });
-    out.append(h("div", { class: "field" }, h("div", { class: "field-label" }, h("label", { for: id }, "Text")), textarea,
+    const improvable = aiImprove(textarea, {
+      key: `${slide.id}:@ov:${o.id}:text`,
+      context: () => ({ label: o.kind === "callout" ? "Callout text" : "Overlay text", description: "A short annotation placed over the slide.", richtext: true, kind: `${o.kind} overlay`, slideId: slide.id }),
+    });
+    out.append(h("div", { class: "field" }, h("div", { class: "field-label" }, h("label", { for: id }, "Text")), improvable,
       h("p", { class: "field-hint" }, "Rich text: <strong>, <em>, <span class=\"blue\">…</span>. Fonts and colors come from the theme.")));
   }
   const options = OVERLAY_OPTIONS[o.kind] || {};

@@ -3,6 +3,7 @@
 // counter, fit and a focal point picked by clicking the thumbnail.
 
 import { h, icon, debounce, toast } from "./dom.js";
+import { aiImprove } from "./improve.js";
 import { ACCEPT, hasFiles, imageFiles, listAssets, previewUrl, uploadImage } from "./assets.js";
 import { IMAGE_FITS, isRemoteSrc, isSafeImageSrc, normalizeImage } from "../core/image.js";
 
@@ -19,7 +20,7 @@ let counter = 0;
  *              stale values; `replace` means a whole new image value.
  *   required   show the empty state as a warning
  */
-export function imageControl({ value, label, path, onChange, required = false, description }) {
+export function imageControl({ value, label, path, onChange, required = false, description, slideId = null }) {
   const id = `img${++counter}`;
   const image = normalizeImage(value);
   const fileInput = h("input", { type: "file", accept: ACCEPT, hidden: true, "data-testid": "image-file", dataset: { path } });
@@ -153,7 +154,10 @@ export function imageControl({ value, label, path, onChange, required = false, d
 
     children.push(
       h("div", { class: "field-label" }, h("label", { for: altId }, "Alt text"), count),
-      alt,
+      aiImprove(alt, {
+        key: `${slideId}:${path}.alt`,
+        context: () => ({ label: "Alt text", description: "Alternative text read by screen readers instead of the picture: short and specific.", max: ALT_MAX, kind: "image alt text", slideId }),
+      }),
       altHint,
       h("div", { class: "row between" }, h("span", { class: "label" }, "Fit"), fit),
       h("div", { class: "row between" },
