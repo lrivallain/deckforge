@@ -5,7 +5,8 @@ import { EventEmitter } from "node:events";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { OpError } from "../core/ops.js";
-import { improvePrompt, improveSystemPrompt, systemPrompt } from "./prompt.js";
+import { improvePrompt, improveSystemPrompt, systemPrompt, themePrompt, themeSystemPrompt } from "./prompt.js";
+import { normalizeTheme, OPTIONAL_PALETTE_KEYS, PALETTE_KEYS, themeContrastIssues } from "../core/theme.js";
 import { MUTATING_TOOLS, SLIDE_SCOPED_OPS, deckToolHandlers, deckToolSpecs, describeToolCall } from "./deck-tools.js";
 import { cliCommands, copilotAppUrl, globalMcpStatus, mcpServerConfig, openUrl, rememberedSession, rememberSession, sessionHolders, sessionName, writeMcpConfig } from "./copilot-link.js";
 
@@ -56,6 +57,7 @@ const MAX_LOG_TURNS = 100;
 const IMPROVE_TIMEOUT_MS = 90 * 1000;
 export const MAX_IMPROVE_CHARS = 8000;
 const MAX_IMPROVE_CONCURRENCY = 3;
+export const MAX_THEME_PROMPT_CHARS = 2000;
 export const AUTH_HINT = "Sign in with `gh auth login` (GitHub CLI) or `copilot` → `/login` (Copilot CLI), then retry. A GitHub Copilot subscription is required.";
 
 async function quietly(fn) {
@@ -77,6 +79,55 @@ export function cleanImproved(answer) {
   const quoted = /^(["“«'])([\s\S]*)(["”»'])$/.exec(text);
   if (quoted && !quoted[2].includes(quoted[1])) text = quoted[2].trim();
   return text;
+}
+
+const THEME_KEYS = [...PALETTE_KEYS, ...OPTIONAL_PALETTE_KEYS];
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+/** The palette being edited, reduced to known keys with short string values. */
+function sanitizeCurrentPalette(current) {
+  if (!current || typeof current !== "object") return null;
+  const palette = {};
+  for (const key of THEME_KEYS) {
+    const value = current.palette?.[key];
+    if (typeof value === "string" && value.length <= 80) palette[key] = value;
+  }
+  return { palette, colorScheme: current.colorScheme === "dark" ? "dark" : "light" };
+}
+
+/**
+ * Parse the theme designer's JSON answer (tolerates code fences and text
+ * around the object) into a validated palette. Throws (status 502) when the
+ * answer is unusable.
+ */
+export function parseThemeReply(answer) {
+  const text = String(answer ?? "");
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const fail = (why) => Object.assign(new Error(`Copilot returned an invalid palette: ${why}`), { status: 502 });
+  if (start === -1 || end <= start) throw fail("no JSON object in the answer");
+  let data;
+  try {
+    data = JSON.parse(text.slice(start, end + 1));
+  } catch {
+    throw fail("the JSON could not be parsed");
+  }
+  const palette = {};
+  for (const key of THEME_KEYS) {
+    const value = data?.palette?.[key];
+    if (typeof value === "string" && HEX_RE.test(value.trim())) palette[key] = value.trim().toUpperCase();
+  }
+  const missing = PALETTE_KEYS.filter((key) => !palette[key]);
+  if (missing.length) throw fail(`missing or non-hex ${missing.join(", ")}`);
+  const colorScheme = data.colorScheme === "dark" ? "dark" : "light";
+  let theme;
+  try {
+    theme = normalizeTheme({ name: "generated", colorScheme, palette });
+  } catch (err) {
+    throw fail(err.message);
+  }
+  const clean = (value, max) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+  return { label: clean(data.label, 60), description: clean(data.description, 300), colorScheme, palette, issues: themeContrastIssues(theme) };
 }
 
 export class AgentController extends EventEmitter {
@@ -288,9 +339,43 @@ export class AgentController extends EventEmitter {
     text = String(text ?? "");
     if (!text.trim()) throw new OpError("Nothing to improve: the field is empty");
     if (text.length > MAX_IMPROVE_CHARS) throw new OpError(`The text is too long to improve (over ${MAX_IMPROVE_CHARS} characters)`);
-    if (this.improving >= MAX_IMPROVE_CONCURRENCY) throw Object.assign(new OpError("Copilot is already improving other fields. Try again in a moment."), { status: 429 });
     const slide = slideId ? this.store.deck.slides.find((s) => s.id === slideId) : null;
     const maxLength = Number.isFinite(Number(max)) && Number(max) > 0 ? Math.floor(Number(max)) : null;
+    const prompt = improvePrompt({ text, label: String(label || "").slice(0, 120), description: String(description || "").slice(0, 500), max: maxLength, richtext: Boolean(richtext), kind: String(kind || "").slice(0, 40), slide });
+    return this.oneShot({
+      system: improveSystemPrompt(this.store.deck.meta),
+      prompt,
+      busy: "Copilot is already improving other fields. Try again in a moment.",
+      reject: "Reply with the rewritten text only; no tools are available.",
+      parse: (content) => {
+        const improved = cleanImproved(content);
+        if (!improved) throw new Error("Copilot returned an empty answer");
+        return { text: improved };
+      },
+    });
+  }
+
+  /**
+   * Design a colour palette from a free-text request. Returns
+   * { label, description, colorScheme, palette, issues } validated as a theme;
+   * the theme editor shows it for review, nothing is saved.
+   */
+  async generateTheme({ prompt, current } = {}) {
+    prompt = String(prompt ?? "").trim();
+    if (!prompt) throw new OpError("Describe the palette you want");
+    if (prompt.length > MAX_THEME_PROMPT_CHARS) throw new OpError(`The request is too long (over ${MAX_THEME_PROMPT_CHARS} characters)`);
+    return this.oneShot({
+      system: themeSystemPrompt(this.store.deck.meta),
+      prompt: themePrompt({ prompt, current: sanitizeCurrentPalette(current) }),
+      busy: "Copilot is already busy with other requests. Try again in a moment.",
+      reject: "Reply with the JSON palette only; no tools are available.",
+      parse: parseThemeReply,
+    });
+  }
+
+  /** Run one prompt in a short-lived tool-less session and parse the reply. */
+  async oneShot({ system, prompt, busy, reject, parse }) {
+    if (this.improving >= MAX_IMPROVE_CONCURRENCY) throw Object.assign(new OpError(busy), { status: 429 });
     this.improving += 1;
     let client;
     let session;
@@ -301,10 +386,9 @@ export class AgentController extends EventEmitter {
         tools: [],
         availableTools: [],
         workingDirectory: this.store.deckDir,
-        systemMessage: { mode: "replace", content: improveSystemPrompt(this.store.deck.meta) },
-        onPermissionRequest: () => ({ kind: "reject", feedback: "Reply with the rewritten text only; no tools are available." }),
+        systemMessage: { mode: "replace", content: system },
+        onPermissionRequest: () => ({ kind: "reject", feedback: reject }),
       });
-      const prompt = improvePrompt({ text, label: String(label || "").slice(0, 120), description: String(description || "").slice(0, 500), max: maxLength, richtext: Boolean(richtext), kind: String(kind || "").slice(0, 40), slide });
       let reply;
       try {
         reply = await session.sendAndWait({ prompt }, IMPROVE_TIMEOUT_MS);
@@ -313,9 +397,7 @@ export class AgentController extends EventEmitter {
         if (/timeout|timed out/i.test(err.message)) throw new Error("Copilot took too long to answer", { cause: err });
         throw err;
       }
-      const improved = cleanImproved(reply?.data?.content);
-      if (!improved) throw new Error("Copilot returned an empty answer");
-      return { text: improved };
+      return parse(reply?.data?.content);
     } catch (err) {
       if (err.name === "OpError" || err.status) throw err;
       const auth = isAuthError(err);

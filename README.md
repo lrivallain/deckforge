@@ -43,7 +43,7 @@ an AI edits typed slides through validated tools, and you can review and undo ev
   diffs, and the text is checked against each slot's limits.
 - **A live editor.** Edit text in place, use a typed inspector, add images and overlays, and undo any change. It ships with
   4 themes and 32 templates, from one-idea slides to diagrams, data-driven charts and technical reviews, and you can add
-  your own.
+  your own. The theme editor lets you pick the colours yourself or ask Copilot for a palette.
 - **One static file, or PowerPoint.** Speaker notes, a presenter window and print to PDF, with no network requests by
   default. Or export an editable `.pptx` with native text boxes, shapes, pictures and your speaker notes.
 - **Offline technical decks.** Architecture reviews, postmortems, assessments and decision records: charts computed from the figures,

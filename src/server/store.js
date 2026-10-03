@@ -7,8 +7,9 @@ import path from "node:path";
 import { parseDeckYaml, stringifyDeck } from "../core/deck.js";
 import { applyOp, OpError } from "../core/ops.js";
 import { parseTemplate } from "../core/template.js";
+import { parseTheme, themeContrastIssues } from "../core/theme.js";
 import { buildDeckObject, outputPathFor, writeFileAtomic } from "./build.js";
-import { configDir, loadTemplates, loadThemes, templateDirFor } from "./registry.js";
+import { configDir, loadTemplates, loadThemes, templateDirFor, themeDirFor } from "./registry.js";
 
 const COALESCE_MS = 2000;
 const MAX_UNDO = 200;
@@ -82,7 +83,7 @@ export class DeckStore extends EventEmitter {
       templates: Object.values(this.templates)
         .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
         .map((t) => ({ name: t.name, label: t.label, description: t.description, category: t.category, scope: t.scope, source: t.source })),
-      themes: Object.values(this.themes).map((t) => ({ name: t.name, label: t.label, description: t.description, scope: t.scope, css: t.css, palette: t.palette })),
+      themes: Object.values(this.themes).map((t) => ({ name: t.name, label: t.label, description: t.description, scope: t.scope, css: t.css, palette: t.palette, source: t.source })),
       registryErrors: this.registryErrors.map((e) => ({ path: path.relative(this.deckDir, e.path) || e.path, message: e.message })),
       configDir: configDir(),
       lastBuild: this.lastBuild,
@@ -212,6 +213,29 @@ export class DeckStore extends EventEmitter {
     this.scheduleBuild();
     this.emitChange({ changed: this.deck.slides.filter((s) => s.template === name).map((s) => s.id), source: "template", op: "save_template" });
     return { name, scope, path: file, issues: template.issues };
+  }
+
+  /** Save a theme file (scope: deck | user). */
+  saveTheme(name, source, scope) {
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) throw new OpError("Theme names use lowercase letters, digits and dashes");
+    let theme;
+    try {
+      theme = parseTheme(source, { name, scope });
+    } catch (err) {
+      throw new OpError(err.message);
+    }
+    if (theme.name !== name) throw new OpError(`theme name "${theme.name}" must match "${name}"`);
+    const dir = themeDirFor(scope, this.deckDir);
+    const file = path.resolve(dir, `${name}.yaml`);
+    if (path.dirname(file) !== path.resolve(dir)) throw new OpError("Invalid theme path");
+    fs.mkdirSync(dir, { recursive: true });
+    writeFileAtomic(file, source);
+    this.loadRegistry();
+    this.version++;
+    this.scheduleBuild();
+    const used = this.deck.meta.theme === name;
+    this.emitChange({ changed: used ? this.deck.slides.map((s) => s.id) : [], source: "theme", op: "save_theme" });
+    return { name, scope, path: file, issues: themeContrastIssues(theme), active: this.themes[name]?.path === file };
   }
 
   watch() {

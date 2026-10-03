@@ -323,6 +323,11 @@ export async function startServer({
       const scope = body.scope === "user" ? "user" : "deck";
       return send(res, 200, { ok: true, ...store.saveTemplate(tpl[1], String(body.source ?? ""), scope) });
     }
+    const theme = /^\/themes\/([a-z0-9][a-z0-9-]*)$/.exec(route);
+    if (req.method === "PUT" && theme) {
+      const scope = body.scope === "user" ? "user" : "deck";
+      return send(res, 200, { ok: true, ...store.saveTheme(theme[1], String(body.source ?? ""), scope) });
+    }
     if (req.method === "POST" && route === "/agent") {
       await agent.chat({ prompt: String(body.prompt ?? ""), scope: body.scope === "slide" ? "slide" : "deck", slideId: body.slideId ?? null });
       return send(res, 202, { ok: true });
@@ -331,6 +336,10 @@ export async function startServer({
     if (req.method === "POST" && route === "/agent/improve") {
       const { text, label, description, max, richtext, kind, slideId } = body || {};
       return send(res, 200, await agent.improve({ text, label, description, max, richtext, kind, slideId }));
+    }
+    if (req.method === "POST" && route === "/agent/theme") {
+      const { prompt, current } = body || {};
+      return send(res, 200, await agent.generateTheme({ prompt, current }));
     }
     if (req.method === "POST" && route === "/agent/reset") return send(res, 200, { ok: await agent.reset() });
     if (req.method === "POST" && route === "/agent/connect") {

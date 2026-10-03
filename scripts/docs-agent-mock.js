@@ -2,6 +2,19 @@
 // A slide-scoped request tightens the problem text and writes speaker notes,
 // so the Copilot drawer screenshot shows a realistic, reproducible turn.
 // A whole-deck request (the demo GIF) tightens three takeaways at a readable pace.
+// A one-shot palette request (theme editor) answers a fixed forest/copper palette.
+
+const PALETTE = {
+  label: "Forest copper",
+  description: "Deep forest green with a warm copper accent on soft neutrals.",
+  colorScheme: "light",
+  palette: {
+    bg: "#EEF3EE", paper: "#FFFFFF", line: "#DCE6DC", ink: "#14261C", muted: "#4D6355", node: "#F6F9F6",
+    primary: "#2F6B45", "primary-soft": "#E6F1E9", "primary-line": "#A9CDB4", "primary-text": "#2A6140",
+    accent: "#B5651D", "accent-soft": "#FBEEE2", "accent-line": "#E8B98A", "accent-text": "#8F4A12",
+    frame: "#FFF9F2", ok: "#1F8A55",
+  },
+};
 
 const REPLY =
   'Tightened the problem text and added speaker notes that walk through the four responses, ending on the amber review gate.';
@@ -63,6 +76,11 @@ export function createClient() {
             emit("session.idle", {});
           }, 30);
           return "docs-message-id";
+        },
+        async sendAndWait({ prompt }) {
+          await new Promise((resolve) => setTimeout(resolve, 30));
+          const text = /\n<<<\n([\s\S]*?)\n>>>/.exec(prompt)?.[1] ?? "";
+          return { type: "assistant.message", data: { content: /^Theme request:/m.test(prompt) ? JSON.stringify(PALETTE) : text } };
         },
         async abort() {
           emit("session.idle", {});
