@@ -5,8 +5,24 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-03
+
+First public release.
+
 ### Added
 
+- `deck.yaml` → static `deck.html` renderer, with `local`, `inline` and `cdn` runtime modes.
+- Viewer: keyboard and hash navigation, static mode, speaker notes, presenter window, fullscreen, print to PDF.
+- Themes: `build`, `atelier`, `aurora` and `azure`.
+- 32 templates: Essentials, structure, diagrams, content, media, data-driven charts and technical decks.
+- Editor: slide rail, inline text editing, typed inspector, images, overlays with snapping, reorder, undo/redo, autosave.
+- Template editor with live preview and validation.
+- Copilot assistant with slide or deck scope and deck-only tools, where each turn is one undo step.
+- GitHub Copilot skill (`deckforge skill install-copilot`).
+- CLI: `new`, `build`, `templates`, `edit`, `serve`, `skill`.
+- Documentation site at <https://deckforge.vuptime.io/>, with screenshots and live example decks.
+- deckforge icon: favicon for the editor and the site, and a social card.
+- Community files, issue and pull request templates, Dependabot, and a release workflow that runs on `v*` tags.
 - Editor: a **Themes** theme editor. Edit every theme token (colours with pickers, fonts, radii, spacing, motion, shadow, or the raw YAML) with a live preview of sample slides and contrast warnings. Ask Copilot to generate a palette from a description, then save to the deck's `themes/` or `~/.config/deckforge/themes` and apply it to the deck. New endpoints: `PUT /api/themes/<name>` and `POST /api/agent/theme`.
 - PowerPoint export: `deckforge export <deck>` and the editor's **PowerPoint** button write an editable `deck.pptx`
   with native text boxes, shapes, pictures, links and speaker notes. Icons and gradients become vector pictures.
@@ -43,33 +59,11 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The inspector thumbnail of an SVG image that has only a `viewBox` no longer collapses to 0×0.
 - `zoom` template: the highlighted response title uses the theme's small-text accent colour, for 4.5:1 contrast.
 - Editor: the page no longer scrolls past the app, which used to push the toolbar out of view.
 - Editor: the URL printed by `deckforge edit` now opens from hosts that start navigations on another site, such as the GitHub Copilot app's built-in browser. The token cookie is `SameSite=Lax` instead of `Strict`.
 - `npm run dev` no longer fails at random with "Option '--token' argument is ambiguous": tokens never start with `-`, and the token is passed as `--token=<t>`.
-
-## [0.1.0]
-
-First public version. Add the release date to this heading when you tag it.
-
-### Added
-
-- `deck.yaml` → static `deck.html` renderer, with `local`, `inline` and `cdn` runtime modes.
-- Viewer: keyboard and hash navigation, static mode, speaker notes, presenter window, fullscreen, print to PDF.
-- Themes: `build`, `atelier`, `aurora` and `azure`.
-- 20 templates: Essentials, structure, diagrams, content and media.
-- Editor: slide rail, inline text editing, typed inspector, images, overlays with snapping, reorder, undo/redo, autosave.
-- Template editor with live preview and validation.
-- Copilot assistant with slide or deck scope and deck-only tools, where each turn is one undo step.
-- GitHub Copilot skill (`deckforge skill install-copilot`).
-- CLI: `new`, `build`, `templates`, `edit`, `serve`, `skill`.
-- Documentation site at <https://deckforge.vuptime.io/>, with screenshots and live example decks.
-- deckforge icon: favicon for the editor and the site, and a social card.
-- Community files, issue and pull request templates, Dependabot, and a release workflow that runs on `v*` tags.
-
-### Fixed
-
-- The inspector thumbnail of an SVG image that has only a `viewBox` no longer collapses to 0×0.
 
 [Unreleased]: https://github.com/lrivallain/deckforge/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/lrivallain/deckforge/releases/tag/v0.1.0
