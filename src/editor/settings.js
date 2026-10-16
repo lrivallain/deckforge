@@ -21,6 +21,9 @@ export function openSettings() {
   const runtime = h("select", { id: "set-runtime", class: "input" },
     ["local", "cdn", "inline"].map((m) => h("option", { value: m, selected: (meta.runtime || "local") === m }, m)),
   );
+  const sourcesOn = h("input", { type: "checkbox", class: "switch", id: "set-sources-on", checked: meta.sourcesSlide !== false });
+  const sourcesTitle = h("input", { id: "set-sourcesSlide", class: "input", value: typeof meta.sourcesSlide === "string" ? meta.sourcesSlide : "", placeholder: "Sources", disabled: meta.sourcesSlide === false });
+  sourcesOn.addEventListener("change", () => { sourcesTitle.disabled = !sourcesOn.checked; });
   const form = h("form", { class: "dialog-body settings-grid", onSubmit: (e) => { e.preventDefault(); save(); } },
     h("fieldset", {}, h("legend", {}, "Deck"),
       input("title", "Title", meta.title),
@@ -31,12 +34,18 @@ export function openSettings() {
       input("lang", "Language", meta.lang, { hint: "BCP 47 code, e.g. en, fr, en-GB." }),
       h("div", { class: "field" }, h("div", { class: "field-label" }, h("label", { for: "set-runtime" }, "Viewer runtime")), runtime,
         h("p", { class: "field-hint" }, "local: copy the viewer next to deck.html · cdn: load it from jsDelivr · inline: one self-contained file.")),
+      h("div", { class: "field" },
+        h("div", { class: "field field-inline" }, sourcesOn, h("label", { for: "set-sources-on" }, "Add a Sources slide at the end")),
+        h("div", { class: "field-label" }, h("label", { for: "set-sourcesSlide" }, "Sources slide title")), sourcesTitle,
+        h("p", { class: "field-hint" }, "Built from the sources listed on each slide. Leave the title empty for “Sources”.")),
     ),
     h("fieldset", {}, h("legend", {}, "Brief"), h("p", { class: "muted small" }, "Grounds the Copilot assistant: it designs for this audience and goal."),
       input("topic", "Topic", brief.topic),
       input("audience", "Audience", brief.audience),
       input("goal", "Goal", brief.goal, { textarea: true, improve: "What the audience should think or do after the talk." }),
       input("duration", "Duration", brief.duration, { placeholder: "e.g. 20 minutes" }),
+      input("language", "Writing language", brief.language, { placeholder: "e.g. French", hint: "Language the assistant writes the slides in." }),
+      input("notes", "Notes", brief.notes, { textarea: true, hint: "Anything else the assistant should know: tone, constraints, things to avoid." }),
       input("sources", "Sources", (brief.sources || []).join("\n"), { textarea: true, hint: "One per line. Only cite sources you are allowed to share." }),
     ),
   );
@@ -57,11 +66,14 @@ export function openSettings() {
       footer: value("footer"),
       lang: value("lang") || "en",
       runtime: runtime.value,
+      sourcesSlide: sourcesOn.checked ? sourcesTitle.value.trim() || null : false,
       brief: {
         topic: value("topic"),
         audience: value("audience"),
         goal: value("goal"),
         duration: value("duration"),
+        language: value("language"),
+        notes: value("notes"),
         sources: value("sources").split("\n").map((s) => s.trim()).filter(Boolean),
       },
     };

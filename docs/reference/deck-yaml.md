@@ -53,7 +53,7 @@ slides:
 | `runtime` | `local` \| `cdn` \| `inline` | Default `--runtime` for `deckforge build` |
 | `description` | string | `<meta name="description">` of the page |
 | `subtitle`, `author`, `date` | string | Available to templates, for example <code v-pre>{{deck.author}}</code> |
-| `brief` | mapping | `topic`, `audience`, `goal`, `duration`, `sources`: context for Copilot |
+| `brief` | mapping | `topic`, `audience`, `goal`, `duration`, `sources`, `language`, `notes`: context for Copilot |
 | `sourcesSlide` | `false` \| string | `false` leaves out the generated Sources slide; a string is its title. The default title is `Sources` |
 
 ## Slides
@@ -87,6 +87,11 @@ Each `sources:` entry is listed at the end of the slide's speaker notes. When at
 title of the slide it supports. Entries that are `http(s)` URLs, or have an `href`, become links. The appendix uses
 the `sources` template, which a deck can override; `meta.sourcesSlide` renames it or turns it off.
 The appendix is generated at build time: the editor doesn't show it as a slide.
+
+In the editor, edit a slide's sources in the inspector's **Sources** box (one per line, `Label | https://url` for a
+link with a label). The **Deck** settings dialog turns the appendix on or off and sets its title; it also has the
+brief's **Writing language** (`meta.brief.language`) and **Notes** (`meta.brief.notes`). The Copilot assistant can set
+the same fields with `update_slide` (`sources`) and `update_meta` (`sourcesSlide`, `brief`).
 
 ## Number values
 

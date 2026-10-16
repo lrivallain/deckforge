@@ -251,6 +251,7 @@ body.chat-open .workspace { grid-template-columns: var(--rail-w) minmax(0, 1fr) 
 .issues { list-style: none; margin: 0; padding: 10px 12px; border-radius: var(--ui-radius); background: var(--ui-warn-soft); color: var(--ui-warn); display: grid; gap: 4px; font-size: 12.5px; }
 .issues li { display: flex; gap: 6px; align-items: center; }
 .notes-input { min-height: 110px; }
+.sources-input { min-height: 72px; resize: vertical; }
 
 /* ------------------------------------------------------------ chat */
 .chat { position: relative; display: flex; flex-direction: column; min-height: 0; background: var(--ui-panel); border-left: 1px solid var(--ui-line); }

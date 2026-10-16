@@ -41,6 +41,11 @@ export function deckToolSpecs() {
         notes: { type: "string", description: "Speaker notes (replaces existing)" },
         title: { type: "string", description: "Short title used in navigation (optional)" },
         footer: { type: "string", description: "Footer override for this slide (richtext); empty string to clear" },
+        sources: {
+          type: "array",
+          description: "Where this slide's facts come from (replaces existing; empty list clears). Each entry is a string or {label, href}; listed in the notes and on the generated Sources slide.",
+          items: { anyOf: [{ type: "string" }, obj({ label: { type: "string" }, href: { type: "string" } })] },
+        },
       }, ["id"]),
     },
     {
@@ -94,7 +99,7 @@ export function deckToolSpecs() {
     { name: "remove_overlay", description: "Delete an overlay from a slide.", parameters: obj({ id: ID, overlayId: { type: "string" } }, ["id", "overlayId"]) },
     {
       name: "update_meta",
-      description: "Update deck metadata: title, subtitle, author, date, footer, description, lang, and brief {topic, audience, goal, sources[], duration}.",
+      description: "Update deck metadata: title, subtitle, author, date, footer, description, lang, runtime, sourcesSlide (false turns the generated Sources slide off, a string renames it, null restores the default), and brief {topic, audience, goal, sources[], duration, language, notes}.",
       parameters: obj({ meta: { type: "object", additionalProperties: true } }, ["meta"]),
     },
   ];
@@ -151,6 +156,7 @@ export function describeToolCall(name, args = {}, result = {}) {
       if (args.notes !== undefined) fields.push("notes");
       if (args.title !== undefined) fields.push("nav title");
       if (args.footer !== undefined) fields.push("footer");
+      if (args.sources !== undefined) fields.push("sources");
       break;
     case "add_slide":
       fields = ["template", ...keysOf(args.data)];

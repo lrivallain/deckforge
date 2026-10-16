@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { colorToHex, contrastRatio, parseColor, parseTheme, themeContrastIssues, ThemeError } from "../../src/core/theme.js";
 import { normalizeDeck, parseDeckYaml, stringifyDeck, validateDeck, DeckError } from "../../src/core/deck.js";
 import { applyOp, OpError } from "../../src/core/ops.js";
+import { formatSourceLines, parseSourceLines } from "../../src/core/sources.js";
 import { renderDeck, renderSlideDocument, VERSION, cdnBase } from "../../src/core/render.js";
 import { loadTemplates, loadThemes } from "../../src/server/registry.js";
 import { sampleData } from "../../src/core/template.js";
@@ -206,6 +207,33 @@ describe("ops", () => {
     expect(() => applyOp(base, "nope", {}, ctx)).toThrow(/Unknown operation/);
     expect(() => applyOp(base, "update_slide", { id: "zz" }, ctx)).toThrow(/No slide/);
     expect(() => applyOp(base, "add_slide", { template: "zz" }, ctx)).toThrow(/Unknown template/);
+  });
+  it("update_meta sets the sourcesSlide and the extra brief fields", () => {
+    const off = applyOp(base, "update_meta", { meta: { sourcesSlide: false } }, ctx).deck;
+    expect(off.meta.sourcesSlide).toBe(false);
+    const renamed = applyOp(off, "update_meta", { meta: { sourcesSlide: " Références " } }, ctx).deck;
+    expect(renamed.meta.sourcesSlide).toBe("Références");
+    for (const reset of [null, "", true]) expect(applyOp(renamed, "update_meta", { meta: { sourcesSlide: reset } }, ctx).deck.meta).not.toHaveProperty("sourcesSlide");
+    expect(() => applyOp(base, "update_meta", { meta: { sourcesSlide: 3 } }, ctx)).toThrow(OpError);
+    const { deck } = applyOp(base, "update_meta", { meta: { brief: { language: "French", notes: "Keep it short" } } }, ctx);
+    expect(deck.meta.brief).toMatchObject({ language: "French", notes: "Keep it short" });
+    expect(applyOp(deck, "update_meta", { meta: { brief: { language: "", notes: null } } }, ctx).deck.meta.brief).not.toHaveProperty("language");
+  });
+  it("update_slide sets, normalizes and clears sources", () => {
+    const sources = ["Q3 report", { label: "Prices", href: "https://example.com/p" }, "  "];
+    const { deck } = applyOp(base, "update_slide", { id: "a", sources }, ctx);
+    expect(deck.slides[0].sources).toEqual(["Q3 report", { label: "Prices", href: "https://example.com/p" }]);
+    expect(applyOp(deck, "update_slide", { id: "a", sources: [] }, ctx).deck.slides[0]).not.toHaveProperty("sources");
+    expect(applyOp(deck, "update_slide", { id: "a", notes: "n" }, ctx).deck.slides[0].sources).toHaveLength(2);
+    expect(() => applyOp(base, "update_slide", { id: "a", sources: [[1]] }, ctx)).toThrow(OpError);
+  });
+  it("source lines round-trip through the text editor format", () => {
+    const sources = ["Q3 report", "https://example.com/r", { label: "Prices", href: "https://example.com/p" }];
+    const text = formatSourceLines(sources);
+    expect(text).toBe("Q3 report\nhttps://example.com/r\nPrices | https://example.com/p");
+    expect(parseSourceLines(text)).toEqual(sources);
+    expect(parseSourceLines("\n a \n\nLabel |\n")).toEqual(["a", "Label |"]);
+    expect(formatSourceLines(undefined)).toBe("");
   });
 });
 

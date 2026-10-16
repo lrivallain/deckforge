@@ -760,6 +760,7 @@ describe("Agent change summary", () => {
     expect(describeToolCall("remove_slide", { id: "a" }, { removed: "a" })).toEqual({ slideId: "a", fields: ["removed"] });
     expect(describeToolCall("set_theme", { theme: "aurora" })).toEqual({ slideId: null, fields: ["theme"] });
     expect(describeToolCall("update_meta", { meta: { brief: {}, title: "T" } })).toEqual({ slideId: null, fields: ["meta.brief", "meta.title"] });
+    expect(describeToolCall("update_slide", { id: "a", sources: ["x"] })).toEqual({ slideId: "a", fields: ["sources"] });
     expect(describeToolCall("get_deck", {})).toEqual({ slideId: null, fields: [] });
   });
 

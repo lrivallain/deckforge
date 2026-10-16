@@ -5,6 +5,11 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Editor: edit a slide's `sources` in the inspector, and set `meta.sourcesSlide` and the brief's `language` and `notes` in the Deck settings.
+- Copilot tools: `update_slide` accepts `sources`, and `update_meta` accepts `sourcesSlide`.
+
 ## [0.1.0] - 2026-10-03
 
 First public release.

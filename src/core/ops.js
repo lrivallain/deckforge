@@ -2,7 +2,7 @@
 // Every op takes (deck, args, ctx) and returns { deck, changed: [slideIds], result }.
 // The input deck is never mutated.
 
-import { makeSlideId, normalizeSlide } from "./deck.js";
+import { DeckError, makeSlideId, normalizeSlide, normalizeSources } from "./deck.js";
 import { sampleData, toNumber } from "./template.js";
 import { RUNTIME_MODES } from "./deck.js";
 import { IMAGE_FITS, isSafeImageSrc, normalizeFocus } from "./image.js";
@@ -171,7 +171,7 @@ function slideLabel(deck, slide) {
 }
 
 export const OPS = {
-  update_slide(deck, { id, data, set, notes, title, footer, replace = false }) {
+  update_slide(deck, { id, data, set, notes, title, footer, sources, replace = false }) {
     const next = clone(deck);
     const slide = next.slides[findIndex(next, id)];
     if (data !== undefined) {
@@ -195,6 +195,17 @@ export const OPS = {
     if (footer !== undefined) {
       if (footer) slide.footer = String(footer);
       else delete slide.footer;
+    }
+    if (sources !== undefined) {
+      let list;
+      try {
+        list = normalizeSources(sources);
+      } catch (err) {
+        if (err instanceof DeckError) throw new OpError(err.message);
+        throw err;
+      }
+      if (list.length) slide.sources = list;
+      else delete slide.sources;
     }
     return { deck: next, changed: [id], result: { id } };
   },
@@ -286,6 +297,11 @@ export const OPS = {
       } else if (key === "runtime") {
         if (!RUNTIME_MODES.includes(value)) throw new OpError(`runtime must be one of ${RUNTIME_MODES.join(", ")}`);
         next.meta.runtime = value;
+      } else if (key === "sourcesSlide") {
+        if (value === false) next.meta.sourcesSlide = false;
+        else if (typeof value === "string" && value.trim()) next.meta.sourcesSlide = value.trim();
+        else if (value === null || value === true || value === "") delete next.meta.sourcesSlide;
+        else throw new OpError("sourcesSlide must be false, a title, or null for the default");
       } else if (key === "theme") {
         throw new OpError("Use set_theme to change the theme");
       } else throw new OpError(`Unknown meta field "${key}"`);
