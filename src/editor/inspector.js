@@ -11,6 +11,7 @@ import { imageControl } from "./image-control.js";
 import { layersSection, overlayPanel } from "./inspector-overlays.js";
 import { makeSortable } from "./reorder.js";
 import { aiImprove, syncImproveFields } from "./improve.js";
+import { formatSourceLines, parseSourceLines } from "../core/sources.js";
 
 function humanize(name) {
   return name.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[-_]/g, " ").replace(/^./, (c) => c.toUpperCase());
@@ -332,6 +333,16 @@ export function createInspector({ onFieldFocus }) {
     });
     body.append(section("Speaker notes", h("label", { for: notesId, class: "sr-only" }, "Speaker notes"), improvableNotes));
 
+    const sourcesId = nextId();
+    const sourcesInput = h("textarea", { id: sourcesId, class: "input sources-input", rows: 3, value: formatSourceLines(slide.sources), placeholder: "Q3 incident review\nPrice list | https://example.com/prices", dataset: { path: "@sources" } });
+    sourcesInput.addEventListener("input", debounce(() => opQuiet("update_slide", { id: slide.id, sources: parseSourceLines(sourcesInput.value) }, { coalesce: `${slide.id}:@sources`, label: "Edit sources" }), 400));
+    setters.set("@sources", (v) => { if (document.activeElement !== sourcesInput) sourcesInput.value = formatSourceLines(v); });
+    body.append(section("Sources",
+      h("label", { for: sourcesId, class: "sr-only" }, "Sources"),
+      sourcesInput,
+      h("p", { class: "field-hint" }, "One per line: a name or URL, or “Label | https://url”. Listed in the notes and on the generated Sources slide."),
+    ));
+
     const navId = nextId();
     const footId = nextId();
     const navTitle = h("input", { id: navId, class: "input", value: slide.title || "", placeholder: "Defaults to the slide headline", dataset: { path: "@title" } });
@@ -352,6 +363,7 @@ export function createInspector({ onFieldFocus }) {
     const get = (path) => path.split(".").reduce((node, key) => (node == null ? undefined : node[key]), slide.data);
     for (const [path, set] of setters) {
       if (path === "@notes") set(slide.notes);
+      else if (path === "@sources") set(slide.sources);
       else if (path.startsWith("@ov:")) {
         const overlay = slide.overlays?.find((o) => o.id === path.split(":")[1]);
         if (overlay) set(overlay);

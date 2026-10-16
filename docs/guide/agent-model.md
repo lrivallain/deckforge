@@ -81,6 +81,7 @@ Update one slide. `data` merges top-level slot values (null deletes a slot). `se
 | `notes` | string | – | Speaker notes (replaces existing) |
 | `title` | string | – | Short title used in navigation (optional) |
 | `footer` | string | – | Footer override for this slide (richtext); empty string to clear |
+| `sources` | array | – | Where this slide's facts come from (replaces existing; empty list clears). Each entry is a string or {label, href}; listed in the notes and on the generated Sources slide. |
 
 ### `add_slide` {#tool-add-slide}
 
@@ -204,7 +205,7 @@ Delete an overlay from a slide.
 
 ### `update_meta` {#tool-update-meta}
 
-Update deck metadata: title, subtitle, author, date, footer, description, lang, and brief {topic, audience, goal, sources[], duration}.
+Update deck metadata: title, subtitle, author, date, footer, description, lang, runtime, sourcesSlide (false turns the generated Sources slide off, a string renames it, null restores the default), and brief {topic, audience, goal, sources[], duration, language, notes}.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|

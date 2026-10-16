@@ -141,11 +141,35 @@ test("deck settings update meta and brief", async ({ page }) => {
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Title", { exact: true }).fill("Quarterly review");
   await dialog.getByLabel("Audience").fill("Leadership team");
-  await dialog.getByLabel("Sources").fill("Q3 report\nCustomer survey");
+  await dialog.getByLabel("Sources", { exact: true }).fill("Q3 report\nCustomer survey");
+  await dialog.getByLabel("Writing language").fill("French");
+  await dialog.getByLabel("Notes", { exact: true }).fill("Keep it short");
+  await dialog.getByLabel("Add a Sources slide at the end").uncheck();
+  await expect(dialog.getByLabel("Sources slide title")).toBeDisabled();
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(page.getByTestId("deck-title")).toHaveText("Quarterly review");
   const yaml = await waitForFile(editor.readYaml, (y) => y.includes("audience: Leadership team"));
   expect(yaml).toMatch(/sources:\n\s+- Q3 report\n\s+- Customer survey/);
+  expect(yaml).toMatch(/language: French/);
+  expect(yaml).toMatch(/notes: Keep it short/);
+  expect(yaml).toMatch(/sourcesSlide: false/);
+
+  await page.getByTestId("open-settings").click();
+  const again = page.getByRole("dialog");
+  await expect(again.getByLabel("Add a Sources slide at the end")).not.toBeChecked();
+  await again.getByLabel("Add a Sources slide at the end").check();
+  await again.getByLabel("Sources slide title").fill("References");
+  await again.getByRole("button", { name: "Save" }).click();
+  await waitForFile(editor.readYaml, (y) => /sourcesSlide: References/.test(y));
+});
+
+test("slide sources are edited in the inspector", async ({ page }) => {
+  await page.locator(".sources-input").fill("Q3 report\nPrices | https://example.com/prices");
+  const yaml = await waitForFile(editor.readYaml, (y) => y.includes("https://example.com/prices"));
+  expect(yaml).toMatch(/- Q3 report/);
+  expect(yaml).toMatch(/label: Prices/);
+  await page.locator(".sources-input").fill("");
+  await waitForFile(editor.readYaml, (y) => !y.includes("Q3 report"));
 });
 
 test("template editor validates, previews and saves into the deck folder", async ({ page }) => {
